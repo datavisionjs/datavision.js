@@ -3,15 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Testing DataVision</title>
 </head>
 <body>
-    <script src="../src/index.js"></script>
+    
+    <script src="../dist/datavision.min.js"></script>
 
-    <div></div>
+    <div id="my-chart"></div>
 
     <script>
-        
+        let data = [];
+        let layout = {
+            xAxis: {range: [20,  50], title: "Movie"},
+            yAxis: {range: [5, 15], title: "Strip"}
+        }
+
+        const chart = new DataVision("my-chart");
+        chart.plot("bar", data, layout);
     </script>
 </body>
 </html>
