@@ -14,12 +14,13 @@
     <script>
         let data = [];
         let layout = {
-            xAxis: {range: [20,  50], title: "Movie"},
-            yAxis: {range: [5, 15], title: "Strip"}
+            xAxis: {range: [40, 160], title: "Square Meters"},
+            yAxis: {range: [5, 16], title: "Price In Millions"},
+            title: "House Prices vs. Size"
         }
 
         const chart = new DataVision("my-chart");
-        chart.plot("bar", data, layout);
+        chart.plot("", data, layout);
     </script>
 </body>
 </html>
