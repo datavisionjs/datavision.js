@@ -24,14 +24,17 @@ function DataVision(targetId) {
     };
 }
 
-DataVision.prototype.plot = function (type, data, layout){
+DataVision.prototype.plot = function (data, layout){
     const canvas = this.canvas;
     canvas.width = 700;
     canvas.height = (700*0.75);
 
     const ctx = canvas.getContext("2d");
 
-    dataVis.DrawAxis(ctx, data, layout);
+    dataVis.DrawAxis(ctx, layout);
+
+    dataVis.Chart(ctx, data, layout);
+
     this.addCanvasToTarget();
 }
 

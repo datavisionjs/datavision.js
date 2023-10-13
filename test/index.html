@@ -12,7 +12,16 @@
     <div id="my-chart"></div>
 
     <script>
-        let data = [];
+
+        const xArray = [50,60,70,80,90,100,110,120,130,140,150];
+        const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+
+        const data = [{
+            x:xArray,
+            y:yArray,
+            type: "scatter"
+        }];
+
         let layout = {
             xAxis: {range: [40, 160], title: "Square Meters"},
             yAxis: {range: [5, 16], title: "Price In Millions"},
@@ -20,7 +29,7 @@
         }
 
         const chart = new DataVision("my-chart");
-        chart.plot("", data, layout);
+        chart.plot(data, layout);
     </script>
 </body>
 </html>

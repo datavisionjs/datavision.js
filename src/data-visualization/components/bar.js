@@ -1,6 +1,6 @@
 
-const Bargraph = () => {
+const Bar = () => {
     
 }
 
-export default Bargraph;
+export default Bar;
