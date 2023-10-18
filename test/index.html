@@ -13,18 +13,17 @@
 
     <script>
 
-        const xArray = [50,60,70,80,90,100,110,120,130,140,150];
-        const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+        const xValues = [50,60,70,80,90,100,110,120,130,140,150];
+        const yValues = [7,8,8,9,9,9,10,11,14,14,15];
 
-        const data = [{
-            x:xArray,
-            y:yArray,
-            type: "scatter"
-        }];
+        // Define Data
+        const data = [
+            {x: xValues, y: yValues, type:"scatter"}
+        ];
 
         let layout = {
-            xAxis: {range: [40, 160], title: "Square Meters"},
-            yAxis: {range: [5, 16], title: "Price In Millions"},
+            xAxis: {range: [50, 150], title: "Square Meters"},
+            yAxis: {range: [0, 15], title: "Price In Millions"},
             title: "House Prices vs. Size"
         }
 

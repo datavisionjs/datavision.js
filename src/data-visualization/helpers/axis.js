@@ -77,8 +77,6 @@ function drawYAxis(ctx, layout, position){
 
     let axis = layout.yAxis;
 
-    console.log("working");
-
     if(axis){
         if(axis.range){
             const maxDist = 10;
@@ -158,8 +156,6 @@ function drawXAxis(ctx, layout, position){
             let pixelStep = (graphWidth/dist);
 
             let label = rangeStart;
-
-            console.log("xAxis: ", label, "  ", rangeStart);
 
             let fontSize = 13;
 

@@ -80,8 +80,6 @@ export function axisRange(range, maxDist){
     
     end = (start+(dist*step));
 
-    console.log("range: ", end, "  ", dist, "  ", step);
-
     return [start, end];
 }
 
