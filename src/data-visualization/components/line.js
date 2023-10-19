@@ -1,6 +1,11 @@
+import DrawElements from "../elements";
 
-const Line = (ctx, data, layout) => {
+const Line = (ctx, dataSet) => {
 
+    if(dataSet){
+
+        DrawElements(ctx, "lines", dataSet);
+    }
 }
 
 export default Line;

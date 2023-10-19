@@ -20,23 +20,29 @@ const DrawElements = (ctx, type, dataSet) => {
             const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
             
             if(y){ //proceed if y is valid
-    
-                const position = Calc.dataPosition(ctx, {x: x, y: y}, layout);
-    
-                if(position){
 
-                    if(type === "arcs"){
+                const position = {x: x, y: y};
 
-                    }else if(type === "bars"){
-            
-                    }else if(type === "lines"){
-                        console.log(type);
-                        DrawLines(ctx, positionType, size, position.x, position.y);
-                    }else if(type === "points"){
+                if(type === "arcs"){
 
-                        DrawPoints(ctx, size, position.x, position.y);
-                    }
+                }else if(type === "bars"){
+        
+                }else if(type === "lines"){
+
+                    DrawLines(ctx, positionType, size, position);
+
+                }else if(type === "points"){
+
+                    DrawPoints(ctx, size, position);
                 }
+
+            }else {
+                
+                //draw what lines drawn
+                ctx.stroke();
+
+                //close whatever path drawn
+                ctx.closePath();
             }
         }
 

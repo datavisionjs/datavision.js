@@ -1,5 +1,17 @@
 //Contains mathematical functions for data transformations, calculations, and scaling.
 
+
+//finds a point on a straight line between two known points.
+export function linearInterpolation(x, x1, y1, x2, y2) {
+    if (x1 === x2) {
+        return y1; // Avoid division by zero
+    }
+
+    // Calculate the intermediate point (x, y)
+    const y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+    return y;
+}
+
 export function graphPosition(canvasWidth, canvasHeight){
 
     //define the graph dimensions
@@ -36,6 +48,37 @@ export function axisDist(range, maxDist){
     return dist;
 }
 
+export function findRanges(){
+    //find x axis range 
+    let xRange = null;
+    let yRange = null;
+
+    //get range from layout
+    if(layout){
+
+        const xMaxDist = 7;
+        const xAxis = layout.xAxis;
+        if(xAxis){
+            if(xAxis.range){
+                xRange = rangeOnAxis(xAxis.range, xMaxDist);
+            }
+        }
+
+        const yMaxDist = 10;
+        const yAxis = layout.yAxis;
+        if(yAxis){
+            if(yAxis.range){
+                yRange = rangeOnAxis(yAxis.range, yMaxDist);
+            }
+        }
+    }
+
+    return {
+        xRange: xRange,
+        yRange: yRange
+    }
+}
+
 //calculates axis steps on canvas
 export function rangeStep(range, maxDist){
     const roundedNumbers = [1, 2, 5, 10, 20, 50, 100];
@@ -58,7 +101,8 @@ export function rangeStep(range, maxDist){
     return step;
 }
 
-export function axisRange(range, maxDist){
+//generate range that'll be shown on axis
+export function rangeOnAxis(range, maxDist){
     let start = range[0];
     let end = range[1];
 
@@ -83,8 +127,9 @@ export function axisRange(range, maxDist){
     return [start, end];
 }
 
-//calculates data position on canvas
-export function dataPosition(ctx, position, layout){
+
+//calculates data position on graph
+export function posOnGraph(ctx, position){
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
@@ -97,13 +142,13 @@ export function dataPosition(ctx, position, layout){
 
     if(xAxis && yAxis){
 
-        const xRange = axisRange(xAxis.range, 7);
+        const xRange = rangeOnAxis(xAxis.range, 7);
         const xRangeStart = xRange[0];
         const xRangeEnd = xRange[1];
 
         const xRangeDiff = (xRangeEnd-xRangeStart);
 
-        const yRange = axisRange(yAxis.range, 10);
+        const yRange = rangeOnAxis(yAxis.range, 10);
         const yRangeStart = yRange[0];
         const yRangeEnd = yRange[1];
 

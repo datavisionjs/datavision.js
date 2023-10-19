@@ -1,15 +1,20 @@
+import * as Calc from '../helpers/math.js'
 
-const DrawPoints = (ctx, size, x, y) => {
 
-    ctx.beginPath();
+const DrawPoints = (ctx, size, position) => {
 
-    //add style 
-    ctx.fillStyle = "blue";
+    const pos = Calc.posOnGraph(ctx, position);
 
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.closePath();
-       
+    if(pos){
+        ctx.beginPath();
+
+        //add style 
+        ctx.fillStyle = "blue";
+
+        ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    } 
 }
 
 export default DrawPoints

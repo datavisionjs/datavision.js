@@ -4,16 +4,21 @@ import Bar from './bar.js'
 import Line from './line.js'
 import Pie from './pie.js'
 
-const Chart = (ctx, data, layout) => {
+const Chart = (ctx) => {
 
     for(let i  = 0; i < data.length; i++){
 
-        const set = data[i];
-        const type = set.type;
+        const dataSet = data[i];
+        const type = dataSet.type;
 
         if(type){
-            if(type === "scatter"){
-                Scatter(ctx, set, layout);
+
+            if(type === "line"){
+
+                Line(ctx, dataSet, layout);
+            }if(type === "scatter"){
+
+                Scatter(ctx, dataSet, layout);
             }
         }
 

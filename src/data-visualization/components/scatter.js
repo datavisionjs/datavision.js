@@ -1,6 +1,6 @@
 import DrawElements from "../elements";
 
-const Scatter = (ctx, dataSet, layout) => {
+const Scatter = (ctx, dataSet) => {
     
     if(dataSet){
 

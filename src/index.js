@@ -31,9 +31,9 @@ DataVision.prototype.plot = function (data, layout){
 
     const ctx = canvas.getContext("2d");
 
-    dataVis.DrawAxis(ctx, layout);
+    dataVis.DrawAxis(ctx);
 
-    dataVis.Chart(ctx, data, layout);
+    dataVis.Chart(ctx);
 
     this.addCanvasToTarget();
 }
