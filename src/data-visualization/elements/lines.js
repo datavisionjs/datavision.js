@@ -1,8 +1,11 @@
 import * as Calc from '../helpers/math.js'
 
 //keep track of position out of graph bounds
-let outOfGraphBounds = null;
+let lastOutOfGraphBoundPos = null;
 let isOutOfGraphBounds = false;
+let isLeftBoundDone = false;
+
+let lastGraphBoundPos = null; //stores position on graph
 
 const DrawLines = (ctx, type, size, position) => {
 
@@ -19,8 +22,8 @@ const DrawLines = (ctx, type, size, position) => {
         //draw lines from left bound
         if(isOutOfGraphBounds){
 
-            const x1 = outOfGraphBounds.x;
-            const y1 = outOfGraphBounds.y;
+            const x1 = lastOutOfGraphBoundPos.x;
+            const y1 = lastOutOfGraphBoundPos.y;
 
             const x2 = position.x;
             const y2 = position.y;
@@ -40,13 +43,40 @@ const DrawLines = (ctx, type, size, position) => {
     
             ctx.lineTo(pos.x, pos.y);
 
+            isLeftBoundDone = true;
         }
 
+        //set position on graph 
+        lastGraphBoundPos = position;
+        //
         isOutOfGraphBounds = false;
     }else {
-
-        outOfGraphBounds = position;
+        lastOutOfGraphBoundPos = position;
         isOutOfGraphBounds = true;
+
+        //draw lines from right bound
+        if(isLeftBoundDone){
+            const x1 = lastGraphBoundPos.x;
+            const y1 = lastGraphBoundPos.y;
+
+            const x2 = position.x;
+            const y2 = position.y;
+
+            const rightBoundY = Calc.linearInterpolation(xRangeEnd, x1, y1, x2, y2);
+
+            const rightBoundPos = {x: xRangeEnd, y: rightBoundY};
+
+            const newPos = Calc.posOnGraph(ctx, rightBoundPos);
+
+            //add style 
+            ctx.strokeStyle = "blue";
+            ctx.lineWidth = size;
+    
+            ctx.lineTo(newPos.x, newPos.y);
+
+            //reset left bound done
+            isLeftBoundDone = false;
+        }
     }
 
 
@@ -57,6 +87,7 @@ const DrawLines = (ctx, type, size, position) => {
             ctx.moveTo(pos.x, pos.y);
         }else {
 
+            console.log("wowo");
             //add style 
             ctx.strokeStyle = "blue";
             ctx.lineWidth = size;
@@ -69,8 +100,9 @@ const DrawLines = (ctx, type, size, position) => {
     if(type === "end"){
 
         //reset out of graph bounds variables
-        outOfGraphBounds = null;
+        lastOutOfGraphBoundPos = null;
         isOutOfGraphBounds = true;
+        isLeftBoundDone = false;
 
         ctx.stroke();
         ctx.closePath();
