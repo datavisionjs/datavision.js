@@ -108,7 +108,7 @@ function drawYAxis(ctx, position, range){
             ctx.lineTo((graphX), (axisY));
             ctx.stroke();
             
-
+            console.log("label: ", label);
             //add xAxis range labels
             ctx.beginPath();
             ctx.fillText(label, textPosX, textPosY);

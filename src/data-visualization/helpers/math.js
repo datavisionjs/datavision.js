@@ -12,6 +12,22 @@ export function linearInterpolation(x, x1, y1, x2, y2) {
     return y;
 }
 
+//find minimum numbers 
+function findMinAndMax(arr) {
+    // Use filter to remove non-numeric elements
+    const numericArray = arr.filter(element => typeof element === 'number' && !isNaN(element));
+  
+    if (numericArray.length === 0) {
+      // Handle the case where there are no valid numbers in the array
+      return undefined; // or any other value that makes sense in your context
+    }
+  
+    return {
+        min: Math.min(...numericArray),
+        max: Math.max(...numericArray)
+    }
+}
+
 export function graphPosition(canvasWidth, canvasHeight){
 
     //define the graph dimensions
@@ -76,11 +92,51 @@ export function findRanges(){
     //get range from data 
     if(data){
 
-        if(!xRange){
-            let xRangeStart, xRangeEnd;
-
+        if(!xRange || !yRange){
             
+            let tempXRange = xRange;
+            let tempYRange = yRange;
 
+            //loop through data and set xRange and yRange
+            for(let i = 0; i < data.length; i++){
+                const dataset = data[i];
+                const x = dataset.x;
+                const y = dataset.y;
+
+                
+                if(!xRange){
+
+                    const xMinAndMax = findMinAndMax(x);
+                    if(xMinAndMax){
+                        if(tempXRange){
+                            tempXRange = [Math.min(tempXRange[0],xMinAndMax.min), Math.max(tempXRange[1], xMinAndMax.max)];
+                        }else {
+                            tempXRange = [xMinAndMax.min, xMinAndMax.max];
+                        }
+                    }
+                }
+
+                if(!yRange){
+
+                    const yMinAndMax = findMinAndMax(y);
+                    if(yMinAndMax){
+                        if(tempYRange){
+                            tempYRange = [Math.min(tempYRange[0],yMinAndMax.min), Math.max(tempYRange[1], yMinAndMax.max)];
+                        }else {
+                            tempYRange = [yMinAndMax.min, yMinAndMax.max];
+                        }
+                    }
+                }
+
+            }
+
+            //round up the ranges
+            if(tempXRange){
+                xRange = [Math.round(tempXRange[0]), Math.round(tempXRange[1])];
+            }
+            if(tempYRange){
+                yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
+            }
         }
     }
 
@@ -136,8 +192,6 @@ export function rangeOnAxis(range, maxDist){
     //calculate end
     const step = rangeStep(range, maxDist);
     const dist = axisDist(range, maxDist);
-
-    console.log("step: ", step, maxDist);
     
     end = (start+(dist*step));
 
@@ -159,13 +213,15 @@ export function posOnGraph(ctx, position){
 
     if(xAxis && yAxis){
 
-        const xRange = rangeOnAxis(xAxis.range, 7);
+        const ranges = findRanges();
+
+        const xRange = rangeOnAxis(ranges.xRange, 7);
         const xRangeStart = xRange[0];
         const xRangeEnd = xRange[1];
 
         const xRangeDiff = (xRangeEnd-xRangeStart);
 
-        const yRange = rangeOnAxis(yAxis.range, 10);
+        const yRange = rangeOnAxis(ranges.yRange, 10);
         const yRangeStart = yRange[0];
         const yRangeEnd = yRange[1];
 
@@ -183,10 +239,6 @@ export function posOnGraph(ctx, position){
             return {x: x, y: y};
         }
 
-        console.log("xRange: ", xRangeStart, xRangeEnd);
-        console.log("yRange: ", yRangeStart, yRangeEnd);
-        
-        console.log("Position: ", position.x, position.y);
     }
 
     return null;

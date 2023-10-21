@@ -92,7 +92,6 @@ const DrawLines = (ctx, type, size, position) => {
             ctx.moveTo(pos.x, pos.y);
         }else {
 
-            console.log("wowo");
             //add style 
             ctx.strokeStyle = "blue";
             ctx.lineWidth = size;
