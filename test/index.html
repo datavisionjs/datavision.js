@@ -13,18 +13,25 @@
 
     <script>
 
-        const xValues = [40, 55, 60, 70,80,90,100,110,120,130,140,190];
-        const yValues = [10, 7,8,8,9,9,9,10,11,14,14,8];
+        let exp = "Math.cos(x)";
+
+        const xValues = [];
+        const yValues = [];
+
+        for (let x = 0; x <= 10; x += 0.2) {
+            xValues.push(x);
+            yValues.push(eval(exp));
+        }
 
         // Define Data
         const data = [
-            {x: xValues, y: yValues, type:"line"}
+            {x: xValues, y: yValues, type:"scatter"}
         ];
 
         let layout = {
-            xAxis: {range: [50, 150], title: "Square Meters"},
-            yAxis: {range: [0, 15], title: "Price In Millions"},
-            title: "House Prices vs. Size"
+            xAxis: {range: [0, 10], title: "Square Meters"},
+            yAxis: {range: [-8, 1], title: "Price In Millions"},
+            title: "y = " + exp
         }
 
         const chart = new DataVision("my-chart");

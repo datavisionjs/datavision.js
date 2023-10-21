@@ -16,12 +16,13 @@ const DrawLines = (ctx, type, size, position) => {
 
     const pos = Calc.posOnGraph(ctx, position);
 
+
+
     //draw lines coming out of graph bounds
     if(pos){
 
         //draw lines from left bound
         if(isOutOfGraphBounds){
-
             const x1 = lastOutOfGraphBoundPos.x;
             const y1 = lastOutOfGraphBoundPos.y;
 
@@ -34,14 +35,16 @@ const DrawLines = (ctx, type, size, position) => {
 
             const newPos = Calc.posOnGraph(ctx, leftBoundPos);
 
-            ctx.beginPath();
-            ctx.moveTo(newPos.x, newPos.y);
-    
-            //add style 
-            ctx.strokeStyle = "blue";
-            ctx.lineWidth = size;
-    
-            ctx.lineTo(pos.x, pos.y);
+            if(newPos){
+                ctx.beginPath();
+                ctx.moveTo(newPos.x, newPos.y);
+        
+                //add style 
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = size;
+        
+                ctx.lineTo(pos.x, pos.y);
+            }
 
             isLeftBoundDone = true;
         }
@@ -68,11 +71,13 @@ const DrawLines = (ctx, type, size, position) => {
 
             const newPos = Calc.posOnGraph(ctx, rightBoundPos);
 
-            //add style 
-            ctx.strokeStyle = "blue";
-            ctx.lineWidth = size;
-    
-            ctx.lineTo(newPos.x, newPos.y);
+            if(newPos){
+                //add style 
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = size;
+        
+                ctx.lineTo(newPos.x, newPos.y);
+            }
 
             //reset left bound done
             isLeftBoundDone = false;

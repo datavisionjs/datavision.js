@@ -73,6 +73,17 @@ export function findRanges(){
         }
     }
 
+    //get range from data 
+    if(data){
+
+        if(!xRange){
+            let xRangeStart, xRangeEnd;
+
+            
+
+        }
+    }
+
     return {
         xRange: xRange,
         yRange: yRange
@@ -114,13 +125,19 @@ export function rangeOnAxis(range, maxDist){
         start = Math.floor(start / 5) * 5;
     }else if(start >= 2){
         start = Math.floor(start / 2) * 2;
-    }else {
+    }else if(start >= 0) {
         start = 0;
+    }else if(start > 10){
+        start = Math.floor(start);
+    }else if(start <= -10){
+        start = Math.floor(start / 10) * 10;
     }
 
     //calculate end
     const step = rangeStep(range, maxDist);
     const dist = axisDist(range, maxDist);
+
+    console.log("step: ", step, maxDist);
     
     end = (start+(dist*step));
 
@@ -165,6 +182,11 @@ export function posOnGraph(ctx, position){
 
             return {x: x, y: y};
         }
+
+        console.log("xRange: ", xRangeStart, xRangeEnd);
+        console.log("yRange: ", yRangeStart, yRangeEnd);
+        
+        console.log("Position: ", position.x, position.y);
     }
 
     return null;
