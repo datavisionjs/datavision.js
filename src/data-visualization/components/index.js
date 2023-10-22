@@ -8,17 +8,28 @@ const Chart = (ctx) => {
 
     for(let i  = 0; i < data.length; i++){
 
-        const dataSet = data[i];
-        const type = dataSet.type;
+        const dataset = data[i];
+        const type = dataset.type;
+
+        const defaultColor = "#5570a3";
+
+        //dataset properties
+        const strokeColor = dataset.strokeColor? dataset.strokeColor: defaultColor;
+        const fillColor = dataset.fillColor? dataset.fillColor: defaultColor;
+
+        //universal styles
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = strokeColor;
+        ctx.fillStyle = fillColor;
 
         if(type){
 
             if(type === "line"){
 
-                Line(ctx, dataSet, layout);
+                Line(ctx, dataset, layout);
             }if(type === "scatter"){
-
-                Scatter(ctx, dataSet, layout);
+                
+                Scatter(ctx, dataset, layout);
             }
         }
 

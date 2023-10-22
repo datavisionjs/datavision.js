@@ -8,9 +8,6 @@ const DrawPoints = (ctx, size, position) => {
     if(pos){
         ctx.beginPath();
 
-        //add style 
-        ctx.fillStyle = "blue";
-
         ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
