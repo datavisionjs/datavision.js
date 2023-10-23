@@ -15,7 +15,7 @@ const Chart = (ctx) => {
 
         //dataset properties
         const strokeColor = dataset.strokeColor? dataset.strokeColor: defaultColor;
-        const fillColor = dataset.fillColor? dataset.fillColor: defaultColor;
+        const fillColor = dataset.fillColor? dataset.fillColor: strokeColor;
 
         //universal styles
         ctx.lineJoin = "round";

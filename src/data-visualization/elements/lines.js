@@ -54,8 +54,9 @@ const DrawLines = (ctx, type, size, position) => {
         lastOutOfGraphBoundPos = position;
         isOutOfGraphBounds = true;
 
+        console.log("Yep");
         //draw lines from right bound
-        if(isLeftBoundDone){
+        if(isLeftBoundDone || lastGraphBoundPos){
             const x1 = lastGraphBoundPos.x;
             const y1 = lastGraphBoundPos.y;
 
@@ -69,6 +70,7 @@ const DrawLines = (ctx, type, size, position) => {
             const newPos = Calc.posOnGraph(ctx, rightBoundPos);
 
             if(newPos){
+                console.log("wowowowo");
                 ctx.lineTo(newPos.x, newPos.y);
             }
 
@@ -78,15 +80,39 @@ const DrawLines = (ctx, type, size, position) => {
     }
 
 
-    //draw lines within graph bounds
+    //draw lines and arc within graph bounds
     if(pos){
+
         if(type === "start"){
+
+            //draw circle at the points
             ctx.beginPath();
+            ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+
+            ctx.beginPath();
+            console.log("begin Path");
             ctx.moveTo(pos.x, pos.y);
+
         }else {
 
             ctx.lineTo(pos.x, pos.y);
+
+            ctx.stroke();
+            ctx.closePath();
+
+            //draw circle at the points
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+
         }
+
     }
 
     
