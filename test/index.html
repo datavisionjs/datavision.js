@@ -13,36 +13,33 @@
 
     <script>
 
-        const xValues = [100,200,300,400,500,600,700,800,900,1000];
+        const xValues = [];
+        const yValues = [];
+        generateData("x * 2 + 7", 0, 10, 0.5);
 
         const data = [
             {
                 x: xValues,
-                y: [860,1140,1060,1060,1070,1110,1330,2210,7830,2478],
+                y: yValues,
                 type: "line",
-                strokeColor: "red"
-            },{
-                x: xValues,
-                y: [1600,1700,1700,1900,2000,2700,4000,5000,6000,7000],
-                type: "line",
-                strokeColor: "green"
-
-            },{
-                x: xValues,
-                y: [300,700,2000,5000,6000,4000,2000,1000,200,100],
-                type: "line",
-                strokeColor: "blue"
+                strokeColor: "blue",
             }
+             
         ];
 
         let layout = {
-            xAxis: {range: [100, 1000], title: ""},
-            yAxis: {title: ""},
-            title: ""
+            title: "y = sin(x)"
         }
 
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
+
+        function generateData(value, i1, i2, step = 1) {
+            for (let x = i1; x <= i2; x += step) {
+                yValues.push(eval(value));
+                xValues.push(x);
+            }
+        }
     </script>
 </body>
 </html>

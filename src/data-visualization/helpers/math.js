@@ -190,8 +190,8 @@ export function rangeOnAxis(range, maxDist){
     }
 
     //calculate end
-    const step = rangeStep(range, maxDist);
-    const dist = axisDist(range, maxDist);
+    const step = rangeStep([start, end], maxDist);
+    const dist = axisDist([start, end], maxDist);
     
     end = (start+(dist*step));
 
@@ -208,37 +208,30 @@ export function posOnGraph(ctx, position){
     //stores the position and dimensions of the graph area
     const chartPosition = graphPosition(canvasWidth, canvasHeight);
 
-    const xAxis = layout.xAxis;
-    const yAxis = layout.yAxis;
+    const ranges = findRanges();
 
-    if(xAxis && yAxis){
+    const xRange = rangeOnAxis(ranges.xRange, 7);
+    const xRangeStart = xRange[0];
+    const xRangeEnd = xRange[1];
 
-        const ranges = findRanges();
+    const xRangeDiff = (xRangeEnd-xRangeStart);
 
-        const xRange = rangeOnAxis(ranges.xRange, 7);
-        const xRangeStart = xRange[0];
-        const xRangeEnd = xRange[1];
+    const yRange = rangeOnAxis(ranges.yRange, 10);
+    const yRangeStart = yRange[0];
+    const yRangeEnd = yRange[1];
 
-        const xRangeDiff = (xRangeEnd-xRangeStart);
+    const yRangeDiff = (yRangeEnd-yRangeStart);
 
-        const yRange = rangeOnAxis(ranges.yRange, 10);
-        const yRangeStart = yRange[0];
-        const yRangeEnd = yRange[1];
-
-        const yRangeDiff = (yRangeEnd-yRangeStart);
-
-        //check if position is within range
-        if((position.x >= xRangeStart && position.x <= xRangeEnd) && (position.y >= yRangeStart && position.y <= yRangeEnd)){
-            
-            const xPerc = ((position.x - xRangeStart)/xRangeDiff);
-            const yPerc = ((position.y - yRangeStart)/yRangeDiff);
-            
-            const x = (chartPosition.x+(xPerc*chartPosition.width));
-            const y = ((chartPosition.y+chartPosition.height)-(yPerc*chartPosition.height));
-
-            return {x: x, y: y};
-        }
-
+    //check if position is within range
+    if((position.x >= xRangeStart && position.x <= xRangeEnd) && (position.y >= yRangeStart && position.y <= yRangeEnd)){
+        
+        const xPerc = ((position.x - xRangeStart)/xRangeDiff);
+        const yPerc = ((position.y - yRangeStart)/yRangeDiff);
+        
+        const x = (chartPosition.x+(xPerc*chartPosition.width));
+        const y = ((chartPosition.y+chartPosition.height)-(yPerc*chartPosition.height));
+        
+        return {x: x, y: y};
     }
 
     return null;

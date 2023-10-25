@@ -54,7 +54,6 @@ const DrawLines = (ctx, type, size, position) => {
         lastOutOfGraphBoundPos = position;
         isOutOfGraphBounds = true;
 
-        console.log("Yep");
         //draw lines from right bound
         if(isLeftBoundDone || lastGraphBoundPos){
             const x1 = lastGraphBoundPos.x;
@@ -70,7 +69,6 @@ const DrawLines = (ctx, type, size, position) => {
             const newPos = Calc.posOnGraph(ctx, rightBoundPos);
 
             if(newPos){
-                console.log("wowowowo");
                 ctx.lineTo(newPos.x, newPos.y);
             }
 
@@ -92,7 +90,6 @@ const DrawLines = (ctx, type, size, position) => {
             ctx.closePath();
 
             ctx.beginPath();
-            console.log("begin Path");
             ctx.moveTo(pos.x, pos.y);
 
         }else {

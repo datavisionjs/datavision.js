@@ -19,7 +19,7 @@ const DrawElements = (ctx, type, dataSet) => {
             
             const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
             
-            if(y){ //proceed if y is valid
+            if(y || y === 0){ //proceed if y is valid
 
                 const position = {x: x, y: y};
 

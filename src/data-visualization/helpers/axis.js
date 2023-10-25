@@ -4,6 +4,9 @@ import * as Calc from './math.js'
 
 function drawLabels(ctx, position){
 
+    const canvas = ctx.canvas;
+    const canvasHeight = canvas.height;
+
     const graphWidth = position.width;
     const graphHeight = position.height;
 
@@ -31,36 +34,43 @@ function drawLabels(ctx, position){
     const fontSize = 18;
 
     if(yAxis){
+
         let title = yAxis.title;
-        ctx.beginPath();
 
-        let angleInRadians = (-90 * (Math.PI/180))
+        if(title){
+            ctx.beginPath();
 
-        ctx.font = fontSize+'px Arial';
+            let angleInRadians = (-90 * (Math.PI/180))
 
-        //save the current canvas state
-        ctx.save();
+            ctx.font = fontSize+'px Arial';
 
-        // Translate the canvas context to the desired position
-        ctx.translate((graphX-(fontSize*2)), (graphY+(graphHeight/2)));
+            //save the current canvas state
+            ctx.save();
 
-        // Rotate the canvas context by the specified angle
-        ctx.rotate(angleInRadians);
+            // Translate the canvas context to the desired position
+            ctx.translate(fontSize, (graphY+(graphHeight/2)));
 
-        // Draw the rotated text
-        ctx.fillText(title, 0, 0); // (0, 0) is the position relative to the translated and rotated context
+            // Rotate the canvas context by the specified angle
+            ctx.rotate(angleInRadians);
 
-        ctx.restore();
+            // Draw the rotated text
+            ctx.fillText(title, 0, 0); // (0, 0) is the position relative to the translated and rotated context
+
+            ctx.restore();
+        }
     }
 
     if(xAxis){
+
         let title = xAxis.title;
 
-        ctx.beginPath();
+        if(title){
+            ctx.beginPath();
 
-        ctx.font = fontSize+"px Arial";
+            ctx.font = fontSize+"px Arial";
 
-        ctx.fillText(title, ((graphX+(graphWidth/2))), ((graphY+graphHeight)+(fontSize*3)));
+            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-fontSize));
+        }
     }
 }
 
@@ -77,6 +87,8 @@ function drawYAxis(ctx, position, range){
 
     if(range){
         const maxDist = 10;
+
+        range = Calc.rangeOnAxis(range, maxDist);
 
         const rangeStart = range[0];
 
@@ -108,7 +120,6 @@ function drawYAxis(ctx, position, range){
             ctx.lineTo((graphX), (axisY));
             ctx.stroke();
             
-            console.log("label: ", label);
             //add xAxis range labels
             ctx.beginPath();
             ctx.fillText(label, textPosX, textPosY);
@@ -136,6 +147,8 @@ function drawXAxis(ctx, position, range){
     if(range){
 
         const maxDist = 7;
+
+        range = Calc.rangeOnAxis(range, maxDist);
 
         const rangeStart = range[0];
 
@@ -197,8 +210,9 @@ const DrawAxis = (ctx) => {
 
     //Draw Y-axis, X-axis around the graph area
     const ranges = Calc.findRanges();
-    drawYAxis(ctx, graphPosition, ranges.yRange);
+
     drawXAxis(ctx, graphPosition, ranges.xRange);
+    drawYAxis(ctx, graphPosition, ranges.yRange);
 
     //labels around the graph area
     drawLabels(ctx, graphPosition);
