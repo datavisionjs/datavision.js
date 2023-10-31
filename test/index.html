@@ -13,33 +13,26 @@
 
     <script>
 
-        const xValues = [];
-        const yValues = [];
-        generateData("x * 2 + 7", 0, 10, 0.5);
+        const xValues = ["Home Page", "Product Page", "About Us", "Contact Us", "Blog"];
+        const yValues = [8, 12, 5, 18, 10];
 
         const data = [
             {
                 x: xValues,
                 y: yValues,
-                type: "line",
-                strokeColor: "blue",
-            }
+                type: "bar"
+            },
              
         ];
 
         let layout = {
-            title: "y = sin(x)"
+            yAxis: {range: [0, 20]},
+            title: "Website Traffic (Page Views)"
         }
 
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 
-        function generateData(value, i1, i2, step = 1) {
-            for (let x = i1; x <= i2; x += step) {
-                yValues.push(eval(value));
-                xValues.push(x);
-            }
-        }
     </script>
 </body>
 </html>

@@ -64,7 +64,8 @@ export function axisDist(range, maxDist){
     return dist;
 }
 
-export function findRanges(){
+//set ranges to layout
+export function setRanges(){
     //find x axis range 
     let xRange = null;
     let yRange = null;
@@ -74,6 +75,7 @@ export function findRanges(){
 
         const xMaxDist = 7;
         const xAxis = layout.xAxis;
+
         if(xAxis){
             if(xAxis.range){
                 xRange = rangeOnAxis(xAxis.range, xMaxDist);
@@ -103,7 +105,6 @@ export function findRanges(){
                 const x = dataset.x;
                 const y = dataset.y;
 
-                
                 if(!xRange){
 
                     const xMinAndMax = findMinAndMax(x);
@@ -138,12 +139,98 @@ export function findRanges(){
                 yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
             }
         }
+
+    }
+    //set ranges to layout
+    layout.ranges = {
+        xRange: xRange,
+        yRange: yRange,
+    };
+}
+
+
+export function setBarRanges(){
+    //find y axis range 
+    let yRange = null;
+
+    //stores the number of bars for each category
+    let categoryBarMax = 1;
+
+    let barCategories = new Map();
+
+    //get range from layout
+    if(layout){
+
+        const yMaxDist = 10;
+        const yAxis = layout.yAxis;
+        if(yAxis){
+            if(yAxis.range){
+                yRange = rangeOnAxis(yAxis.range, yMaxDist);
+            }
+        }
     }
 
-    return {
-        xRange: xRange,
-        yRange: yRange
+    //get range from data 
+    if(data){
+
+        //get the data type of the dataset
+        //const firstDataType = data[0]? data[0].type: null;
+        let tempYRange = yRange;
+
+        //loop through data and set xRange and yRange
+        for(let i = 0; i < data.length; i++){
+            const dataset = data[i];
+            const x = dataset.x;
+            const y = dataset.y;
+
+            for(var j = 0; j < x.length; j++){
+                const xValue = x[j];
+                const yValue = y[j];
+
+                let categoryValues = null;
+
+                if(barCategories.has(xValue)){
+                    categoryValues = [...barCategories.get(xValue), yValue];
+                }else {
+                    categoryValues = [yValue];
+                }
+
+                if(categoryValues){
+                    categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
+                }
+
+                barCategories.set(xValue, categoryValues);
+
+            }
+
+            
+            if(!yRange){
+
+                const yMinAndMax = findMinAndMax(y);
+                if(yMinAndMax){
+                    if(tempYRange){
+                        tempYRange = [Math.min(tempYRange[0],yMinAndMax.min), Math.max(tempYRange[1], yMinAndMax.max)];
+                    }else {
+                        tempYRange = [yMinAndMax.min, yMinAndMax.max];
+                    }
+                }
+            }
+
+        }
+
+        //round up the ranges
+        if(tempYRange){
+            yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
+        }
+
     }
+
+    //set ranges to layout
+    layout.ranges = {
+        yRange: yRange,
+        barCategories: barCategories,
+        categoryBarMax: categoryBarMax
+    };
 }
 
 //calculates axis steps on canvas
@@ -208,7 +295,7 @@ export function posOnGraph(ctx, position){
     //stores the position and dimensions of the graph area
     const chartPosition = graphPosition(canvasWidth, canvasHeight);
 
-    const ranges = findRanges();
+    const ranges = layout.ranges;
 
     const xRange = rangeOnAxis(ranges.xRange, 7);
     const xRangeStart = xRange[0];
@@ -236,4 +323,32 @@ export function posOnGraph(ctx, position){
 
     return null;
     
+}
+
+export function posOnGraphYAxis(ctx, y){
+    const canvas = ctx.canvas;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    //stores the position and dimensions of the graph area
+    const chartPosition = graphPosition(canvasWidth, canvasHeight);
+
+    const ranges = layout.ranges;
+
+    const yRange = rangeOnAxis(ranges.yRange, 10);
+    const yRangeStart = yRange[0];
+    const yRangeEnd = yRange[1];
+
+    const yRangeDiff = (yRangeEnd-yRangeStart);
+
+    //check if position is within range
+    if((y >= yRangeStart && y <= yRangeEnd)){
+
+        const yPerc = ((y - yRangeStart)/yRangeDiff);
+        const newY = ((chartPosition.y+chartPosition.height)-(yPerc*chartPosition.height));
+        
+        return newY;
+    }
+
+    return null;
 }

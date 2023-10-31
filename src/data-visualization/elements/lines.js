@@ -9,7 +9,7 @@ let lastGraphBoundPos = null; //stores position on graph
 
 const DrawLines = (ctx, type, size, position) => {
 
-    const ranges = Calc.findRanges();
+    const ranges = layout.ranges;
     const xRange = ranges.xRange;
     const xRangeStart = xRange[0];
     const xRangeEnd = xRange[1];

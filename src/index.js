@@ -1,4 +1,5 @@
 import * as dataVis from './data-visualization/index.js'
+import * as Calc from './data-visualization/helpers/math.js';
 
 function DataVision(targetId) {
     //create canvas 
@@ -30,6 +31,21 @@ DataVision.prototype.plot = function (data, layout){
     canvas.height = (700*0.75);
 
     const ctx = canvas.getContext("2d");
+
+    //set font size 
+    const fontSize = 13;
+    layout.fontSize = fontSize;
+    ctx.font = fontSize+"px Arial";
+
+    //get the data type of the dataset
+    const firstDataType = data[0]? data[0].type: null;
+
+    //set ranges to layout
+    if(firstDataType === "bar"){
+        Calc.setBarRanges();
+    }else {
+        Calc.setRanges();
+    }
 
     dataVis.DrawAxis(ctx);
 

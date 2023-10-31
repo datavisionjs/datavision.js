@@ -6,34 +6,45 @@ import Pie from './pie.js'
 
 const Chart = (ctx) => {
 
-    for(let i  = 0; i < data.length; i++){
+    const defaultColor = "#5570a3";
 
-        const dataset = data[i];
-        const type = dataset.type;
+    //get the data type of the dataset
+    const firstDataType = data[0]? data[0].type: null;
 
-        const defaultColor = "#5570a3";
+    if(firstDataType === "bar"){
+        ctx.fillStyle = defaultColor;//implement default color if no color is specified
 
-        //dataset properties
-        const strokeColor = dataset.strokeColor? dataset.strokeColor: defaultColor;
-        const fillColor = dataset.fillColor? dataset.fillColor: strokeColor;
+        Bar(ctx);
+    }else {
 
-        //universal styles
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = strokeColor;
-        ctx.fillStyle = fillColor;
+        for(let i  = 0; i < data.length; i++){
 
-        if(type){
+            const dataset = data[i];
+            const type = dataset.type;
 
-            if(type === "line"){
+            //dataset properties
+            const strokeColor = dataset.strokeColor? dataset.strokeColor: defaultColor;
+            const fillColor = dataset.fillColor? dataset.fillColor: strokeColor;
 
-                Line(ctx, dataset, layout);
-            }if(type === "scatter"){
-                
-                Scatter(ctx, dataset, layout);
+            //universal styles
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = strokeColor;
+            ctx.fillStyle = fillColor;
+
+            if(type){
+
+                if(type === "line"){
+
+                    Line(ctx, dataset);
+                }else if(type === "scatter"){
+                    
+                    Scatter(ctx, dataset);
+                }
             }
-        }
 
+        }
     }
+
 }
 
 export default Chart;

@@ -1,51 +1,66 @@
 import * as Calc from '../helpers/math.js'
 
 //import elements
+import DrawBars from './bars.js';
 import DrawLines from './lines.js';
 import DrawPoints from "./points";
 
 const DrawElements = (ctx, type, dataSet) => {
 
-    if(dataSet){
+    if(type === "bars"){
 
-        const xValues = dataSet.x;
-        const yValues = dataSet.y;
+        let ranges = layout.ranges;
 
-        for(var i = 0; i < xValues.length; i++){
-            const x = xValues[i];
-            const y = yValues[i];
+        const categories = ranges.barCategories;
+        const catKeys = Array.from(categories.keys());
 
-            const size = 4;
-            
-            const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
-            
-            if(y || y === 0){ //proceed if y is valid
+        for(var i = 0; i < catKeys.length; i++){
+            const category = catKeys[i];
+            const yValues = categories.get(category);
 
-                const position = {x: x, y: y};
-
-                if(type === "arcs"){
-
-                }else if(type === "bars"){
-        
-                }else if(type === "lines"){
-
-                    DrawLines(ctx, positionType, size, position);
-
-                }else if(type === "points"){
-
-                    DrawPoints(ctx, size, position);
-                }
-
-            }else {
-                
-                //draw what lines drawn
-                ctx.stroke();
-
-                //close whatever path drawn
-                ctx.closePath();
-            }
+            DrawBars(ctx, yValues, category);
         }
+    }else {
 
+        if(dataSet){
+
+            const xValues = dataSet.x;
+            const yValues = dataSet.y;
+
+            for(var i = 0; i < xValues.length; i++){
+                const x = xValues[i];
+                const y = yValues[i];
+
+                const size = 4;
+                
+                const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
+                
+                if(y || y === 0){ //proceed if y is valid
+
+                    const position = {x: x, y: y};
+
+                    if(type === "arcs"){
+
+                    }else if(type === "lines"){
+
+                        DrawLines(ctx, positionType, size, position);
+
+                    }else if(type === "points"){
+
+                        DrawPoints(ctx, size, position);
+                    }
+
+                }else {
+                    
+                    //draw what lines drawn
+                    ctx.stroke();
+
+                    //close whatever path drawn
+                    ctx.closePath();
+                }
+            }
+
+        }
     }
 }
 
