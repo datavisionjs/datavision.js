@@ -15,10 +15,10 @@ const DrawElements = (ctx, type, dataSet) => {
         const catKeys = Array.from(categories.keys());
 
         for(var i = 0; i < catKeys.length; i++){
-            const category = catKeys[i];
-            const yValues = categories.get(category);
+            const catKey = catKeys[i];
+            const category = categories.get(catKey);
 
-            DrawBars(ctx, yValues, category);
+            DrawBars(ctx, category, catKey);
         }
     }else {
 

@@ -14,19 +14,25 @@
     <script>
 
         const xValues = ["Home Page", "Product Page", "About Us", "Contact Us", "Blog"];
-        const yValues = [8, 12, 5, 18, 10];
+        const yValues = [8, 12, 5, 18, -7];
+        const barColors = ["red", "green", "blue", "pink"]
 
         const data = [
             {
                 x: xValues,
                 y: yValues,
-                type: "bar"
+                type: "bar",
+                barColors: barColors
+            },{
+                x: ["Home Page"],
+                y: [-5],
+                type: "bar",
             },
              
         ];
 
         let layout = {
-            yAxis: {range: [0, 20]},
+            yAxis: {range: [-10, 20]},
             title: "Website Traffic (Page Views)"
         }
 

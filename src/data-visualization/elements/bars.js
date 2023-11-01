@@ -2,8 +2,13 @@ import * as Calc from '../helpers/math.js'
 
 //draw the bars
 
-const DrawBars = (ctx, yValues, category) => {
-    if(yValues){
+const DrawBars = (ctx, category, catKey) => {
+    if(category){
+
+        const defaultColor = layout.defaultColor;
+        
+        const yValues = category.yValues;
+        const barColors = category.barColors;
 
         const canvas = ctx.canvas;
         const canvasWidth = canvas.width;
@@ -23,7 +28,7 @@ const DrawBars = (ctx, yValues, category) => {
         const categories = ranges.barCategories;
         const catKeys = Array.from(categories.keys());
 
-        const catPos = catKeys.indexOf(category);
+        const catPos = catKeys.indexOf(catKey);
         const step = (graphWidth/catKeys.length);
         const barWidth = (step/(maxBarPerCategory+1));
 
@@ -35,6 +40,8 @@ const DrawBars = (ctx, yValues, category) => {
 
         for(var i = 0; i < yValues.length; i++){
             const y = yValues[i];
+            const barColor = barColors[i]? barColors[i]: defaultColor;
+
             const endY = Calc.posOnGraphYAxis(ctx, y);
 
             const barHeight = (startY-endY);
@@ -43,6 +50,9 @@ const DrawBars = (ctx, yValues, category) => {
 
             if(startY && endY){
 
+                barColor? ctx.fillStyle = barColor: null;//set bar color if exists
+                
+                //draw bar
                 ctx.beginPath();
                 ctx.rect(axisX, endY, barWidth, barHeight);
                 ctx.fill();

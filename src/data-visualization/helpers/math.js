@@ -182,24 +182,31 @@ export function setBarRanges(){
             const dataset = data[i];
             const x = dataset.x;
             const y = dataset.y;
+            const barColors = dataset.barColors? dataset.barColors: [];
 
             for(var j = 0; j < x.length; j++){
                 const xValue = x[j];
                 const yValue = y[j];
+                const barColor = barColors[j];
 
                 let categoryValues = null;
+                let barColorValues = null;
 
                 if(barCategories.has(xValue)){
-                    categoryValues = [...barCategories.get(xValue), yValue];
+                    const category = barCategories.get(xValue);
+                    
+                    categoryValues = [...category.yValues, yValue];
+                    barColorValues = [...category.barColors, barColor];
                 }else {
                     categoryValues = [yValue];
+                    barColorValues = [barColor];
                 }
 
                 if(categoryValues){
                     categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
                 }
 
-                barCategories.set(xValue, categoryValues);
+                barCategories.set(xValue, {yValues: categoryValues, barColors: barColorValues});
 
             }
 

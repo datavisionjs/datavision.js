@@ -34,8 +34,11 @@ DataVision.prototype.plot = function (data, layout){
 
     //set font size 
     const fontSize = 13;
-    layout.fontSize = fontSize;
     ctx.font = fontSize+"px Arial";
+
+    //set layout default settings
+    layout.fontSize = fontSize;
+    layout.defaultColor = "#5570a3";
 
     //get the data type of the dataset
     const firstDataType = data[0]? data[0].type: null;

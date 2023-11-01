@@ -6,16 +6,13 @@ import Pie from './pie.js'
 
 const Chart = (ctx) => {
 
-    const defaultColor = "#5570a3";
-
     //get the data type of the dataset
     const firstDataType = data[0]? data[0].type: null;
 
     if(firstDataType === "bar"){
-        ctx.fillStyle = defaultColor;//implement default color if no color is specified
-
         Bar(ctx);
     }else {
+        const defaultColor = layout.defaultColor;
 
         for(let i  = 0; i < data.length; i++){
 
