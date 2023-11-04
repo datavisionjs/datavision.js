@@ -1,31 +1,25 @@
 import * as Calc from '../helpers/math.js'
+import customColors from '../helpers/colors.js';
 
 //draw the bars
 
-const DrawBars = (ctx, category, catKey) => {
-    if(category){
+const DrawBars = (ctx, category, catKey, dataset) => {
 
-        const defaultColor = layout.defaultColor;
+    if(category && dataset){
         
         const yValues = category.yValues;
         const barColors = category.barColors;
 
-        const canvas = ctx.canvas;
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-
         //stores the position and dimensions of the graph area
-        const graphPosition = Calc.graphPosition(canvasWidth, canvasHeight);
-        const graphX = graphPosition.x, graphY = graphPosition.y;
-        const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+        const graphPosition = layout.graphPosition;
+        const graphX = graphPosition.x, graphWidth = graphPosition.width;
 
-        let ranges = layout.ranges;
 
-        const yRange = Calc.rangeOnAxis(ranges.yRange, 10);
+        const yRange = Calc.rangeOnAxis(dataset.yRange, 10);
 
-        const maxBarPerCategory = ranges.categoryBarMax;
+        const maxBarPerCategory = dataset.categoryBarMax;
 
-        const categories = ranges.barCategories;
+        const categories = dataset.barCategories;
         const catKeys = Array.from(categories.keys());
 
         const catPos = catKeys.indexOf(catKey);
@@ -40,13 +34,15 @@ const DrawBars = (ctx, category, catKey) => {
 
         for(var i = 0; i < yValues.length; i++){
             const y = yValues[i];
+
+            const colorIndex = layout.customColorsIndex;
+            const defaultColor = customColors[colorIndex+i].code;
+
             const barColor = barColors[i]? barColors[i]: defaultColor;
 
             const endY = Calc.posOnGraphYAxis(ctx, y);
 
             const barHeight = (startY-endY);
-
-            console.log(yRange[0], findY0, startY);
 
             if(startY && endY){
 
@@ -61,6 +57,7 @@ const DrawBars = (ctx, category, catKey) => {
             axisX += barWidth;
         }
 
+        
     }
 }
 

@@ -28,6 +28,10 @@ function findMinAndMax(arr) {
     }
 }
 
+export function hasValidElements(arr) {
+    return arr.every(element => element !== undefined && element !== null);
+}
+
 export function graphPosition(canvasWidth, canvasHeight){
 
     //define the graph dimensions
@@ -149,7 +153,7 @@ export function setRanges(){
 }
 
 
-export function setBarRanges(){
+export function setBarProperties(){
     //find y axis range 
     let yRange = null;
 
@@ -178,38 +182,48 @@ export function setBarRanges(){
         let tempYRange = yRange;
 
         //loop through data and set xRange and yRange
-        for(let i = 0; i < data.length; i++){
-            const dataset = data[i];
-            const x = dataset.x;
-            const y = dataset.y;
-            const barColors = dataset.barColors? dataset.barColors: [];
+        const tempData = [...data];
+        const tempDataLength = tempData.length;
 
-            for(var j = 0; j < x.length; j++){
-                const xValue = x[j];
-                const yValue = y[j];
-                const barColor = barColors[j];
+        for(let i = 0; i < tempDataLength; i++){
+            const dataset = tempData[i];
 
-                let categoryValues = null;
-                let barColorValues = null;
+            const dataType = dataset.type;
+            
+            if(dataType === "bar"){
+                const x = dataset.x;
+                const y = dataset.y;
+                const barColors = dataset.barColors? dataset.barColors: [];
 
-                if(barCategories.has(xValue)){
-                    const category = barCategories.get(xValue);
-                    
-                    categoryValues = [...category.yValues, yValue];
-                    barColorValues = [...category.barColors, barColor];
-                }else {
-                    categoryValues = [yValue];
-                    barColorValues = [barColor];
+                for(var j = 0; j < x.length; j++){
+                    const xValue = x[j];
+                    const yValue = y[j];
+                    const barColor = barColors[j];
+
+                    let categoryValues = null;
+                    let barColorValues = null;
+
+                    if(barCategories.has(xValue)){
+                        const category = barCategories.get(xValue);
+                        
+                        categoryValues = [...category.yValues, yValue];
+                        barColorValues = [...category.barColors, barColor];
+                    }else {
+                        categoryValues = [yValue];
+                        barColorValues = [barColor];
+                    }
+
+                    if(categoryValues){
+                        categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
+                    }
+
+                    barCategories.set(xValue, {yValues: categoryValues, barColors: barColorValues});
+
                 }
 
-                if(categoryValues){
-                    categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
-                }
-
-                barCategories.set(xValue, {yValues: categoryValues, barColors: barColorValues});
-
+                //set bar data type to null
+                dataset.type = null;
             }
-
             
             if(!yRange){
 
@@ -230,14 +244,28 @@ export function setBarRanges(){
             yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
         }
 
+
+
     }
 
     //set ranges to layout
     layout.ranges = {
         yRange: yRange,
+    };
+
+    //create a new bar data
+    const newBarData = {
+        type: "bar", 
+        yRange: yRange, 
         barCategories: barCategories,
         categoryBarMax: categoryBarMax
     };
+
+    //set bardata to layout 
+    layout.barData = newBarData;
+
+    //replace the first bar element
+    data.splice(0, 1, newBarData);
 }
 
 //calculates axis steps on canvas

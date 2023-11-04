@@ -27,8 +27,11 @@ function DataVision(targetId) {
 
 DataVision.prototype.plot = function (data, layout){
     const canvas = this.canvas;
-    canvas.width = 700;
-    canvas.height = (700*0.75);
+    const canvasWidth = 700;
+    const canvasHeight = (canvasWidth*0.75);
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
     const ctx = canvas.getContext("2d");
 
@@ -38,14 +41,18 @@ DataVision.prototype.plot = function (data, layout){
 
     //set layout default settings
     layout.fontSize = fontSize;
-    layout.defaultColor = "#5570a3";
+    layout.customColorsIndex = 0;
+    layout.graphPosition = Calc.graphPosition(canvasWidth, canvasHeight);
+
+    layout.isBarChart = false;
 
     //get the data type of the dataset
     const firstDataType = data[0]? data[0].type: null;
 
     //set ranges to layout
     if(firstDataType === "bar"){
-        Calc.setBarRanges();
+        layout.isBarChart = true;
+        Calc.setBarProperties();
     }else {
         Calc.setRanges();
     }

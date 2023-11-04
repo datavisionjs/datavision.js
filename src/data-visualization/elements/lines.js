@@ -7,76 +7,90 @@ let isLeftBoundDone = false;
 
 let lastGraphBoundPos = null; //stores position on graph
 
+const DrawOutOfBoundLines = (ctx, pos, size, position) => {
+
+    if(!layout.isBarChart){
+        const ranges = layout.ranges;
+        const xRange = ranges.xRange;
+        const xRangeStart = xRange[0];
+        const xRangeEnd = xRange[1];
+
+        //draw lines coming out of graph bounds
+        if(pos){
+
+            //draw lines from left bound
+            if(isOutOfGraphBounds){
+                const x1 = lastOutOfGraphBoundPos.x;
+                const y1 = lastOutOfGraphBoundPos.y;
+
+                const x2 = position.x;
+                const y2 = position.y;
+
+                const leftBoundY = Calc.linearInterpolation(xRangeStart, x1, y1, x2, y2);
+
+                const leftBoundPos  = {x: xRangeStart, y: leftBoundY};
+
+                const newPos = Calc.posOnGraph(ctx, leftBoundPos);
+
+                if(newPos){
+                    ctx.beginPath();
+                    ctx.moveTo(newPos.x, newPos.y);
+            
+                    ctx.lineTo(pos.x, pos.y);
+                }
+
+                isLeftBoundDone = true;
+            }
+
+            //set position on graph 
+            lastGraphBoundPos = position;
+            //
+            isOutOfGraphBounds = false;
+        }else {
+            lastOutOfGraphBoundPos = position;
+            isOutOfGraphBounds = true;
+
+            //draw lines from right bound
+            if(isLeftBoundDone || lastGraphBoundPos){
+                const x1 = lastGraphBoundPos.x;
+                const y1 = lastGraphBoundPos.y;
+
+                const x2 = position.x;
+                const y2 = position.y;
+
+                const rightBoundY = Calc.linearInterpolation(xRangeEnd, x1, y1, x2, y2);
+
+                const rightBoundPos = {x: xRangeEnd, y: rightBoundY};
+
+                const newPos = Calc.posOnGraph(ctx, rightBoundPos);
+
+                if(newPos){
+                    ctx.lineTo(newPos.x, newPos.y);
+                }
+
+                //reset left bound done
+                isLeftBoundDone = false;
+            }
+        }
+    }
+};
+
 const DrawLines = (ctx, type, size, position) => {
 
-    const ranges = layout.ranges;
-    const xRange = ranges.xRange;
-    const xRangeStart = xRange[0];
-    const xRangeEnd = xRange[1];
+    let pos = null;
 
-    const pos = Calc.posOnGraph(ctx, position);
+    if(layout.isBarChart){
+        const y = Calc.posOnGraphYAxis(ctx, position.y);
+        pos = {x: position.x, y: y};
+    }else {
+        pos = Calc.posOnGraph(ctx, position);
+    }
 
     //add style 
     ctx.lineWidth = size;
 
-    //draw lines coming out of graph bounds
-    if(pos){
-
-        //draw lines from left bound
-        if(isOutOfGraphBounds){
-            const x1 = lastOutOfGraphBoundPos.x;
-            const y1 = lastOutOfGraphBoundPos.y;
-
-            const x2 = position.x;
-            const y2 = position.y;
-
-            const leftBoundY = Calc.linearInterpolation(xRangeStart, x1, y1, x2, y2);
-
-            const leftBoundPos  = {x: xRangeStart, y: leftBoundY};
-
-            const newPos = Calc.posOnGraph(ctx, leftBoundPos);
-
-            if(newPos){
-                ctx.beginPath();
-                ctx.moveTo(newPos.x, newPos.y);
-        
-                ctx.lineTo(pos.x, pos.y);
-            }
-
-            isLeftBoundDone = true;
-        }
-
-        //set position on graph 
-        lastGraphBoundPos = position;
-        //
-        isOutOfGraphBounds = false;
-    }else {
-        lastOutOfGraphBoundPos = position;
-        isOutOfGraphBounds = true;
-
-        //draw lines from right bound
-        if(isLeftBoundDone || lastGraphBoundPos){
-            const x1 = lastGraphBoundPos.x;
-            const y1 = lastGraphBoundPos.y;
-
-            const x2 = position.x;
-            const y2 = position.y;
-
-            const rightBoundY = Calc.linearInterpolation(xRangeEnd, x1, y1, x2, y2);
-
-            const rightBoundPos = {x: xRangeEnd, y: rightBoundY};
-
-            const newPos = Calc.posOnGraph(ctx, rightBoundPos);
-
-            if(newPos){
-                ctx.lineTo(newPos.x, newPos.y);
-            }
-
-            //reset left bound done
-            isLeftBoundDone = false;
-        }
-    }
-
+    //draw lines coming from out of bounds points
+    DrawOutOfBoundLines(ctx, pos, size, position);
 
     //draw lines and arc within graph bounds
     if(pos){

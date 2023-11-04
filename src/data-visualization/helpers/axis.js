@@ -152,7 +152,9 @@ function drawXAxis(ctx, position){
     let axisY = (graphY+graphHeight);
 
     if(firstDataType === "bar"){
-        const categories = ranges.barCategories;
+        const barData = layout.barData;
+
+        const categories = barData.barCategories;
         const catKeys = Array.from(categories.keys());
 
         const step = (graphWidth/catKeys.length);

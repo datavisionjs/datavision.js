@@ -5,29 +5,79 @@ import DrawBars from './bars.js';
 import DrawLines from './lines.js';
 import DrawPoints from "./points";
 
-const DrawElements = (ctx, type, dataSet) => {
+import customColors from '../helpers/colors.js';
+
+const DrawElements = (ctx, type, dataset) => {
+
+    const colorIndex = (layout.customColorsIndex);
+
+    console.log("index: ", colorIndex);
 
     if(type === "bars"){
 
-        let ranges = layout.ranges;
+        if(layout.isBarChart){
+            const categories = dataset.barCategories;
 
-        const categories = ranges.barCategories;
-        const catKeys = Array.from(categories.keys());
+            const maxBarPerCategory = dataset.categoryBarMax;
+            const catKeys = Array.from(categories.keys());
 
-        for(var i = 0; i < catKeys.length; i++){
-            const catKey = catKeys[i];
-            const category = categories.get(catKey);
+            const graphPosition = layout.graphPosition;
+            const graphX = graphPosition.x, graphWidth = graphPosition.width;
 
-            DrawBars(ctx, category, catKey);
+            const categoryMidPoints = [];
+
+            const step = (graphWidth/catKeys.length);
+            let midPoint = (graphX+(step/2));
+
+            for(var i = 0; i < catKeys.length; i++){
+                const catKey = catKeys[i];
+                const category = categories.get(catKey);
+
+                DrawBars(ctx, category, catKey, dataset);
+
+                //push mid point and increment by step;
+                categoryMidPoints.push(midPoint);
+                midPoint += step;
+            }
+
+            if(maxBarPerCategory){
+                layout.customColorsIndex = (colorIndex+maxBarPerCategory);
+            }
+
+
+            //set categories mid points to barData 
+            //the mid points will be used as x values to plot lines for mixed charts
+            layout.barData.categoryMidPoints = categoryMidPoints;
         }
+
     }else {
 
-        if(dataSet){
+        if(dataset){
 
-            const xValues = dataSet.x;
-            const yValues = dataSet.y;
+            const defaultColor = customColors[colorIndex].code;
+
+            let fillColor = dataset.fillColor;
+            let strokeColor = dataset.strokeColor;
+
+            if(!strokeColor){
+                strokeColor = defaultColor;
+            }
+
+            if(!fillColor){
+                fillColor = defaultColor;
+            }
+
+            layout.customColorsIndex = (colorIndex+1);
+
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = strokeColor;
+
+            //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
+            const xValues = !layout.isBarChart? dataset.x: layout.barData.categoryMidPoints;;
+            const yValues = dataset.y;
 
             for(var i = 0; i < xValues.length; i++){
+
                 const x = xValues[i];
                 const y = yValues[i];
 
