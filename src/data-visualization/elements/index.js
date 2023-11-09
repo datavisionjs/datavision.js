@@ -64,15 +64,18 @@ const DrawElements = (ctx, type, dataset) => {
                 let startDegrees = degrees;
                 
                 for(var i = 0; i < catKeys.length; i++){
-                    //set fillColor
+                    //get defaultColor
                     const defaultColor = customColors[i].code;
-
-                    const fillColor = defaultColor;
-                    fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
 
                     //begin
                     const catKey = catKeys[i];
                     const category = categories.get(catKey);
+                    
+                    const pieColor = category.pieColor;
+
+                    //set fillColor
+                    const fillColor = pieColor? pieColor: defaultColor;
+                    fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
 
                     const value = category.value;
 

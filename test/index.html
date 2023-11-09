@@ -13,22 +13,21 @@
 
     <script>
 
-        var xValues = ["Design", "Development", "Testing", "Documentation", "Project Management"];
-        var yValues = [20, 35, 15, 10, 20];
+        var xValues = ["Chocolate", "Vanilla", "Strawberry", "Other"];
+        var yValues = [30, 20, 15, 10, 10];
        
         const data = [
             {
                 labels: xValues,
                 values: yValues,
                 type: "pie",
-                
+                pieColors: ["#7B3F00", "#F3E5AB", " #FB2943", "#3EB489"]
             }
         ];
 
         let layout = {
             xAxis: {title: "Year"},
-            //yAxis: {range: [0, 5], title: "Income"},
-            title: "Stock Analysis (2009 - 2016)"
+            title: "Favorite ice cream flavors"
         }
 
         const chart = new DataVision("my-chart");
