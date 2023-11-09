@@ -1,6 +1,8 @@
 //Contains functions for rendering and formatting axis, ticks, and labels.
 
-import * as Calc from './math.js'
+import * as Calc from '../helpers/math.js'
+
+import DrawTitleLabel from './titleLabel.js';
 
 function drawLabels(ctx, position){
 
@@ -13,25 +15,14 @@ function drawLabels(ctx, position){
     const graphX = position.x;
     const graphY = position.y;
 
-    let title = layout.title;
     let yAxis = layout.yAxis;
     let xAxis = layout.xAxis;
 
     //set text alignment
     ctx.textAlign = 'center'; 
 
-    if(title){
-        //draw Title
-        ctx.beginPath();
-
-        const fontSize = 30;
-        ctx.font = fontSize+"px Arial";
-
-        ctx.fillText(title, ((graphX+(graphWidth/2))), ((graphY/2)+(fontSize/2)));
-    }
-
     //set fontsize for yAxis and xAxis texts 
-    const fontSize = 18;
+    const fontSize = 15;
 
     if(yAxis){
 
@@ -86,6 +77,7 @@ function drawYAxis(ctx, position){
     let range = ranges.yRange;
 
     const fontSize = layout.fontSize;
+    ctx.font = fontSize+"px Arial";
 
     let axisX = graphX;
     let axisY = graphY+graphHeight;
@@ -95,38 +87,41 @@ function drawYAxis(ctx, position){
 
         range = Calc.rangeOnAxis(range, maxDist);
 
-        const rangeStart = range[0];
+        if(range){
 
-        const step = Calc.rangeStep(range, maxDist);
+            const rangeStart = range[0];
 
-        let dist = Calc.axisDist(range, maxDist);
+            const step = Calc.rangeStep(range, maxDist);
 
-        let pixelStep = (graphHeight/dist);
+            let dist = Calc.axisDist(range, maxDist);
 
-        let label = rangeStart;
+            let pixelStep = (graphHeight/dist);
 
-        for(let i = 0; i < dist; i++){
+            let label = rangeStart;
 
-            //set text width
-            const textWidth = ctx.measureText(label).width;
-            
-            const textPosX = ((axisX-textWidth)-(fontSize));
-            const textPosY = (axisY+Math.floor(fontSize/2));
+            for(let i = 0; i < dist; i++){
 
-            //draw lines 
-            ctx.beginPath();
-            ctx.strokeStyle = "gray";
-            ctx.moveTo((graphX+graphWidth), axisY);
-            ctx.lineTo((graphX), (axisY));
-            ctx.stroke();
-            
-            //add xAxis range labels
-            ctx.beginPath();
-            ctx.fillText(label, textPosX, textPosY);
+                //set text width
+                const textWidth = ctx.measureText(label).width;
+                
+                const textPosX = ((axisX-textWidth)-(fontSize));
+                const textPosY = (axisY+Math.floor(fontSize/2));
 
-            label += step;
-            axisY -= pixelStep;
+                //draw lines 
+                ctx.beginPath();
+                ctx.strokeStyle = "gray";
+                ctx.moveTo((graphX+graphWidth), axisY);
+                ctx.lineTo((graphX), (axisY));
+                ctx.stroke();
+                
+                //add xAxis range labels
+                ctx.beginPath();
+                ctx.fillText(label, textPosX, textPosY);
 
+                label += step;
+                axisY -= pixelStep;
+
+            }
         }
 
     }
@@ -147,6 +142,7 @@ function drawXAxis(ctx, position){
     const ranges = layout.ranges;
 
     const fontSize = layout.fontSize;
+    ctx.font = fontSize+"px Arial";
 
     let axisX = graphX;
     let axisY = (graphY+graphHeight);
@@ -188,39 +184,42 @@ function drawXAxis(ctx, position){
 
             range = Calc.rangeOnAxis(range, maxDist);
 
-            const rangeStart = range[0];
+            if(range){
 
-            const step = Calc.rangeStep(range, maxDist);
+                const rangeStart = range[0];
+
+                const step = Calc.rangeStep(range, maxDist);
 
 
-            let dist = Calc.axisDist(range, maxDist);
+                let dist = Calc.axisDist(range, maxDist);
 
-            let pixelStep = (graphWidth/dist);
+                let pixelStep = (graphWidth/dist);
 
-            let label = rangeStart;
+                let label = rangeStart;
 
-            for(let i = 0; i < dist; i++){
+                for(let i = 0; i < dist; i++){
 
-                //set text width
-                const textWidth = ctx.measureText(label).width;
+                    //set text width
+                    const textWidth = ctx.measureText(label).width;
 
-                const textPosX = (axisX-(textWidth/2));
-                const textPosY = (axisY+(fontSize*2));
+                    const textPosX = (axisX-(textWidth/2));
+                    const textPosY = (axisY+(fontSize*2));
 
-                //draw lines 
-                ctx.beginPath();
-                ctx.moveTo(axisX, graphY);
-                ctx.lineTo(axisX, (graphY+graphHeight));
-                ctx.stroke();
-                
+                    //draw lines 
+                    ctx.beginPath();
+                    ctx.moveTo(axisX, graphY);
+                    ctx.lineTo(axisX, (graphY+graphHeight));
+                    ctx.stroke();
+                    
 
-                //add xAxis range labels
-                ctx.beginPath();
-                ctx.fillText(label, textPosX, textPosY);
+                    //add xAxis range labels
+                    ctx.beginPath();
+                    ctx.fillText(label, textPosX, textPosY);
 
-                label += step;
-                axisX += pixelStep;
+                    label += step;
+                    axisX += pixelStep;
 
+                }
             }
 
         }
@@ -230,12 +229,8 @@ function drawXAxis(ctx, position){
 
 const DrawAxis = (ctx) => {
 
-    const canvas = ctx.canvas;
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-
     //stores the position and dimensions of the graph area
-    const graphPosition = Calc.graphPosition(canvasWidth, canvasHeight);
+    const graphPosition = layout.graphPosition;
 
     //draw a rectangle representing the graph area
     ctx.beginPath();
@@ -247,6 +242,7 @@ const DrawAxis = (ctx) => {
     drawYAxis(ctx, graphPosition);
 
     //labels around the graph area
+    DrawTitleLabel(ctx);
     drawLabels(ctx, graphPosition);
 }
 

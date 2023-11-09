@@ -28,6 +28,9 @@ const Chart = (ctx) => {
             }else if(type === "bar"){
 
                 Bar(ctx, dataset);
+            }else if(type === "pie"){
+
+                Pie(ctx, dataset);
             }
         }
 

@@ -12,8 +12,8 @@ const DrawOutOfBoundLines = (ctx, pos, size, position) => {
     if(!layout.isBarChart){
         const ranges = layout.ranges;
         const xRange = ranges.xRange;
-        const xRangeStart = xRange[0];
-        const xRangeEnd = xRange[1];
+        const xRangeStart = xRange? xRange[0]: null;
+        const xRangeEnd = xRange? xRange[1]: null;
 
         //draw lines coming out of graph bounds
         if(pos){

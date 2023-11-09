@@ -35,29 +35,24 @@ DataVision.prototype.plot = function (data, layout){
 
     const ctx = canvas.getContext("2d");
 
+    //get the data type of the dataset
+    const firstDataType = data[0]? data[0].type: null;
+
+
     //set font size 
     const fontSize = 13;
     ctx.font = fontSize+"px Arial";
+
+    layout.isBarChart = firstDataType === "bar"? true: false;
+    layout.isPieChart = firstDataType === "pie"? true: false;
 
     //set layout default settings
     layout.fontSize = fontSize;
     layout.customColorsIndex = 0;
     layout.graphPosition = Calc.graphPosition(canvasWidth, canvasHeight);
 
-    layout.isBarChart = false;
 
-    //get the data type of the dataset
-    const firstDataType = data[0]? data[0].type: null;
-
-    //set ranges to layout
-    if(firstDataType === "bar"){
-        layout.isBarChart = true;
-        Calc.setBarProperties();
-    }else {
-        Calc.setRanges();
-    }
-
-    dataVis.DrawAxis(ctx);
+    dataVis.DrawPlotArea(ctx, firstDataType);
 
     dataVis.Chart(ctx);
 

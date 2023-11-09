@@ -4,6 +4,7 @@ import * as Calc from '../helpers/math.js'
 import DrawBars from './bars.js';
 import DrawLines from './lines.js';
 import DrawPoints from "./points";
+import DrawPieSlice from './pie.js';
 
 import customColors from '../helpers/colors.js';
 
@@ -11,18 +12,17 @@ const DrawElements = (ctx, type, dataset) => {
 
     const colorIndex = (layout.customColorsIndex);
 
-    console.log("index: ", colorIndex);
+    const graphPosition = layout.graphPosition;
+    const graphX = graphPosition.x, graphY = graphPosition.y;
+    const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-    if(type === "bars"){
+    if(type === "bar"){
 
         if(layout.isBarChart){
             const categories = dataset.barCategories;
 
             const maxBarPerCategory = dataset.categoryBarMax;
             const catKeys = Array.from(categories.keys());
-
-            const graphPosition = layout.graphPosition;
-            const graphX = graphPosition.x, graphWidth = graphPosition.width;
 
             const categoryMidPoints = [];
 
@@ -50,6 +50,47 @@ const DrawElements = (ctx, type, dataset) => {
             layout.barData.categoryMidPoints = categoryMidPoints;
         }
 
+    }else if(type === "pie"){
+        
+        if(layout.isPieChart){
+            const categories = dataset.pieCategories;
+            const valuesLength = dataset.valuesLength;
+
+            if(categories){
+                const catKeys = Array.from(categories.keys());
+
+                let degrees = -90;
+
+                let startDegrees = degrees;
+                
+                for(var i = 0; i < catKeys.length; i++){
+                    //set fillColor
+                    const defaultColor = customColors[i].code;
+
+                    const fillColor = defaultColor;
+                    fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
+
+                    //begin
+                    const catKey = catKeys[i];
+                    const category = categories.get(catKey);
+
+                    const value = category.value;
+
+                    if(!isNaN(value)){
+                        const valPercent = (value/valuesLength);
+                        degrees += (valPercent*360);
+
+                        const endDegrees = degrees;
+
+                        DrawPieSlice(ctx, startDegrees, endDegrees);
+
+                        startDegrees = endDegrees;
+                    }
+                    
+                }
+            }
+
+        }
     }else {
 
         if(dataset){
@@ -76,37 +117,40 @@ const DrawElements = (ctx, type, dataset) => {
             const xValues = !layout.isBarChart? dataset.x: layout.barData.categoryMidPoints;;
             const yValues = dataset.y;
 
-            for(var i = 0; i < xValues.length; i++){
-
-                const x = xValues[i];
-                const y = yValues[i];
-
-                const size = 4;
+            if(xValues){
                 
-                const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
-                
-                if(y || y === 0){ //proceed if y is valid
+                for(var i = 0; i < xValues.length; i++){
 
-                    const position = {x: x, y: y};
+                    const x = xValues[i];
+                    const y = yValues[i];
 
-                    if(type === "arcs"){
-
-                    }else if(type === "lines"){
-
-                        DrawLines(ctx, positionType, size, position);
-
-                    }else if(type === "points"){
-
-                        DrawPoints(ctx, size, position);
-                    }
-
-                }else {
+                    const size = 4;
                     
-                    //draw what lines drawn
-                    ctx.stroke();
+                    const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
+                    
+                    if(y || y === 0){ //proceed if y is valid
 
-                    //close whatever path drawn
-                    ctx.closePath();
+                        const position = {x: x, y: y};
+
+                        if(type === "arcs"){
+
+                        }else if(type === "lines"){
+
+                            DrawLines(ctx, positionType, size, position);
+
+                        }else if(type === "points"){
+
+                            DrawPoints(ctx, size, position);
+                        }
+
+                    }else {
+                        
+                        //draw what lines drawn
+                        ctx.stroke();
+
+                        //close whatever path drawn
+                        ctx.closePath();
+                    }
                 }
             }
 

@@ -13,35 +13,73 @@ export function linearInterpolation(x, x1, y1, x2, y2) {
 }
 
 //find minimum numbers 
-function findMinAndMax(arr) {
-    // Use filter to remove non-numeric elements
-    const numericArray = arr.filter(element => typeof element === 'number' && !isNaN(element));
-  
-    if (numericArray.length === 0) {
-      // Handle the case where there are no valid numbers in the array
-      return undefined; // or any other value that makes sense in your context
+export function findMinAndMax(arr) {
+    if(arr){
+        // Use filter to remove non-numeric elements
+        const numericArray = arr.filter(element => typeof element === 'number' && !isNaN(element));
+    
+        if (numericArray.length === 0) {
+            // Handle the case where there are no valid numbers in the array
+            return undefined; // or any other value that makes sense in your context
+        }
+    
+        return {
+            min: Math.min(...numericArray),
+            max: Math.max(...numericArray)
+        }
+    }else {
+        return null;
     }
-  
+}
+
+export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
+    // Convert degrees to radians
+    const radians = (Math.PI / 180) * degrees;
+   
     return {
-        min: Math.min(...numericArray),
-        max: Math.max(...numericArray)
+        x: (centerPosition.x+(radius*Math.cos(radians))),
+        y: (centerPosition.y+(radius*Math.sin(radians)))
     }
 }
 
 export function hasValidElements(arr) {
-    return arr.every(element => element !== undefined && element !== null);
+    if(arr){    
+        return arr.every(element => element !== undefined && element !== null);
+    }else {
+        return null;
+    }
 }
 
 export function graphPosition(canvasWidth, canvasHeight){
 
     //define the graph dimensions
-    const graphWidth = (canvasWidth * 0.85);
-    const graphHeight = (canvasHeight * 0.65);
+    let graphWidth = canvasWidth;
+    let graphHeight = canvasHeight;
 
     //calculates horizontal position of the graph area
-    const graphX = (canvasWidth - graphWidth) * 0.75;
+    let graphX = 0;
     //calculates vertical position of the graph area
-    const graphY = (canvasHeight-graphHeight)/2;
+    let graphY = 0;
+
+    if(layout.isPieChart){
+
+        graphWidth = (canvasWidth * 0.65);
+        graphHeight = (canvasHeight * 0.80);
+
+        //calculates vertical position of the graph area
+        graphY = (canvasHeight-graphHeight);
+
+    }else {
+
+        graphWidth = (canvasWidth * 0.85);
+        graphHeight = (canvasHeight * 0.65);
+
+        //calculates horizontal position of the graph area
+        graphX = (canvasWidth - graphWidth) * 0.75;
+        //calculates vertical position of the graph area
+        graphY = (canvasHeight-graphHeight)/2;
+
+    }
 
 
     return {
@@ -53,6 +91,8 @@ export function graphPosition(canvasWidth, canvasHeight){
 } 
 
 export function axisDist(range, maxDist){
+    if(!range) return null;
+   
     const start = range[0];
     const rangeEnd = range[1];
 
@@ -68,208 +108,12 @@ export function axisDist(range, maxDist){
     return dist;
 }
 
-//set ranges to layout
-export function setRanges(){
-    //find x axis range 
-    let xRange = null;
-    let yRange = null;
-
-    //get range from layout
-    if(layout){
-
-        const xMaxDist = 7;
-        const xAxis = layout.xAxis;
-
-        if(xAxis){
-            if(xAxis.range){
-                xRange = rangeOnAxis(xAxis.range, xMaxDist);
-            }
-        }
-
-        const yMaxDist = 10;
-        const yAxis = layout.yAxis;
-        if(yAxis){
-            if(yAxis.range){
-                yRange = rangeOnAxis(yAxis.range, yMaxDist);
-            }
-        }
-    }
-
-    //get range from data 
-    if(data){
-
-        if(!xRange || !yRange){
-            
-            let tempXRange = xRange;
-            let tempYRange = yRange;
-
-            //loop through data and set xRange and yRange
-            for(let i = 0; i < data.length; i++){
-                const dataset = data[i];
-                const x = dataset.x;
-                const y = dataset.y;
-
-                if(!xRange){
-
-                    const xMinAndMax = findMinAndMax(x);
-                    if(xMinAndMax){
-                        if(tempXRange){
-                            tempXRange = [Math.min(tempXRange[0],xMinAndMax.min), Math.max(tempXRange[1], xMinAndMax.max)];
-                        }else {
-                            tempXRange = [xMinAndMax.min, xMinAndMax.max];
-                        }
-                    }
-                }
-
-                if(!yRange){
-
-                    const yMinAndMax = findMinAndMax(y);
-                    if(yMinAndMax){
-                        if(tempYRange){
-                            tempYRange = [Math.min(tempYRange[0],yMinAndMax.min), Math.max(tempYRange[1], yMinAndMax.max)];
-                        }else {
-                            tempYRange = [yMinAndMax.min, yMinAndMax.max];
-                        }
-                    }
-                }
-
-            }
-
-            //round up the ranges
-            if(tempXRange){
-                xRange = [Math.round(tempXRange[0]), Math.round(tempXRange[1])];
-            }
-            if(tempYRange){
-                yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
-            }
-        }
-
-    }
-    //set ranges to layout
-    layout.ranges = {
-        xRange: xRange,
-        yRange: yRange,
-    };
-}
-
-
-export function setBarProperties(){
-    //find y axis range 
-    let yRange = null;
-
-    //stores the number of bars for each category
-    let categoryBarMax = 1;
-
-    let barCategories = new Map();
-
-    //get range from layout
-    if(layout){
-
-        const yMaxDist = 10;
-        const yAxis = layout.yAxis;
-        if(yAxis){
-            if(yAxis.range){
-                yRange = rangeOnAxis(yAxis.range, yMaxDist);
-            }
-        }
-    }
-
-    //get range from data 
-    if(data){
-
-        //get the data type of the dataset
-        //const firstDataType = data[0]? data[0].type: null;
-        let tempYRange = yRange;
-
-        //loop through data and set xRange and yRange
-        const tempData = [...data];
-        const tempDataLength = tempData.length;
-
-        for(let i = 0; i < tempDataLength; i++){
-            const dataset = tempData[i];
-
-            const dataType = dataset.type;
-            
-            if(dataType === "bar"){
-                const x = dataset.x;
-                const y = dataset.y;
-                const barColors = dataset.barColors? dataset.barColors: [];
-
-                for(var j = 0; j < x.length; j++){
-                    const xValue = x[j];
-                    const yValue = y[j];
-                    const barColor = barColors[j];
-
-                    let categoryValues = null;
-                    let barColorValues = null;
-
-                    if(barCategories.has(xValue)){
-                        const category = barCategories.get(xValue);
-                        
-                        categoryValues = [...category.yValues, yValue];
-                        barColorValues = [...category.barColors, barColor];
-                    }else {
-                        categoryValues = [yValue];
-                        barColorValues = [barColor];
-                    }
-
-                    if(categoryValues){
-                        categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
-                    }
-
-                    barCategories.set(xValue, {yValues: categoryValues, barColors: barColorValues});
-
-                }
-
-                //set bar data type to null
-                dataset.type = null;
-            }
-            
-            if(!yRange){
-
-                const yMinAndMax = findMinAndMax(y);
-                if(yMinAndMax){
-                    if(tempYRange){
-                        tempYRange = [Math.min(tempYRange[0],yMinAndMax.min), Math.max(tempYRange[1], yMinAndMax.max)];
-                    }else {
-                        tempYRange = [yMinAndMax.min, yMinAndMax.max];
-                    }
-                }
-            }
-
-        }
-
-        //round up the ranges
-        if(tempYRange){
-            yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
-        }
-
-
-
-    }
-
-    //set ranges to layout
-    layout.ranges = {
-        yRange: yRange,
-    };
-
-    //create a new bar data
-    const newBarData = {
-        type: "bar", 
-        yRange: yRange, 
-        barCategories: barCategories,
-        categoryBarMax: categoryBarMax
-    };
-
-    //set bardata to layout 
-    layout.barData = newBarData;
-
-    //replace the first bar element
-    data.splice(0, 1, newBarData);
-}
 
 //calculates axis steps on canvas
 export function rangeStep(range, maxDist){
+
+    if(!range) return null;
+    
     const roundedNumbers = [1, 2, 5, 10, 20, 50, 100];
 
     const rangeStart = range[0];
@@ -292,9 +136,11 @@ export function rangeStep(range, maxDist){
 
 //generate range that'll be shown on axis
 export function rangeOnAxis(range, maxDist){
+
+    if(!range) return null;
+
     let start = range[0];
     let end = range[1];
-
 
     //calculate start
     if(start >= 10){
@@ -323,6 +169,7 @@ export function rangeOnAxis(range, maxDist){
 
 //calculates data position on graph
 export function posOnGraph(ctx, position){
+
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
@@ -333,14 +180,14 @@ export function posOnGraph(ctx, position){
     const ranges = layout.ranges;
 
     const xRange = rangeOnAxis(ranges.xRange, 7);
-    const xRangeStart = xRange[0];
-    const xRangeEnd = xRange[1];
+    const xRangeStart = xRange? xRange[0]: null;
+    const xRangeEnd = xRange? xRange[1]: null;
 
     const xRangeDiff = (xRangeEnd-xRangeStart);
 
     const yRange = rangeOnAxis(ranges.yRange, 10);
-    const yRangeStart = yRange[0];
-    const yRangeEnd = yRange[1];
+    const yRangeStart = yRange? yRange[0]: null;
+    const yRangeEnd = yRange? yRange[1]: null;
 
     const yRangeDiff = (yRangeEnd-yRangeStart);
 
