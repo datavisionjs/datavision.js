@@ -7,7 +7,10 @@ let isLeftBoundDone = false;
 
 let lastGraphBoundPos = null; //stores position on graph
 
-const DrawOutOfBoundLines = (ctx, pos, size, position) => {
+const DrawOutOfBoundLines = (dv, pos, size, position) => {
+
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     if(!layout.isBarChart){
         const ranges = layout.ranges;
@@ -30,7 +33,7 @@ const DrawOutOfBoundLines = (ctx, pos, size, position) => {
 
                 const leftBoundPos  = {x: xRangeStart, y: leftBoundY};
 
-                const newPos = Calc.posOnGraph(ctx, leftBoundPos);
+                const newPos = Calc.posOnGraph(dv, leftBoundPos);
 
                 if(newPos){
                     ctx.beginPath();
@@ -62,7 +65,7 @@ const DrawOutOfBoundLines = (ctx, pos, size, position) => {
 
                 const rightBoundPos = {x: xRangeEnd, y: rightBoundY};
 
-                const newPos = Calc.posOnGraph(ctx, rightBoundPos);
+                const newPos = Calc.posOnGraph(dv, rightBoundPos);
 
                 if(newPos){
                     ctx.lineTo(newPos.x, newPos.y);
@@ -80,10 +83,10 @@ const DrawLines = (ctx, type, size, position) => {
     let pos = null;
 
     if(layout.isBarChart){
-        const y = Calc.posOnGraphYAxis(ctx, position.y);
+        const y = Calc.posOnGraphYAxis(dv, position.y);
         pos = {x: position.x, y: y};
     }else {
-        pos = Calc.posOnGraph(ctx, position);
+        pos = Calc.posOnGraph(dv, position);
     }
 
     //add style 

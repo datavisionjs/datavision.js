@@ -8,7 +8,10 @@ import DrawPieSlice from './pie.js';
 
 import customColors from '../helpers/colors.js';
 
-const DrawElements = (ctx, type, dataset) => {
+const DrawElements = (dv, type, dataset) => {
+
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     const colorIndex = (layout.customColorsIndex);
 
@@ -34,7 +37,7 @@ const DrawElements = (ctx, type, dataset) => {
                 const catKey = catKeys[i];
                 const category = categories.get(catKey);
 
-                DrawBars(ctx, category, catKey, dataset);
+                DrawBars(dv, category, catKey, dataset);
 
                 //push mid point and increment by step;
                 categoryMidPoints.push(midPoint);
@@ -86,7 +89,7 @@ const DrawElements = (ctx, type, dataset) => {
 
                         const endDegrees = degrees;
 
-                        DrawPieSlice(ctx, startDegrees, endDegrees);
+                        DrawPieSlice(dv, startDegrees, endDegrees);
 
                         startDegrees = endDegrees;
                     }
@@ -140,11 +143,11 @@ const DrawElements = (ctx, type, dataset) => {
 
                         }else if(type === "lines"){
 
-                            DrawLines(ctx, positionType, size, position);
+                            DrawLines(dv, positionType, size, position);
 
                         }else if(type === "points"){
 
-                            DrawPoints(ctx, size, position);
+                            DrawPoints(dv, size, position);
                         }
 
                     }else {

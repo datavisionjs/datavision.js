@@ -1,8 +1,11 @@
 
 
-const DrawTitleLabel = (ctx) => {
-    const canvas = ctx.canvas;
+const DrawTitleLabel = (dv) => {
 
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
+
+    const canvas = dv.getCanvas();
     const canvasWidth = canvas.width;
 
     const position = layout.graphPosition;

@@ -4,7 +4,9 @@ import * as Calc from '../helpers/math.js'
 
 import DrawTitleLabel from './titleLabel.js';
 
-function drawLabels(ctx, position){
+function drawLabels(dv, position){
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     const canvas = ctx.canvas;
     const canvasHeight = canvas.height;
@@ -65,7 +67,9 @@ function drawLabels(ctx, position){
     }
 }
 
-function drawYAxis(ctx, position){
+function drawYAxis(dv, position){
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     const graphWidth = position.width;
     const graphHeight = position.height;
@@ -128,7 +132,10 @@ function drawYAxis(ctx, position){
 
 }
 
-function drawXAxis(ctx, position){
+function drawXAxis(dv, position){
+
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     const graphWidth = position.width;
     const graphHeight = position.height;
@@ -137,7 +144,7 @@ function drawXAxis(ctx, position){
     const graphY = position.y;
 
     //get the data type of the dataset
-    const firstDataType = data[0]? data[0].type: null;
+    const firstDataType = layout.firstDataType;
 
     const ranges = layout.ranges;
 
@@ -227,7 +234,9 @@ function drawXAxis(ctx, position){
 
 }
 
-const DrawAxis = (ctx) => {
+const DrawAxis = (dv) => {
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -238,12 +247,12 @@ const DrawAxis = (ctx) => {
     ctx.stroke();
 
     //Draw Y-axis, X-axis around the graph area
-    drawXAxis(ctx, graphPosition);
-    drawYAxis(ctx, graphPosition);
+    drawXAxis(dv, graphPosition);
+    drawYAxis(dv, graphPosition);
 
     //labels around the graph area
-    DrawTitleLabel(ctx);
-    drawLabels(ctx, graphPosition);
+    DrawTitleLabel(dv);
+    drawLabels(dv, graphPosition);
 }
 
 export default DrawAxis;

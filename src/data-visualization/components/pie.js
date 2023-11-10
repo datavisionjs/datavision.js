@@ -1,9 +1,9 @@
 import DrawElements from "../elements";
 
-const Pie = (ctx, dataset) => {
+const Pie = (dv, dataset) => {
     if(dataset){
 
-        DrawElements(ctx, "pie", dataset);
+        DrawElements(dv, "pie", dataset);
     }
 }
 

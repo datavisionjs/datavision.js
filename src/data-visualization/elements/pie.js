@@ -1,7 +1,10 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPieSlice = (ctx, startDegrees, endDegrees) => {
+const DrawPieSlice = (dv, startDegrees, endDegrees) => {
+
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;

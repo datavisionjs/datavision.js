@@ -3,7 +3,11 @@ import * as Calc from '../helpers/math.js'
 import DrawTitleLabel from './titleLabel.js';
 import customColors from '../helpers/colors.js';
 
-function drawLabels(ctx, graphPosition){
+function drawLabels(dv, graphPosition){
+    const ctx = dv.getCtx();
+    const data = dv.getData();
+    const layout = dv.getLayout();
+
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
@@ -76,7 +80,10 @@ function drawLabels(ctx, graphPosition){
     }
 }
 
-const DrawArc = (ctx) => {
+const DrawArc = (dv) => {
+
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -95,8 +102,8 @@ const DrawArc = (ctx) => {
     ctx.stroke();
 
     //labels around the graph area
-    DrawTitleLabel(ctx);
-    drawLabels(ctx, graphPosition);
+    DrawTitleLabel(dv);
+    drawLabels(dv, graphPosition);
 }
 
 export default DrawArc;

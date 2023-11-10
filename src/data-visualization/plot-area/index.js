@@ -4,7 +4,9 @@ import * as Prop from '../helpers/properties.js'
 import DrawAxis from "./axis";
 import DrawArc from './arc.js';
 
-const plotArea = (ctx, type) => {
+const plotArea = (dv) => {
+    const layout = dv.getLayout();
+    const type = layout.firstDataType;
     
     const axisCharts = ["line", "scatter", "bar"];
 
@@ -12,21 +14,21 @@ const plotArea = (ctx, type) => {
         //set ranges to layout
         if(type === "bar"){
             layout.isBarChart = true;
-            Prop.setBar();
+            Prop.setBar(dv);
         }else {
-            Prop.setRanges();
+            Prop.setRanges(dv);
         }
 
         //draw axis
-        DrawAxis(ctx);
+        DrawAxis(dv);
 
     }else if(type === "pie"){
 
         layout.isPieChart = true;
-        Prop.setPie();
+        Prop.setPie(dv);
         
         //draw arc
-        DrawArc(ctx);
+        DrawArc(dv);
     }
 };
 

@@ -4,7 +4,9 @@ import Bar from './bar.js'
 import Line from './line.js'
 import Pie from './pie.js'
 
-const Chart = (ctx) => {
+const Chart = (dv) => {
+    const ctx = dv.getCtx();
+    const data = dv.getData();
 
     for(let i  = 0; i < data.length; i++){
 
@@ -18,19 +20,19 @@ const Chart = (ctx) => {
 
             if(type === "line"){
 
-                Line(ctx, dataset);
+                Line(dv, dataset);
 
             }else if(type === "scatter"){
 
-
-                Scatter(ctx, dataset);
+                Scatter(dv, dataset);
 
             }else if(type === "bar"){
+                //console.log("datasets: ", dataset);
 
-                Bar(ctx, dataset);
+                Bar(dv, dataset);
             }else if(type === "pie"){
 
-                Pie(ctx, dataset);
+                Pie(dv, dataset);
             }
         }
 

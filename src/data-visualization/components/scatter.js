@@ -1,10 +1,10 @@
 import DrawElements from "../elements";
 
-const Scatter = (ctx, dataset) => {
+const Scatter = (dv, dataset) => {
     
     if(dataset){
 
-        DrawElements(ctx, "points", dataset);
+        DrawElements(dv, "points", dataset);
     }
 }
 

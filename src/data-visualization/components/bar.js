@@ -1,10 +1,10 @@
 import DrawElements from "../elements";
 
-const Bar = (ctx, dataset) => {
+const Bar = (dv, dataset) => {
 
     if(dataset){
 
-        DrawElements(ctx, "bars", dataset);
+        DrawElements(dv, "bars", dataset);
     }
 
 }

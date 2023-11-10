@@ -1,7 +1,10 @@
 import * as Calc from './math.js'
 
 //set ranges to layout
-export function setRanges(){
+export function setRanges(dv){
+
+    const layout = dv.getLayout();
+
     //find x axis range 
     let xRange = null;
     let yRange = null;
@@ -85,7 +88,10 @@ export function setRanges(){
 }
 
 
-export function setBar(){
+export function setBar(dv){
+    const layout = dv.getLayout();
+    const data = [...dv.getData()];
+
     //find y axis range 
     let yRange = null;
 
@@ -118,7 +124,7 @@ export function setBar(){
         const tempDataLength = tempData.length;
 
         for(let i = 0; i < tempDataLength; i++){
-            const dataset = tempData[i];
+            const dataset = {...tempData[i]};
 
             const x = dataset.x;
             const y = dataset.y;
@@ -198,9 +204,14 @@ export function setBar(){
 
     //replace the first bar element
     data.splice(0, 1, newBarData);
+
+    //set data to dv
+    dv.setData(data);
 }
 
-export function setPie(){
+export function setPie(dv){
+    const data = [...dv.getData()];
+    const layout = dv.getLayout();
 
     let pieCategories = new Map();
 
@@ -214,7 +225,7 @@ export function setPie(){
         const tempDataLength = tempData.length;
 
         for(let i = 0; i < tempDataLength; i++){
-            const dataset = tempData[i];
+            const dataset = {...tempData[i]};
 
             const labels = dataset.labels;
             const values = dataset.values;
@@ -270,4 +281,7 @@ export function setPie(){
 
     //replace the first pie  element
     data.splice(0, 1, newPieData);
+
+     //set data to dv
+     dv.setData(data);
 }

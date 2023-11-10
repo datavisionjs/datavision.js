@@ -3,7 +3,11 @@ import customColors from '../helpers/colors.js';
 
 //draw the bars
 
-const DrawBars = (ctx, category, catKey, dataset) => {
+const DrawBars = (dv, category, catKey, dataset) => {
+
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
+    
 
     if(category && dataset){
         
@@ -29,8 +33,8 @@ const DrawBars = (ctx, category, catKey, dataset) => {
         let axisX = (graphX+((step*catPos)+(barWidth/2)));
 
         //find the starting position of the bar on the y-axis
-        const findY0 = Calc.posOnGraphYAxis(ctx, 0);
-        const startY = findY0? findY0: Calc.posOnGraphYAxis(ctx, yRange[0]);
+        const findY0 = Calc.posOnGraphYAxis(dv, 0);
+        const startY = findY0? findY0: Calc.posOnGraphYAxis(dv, yRange[0]);
 
         for(var i = 0; i < yValues.length; i++){
             const y = yValues[i];
@@ -40,7 +44,7 @@ const DrawBars = (ctx, category, catKey, dataset) => {
 
             const barColor = barColors[i]? barColors[i]: defaultColor;
 
-            const endY = Calc.posOnGraphYAxis(ctx, y);
+            const endY = Calc.posOnGraphYAxis(dv, y);
 
             const barHeight = (startY-endY);
 

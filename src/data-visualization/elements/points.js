@@ -1,9 +1,11 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPoints = (ctx, size, position) => {
+const DrawPoints = (dv, size, position) => {
 
-    const pos = Calc.posOnGraph(ctx, position);
+    const ctx = dv.getCtx();
+
+    const pos = Calc.posOnGraph(dv, position);
 
     if(pos){
         ctx.beginPath();

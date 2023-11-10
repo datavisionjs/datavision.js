@@ -50,8 +50,7 @@ export function hasValidElements(arr) {
     }
 }
 
-export function graphPosition(canvasWidth, canvasHeight){
-
+export function graphPosition(type, canvasWidth, canvasHeight){
     //define the graph dimensions
     let graphWidth = canvasWidth;
     let graphHeight = canvasHeight;
@@ -61,7 +60,7 @@ export function graphPosition(canvasWidth, canvasHeight){
     //calculates vertical position of the graph area
     let graphY = 0;
 
-    if(layout.isPieChart){
+    if(type === "pie"){
 
         graphWidth = (canvasWidth * 0.65);
         graphHeight = (canvasHeight * 0.80);
@@ -168,14 +167,16 @@ export function rangeOnAxis(range, maxDist){
 
 
 //calculates data position on graph
-export function posOnGraph(ctx, position){
+export function posOnGraph(dv, position){
+    const layout = dv.getLayout();
+    const dataType = dv.getFirstDataType();
 
-    const canvas = ctx.canvas;
+    const canvas = dv.ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
     //stores the position and dimensions of the graph area
-    const chartPosition = graphPosition(canvasWidth, canvasHeight);
+    const chartPosition = graphPosition(dataType, canvasWidth, canvasHeight);
 
     const ranges = layout.ranges;
 
@@ -207,13 +208,17 @@ export function posOnGraph(ctx, position){
     
 }
 
-export function posOnGraphYAxis(ctx, y){
+export function posOnGraphYAxis(dv, y){
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
+    const dataType = layout.firstDataType;
+
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
     //stores the position and dimensions of the graph area
-    const chartPosition = graphPosition(canvasWidth, canvasHeight);
+    const chartPosition = graphPosition(dataType, canvasWidth, canvasHeight);
 
     const ranges = layout.ranges;
 
