@@ -16,7 +16,7 @@ const DrawElements = (ctx, type, dataset) => {
     const graphX = graphPosition.x, graphY = graphPosition.y;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-    if(type === "bar"){
+    if(type === "bars"){
 
         if(layout.isBarChart){
             const categories = dataset.barCategories;
@@ -28,6 +28,7 @@ const DrawElements = (ctx, type, dataset) => {
 
             const step = (graphWidth/catKeys.length);
             let midPoint = (graphX+(step/2));
+
 
             for(var i = 0; i < catKeys.length; i++){
                 const catKey = catKeys[i];

@@ -13,21 +13,19 @@
 
     <script>
 
-        var xValues = ["Chocolate", "Vanilla", "Strawberry", "Other"];
-        var yValues = [30, 20, 15, 10, 10];
+        var xValues = ["Coal", "Natural Gas", "Hydroelectric", "Wind", "Solar", "Nuclear"];
+        var yValues = [30, 25, 20, 15, 5, 5];
        
         const data = [
             {
-                labels: xValues,
-                values: yValues,
-                type: "pie",
-                pieColors: ["#7B3F00", "#F3E5AB", " #FB2943", "#3EB489"]
+                x: xValues,
+                y: yValues,
+                type: "bar",
             }
         ];
 
         let layout = {
-            xAxis: {title: "Year"},
-            title: "Favorite ice cream flavors"
+            title: "Types of Energy Sources in a Crountry's Power Generation"
         }
 
         const chart = new DataVision("my-chart");
