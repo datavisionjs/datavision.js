@@ -4,9 +4,12 @@ import * as Calc from '../helpers/math.js'
 
 import DrawTitleLabel from './titleLabel.js';
 
+
 function drawLabels(dv, position){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
+
+    const labelStyle = dv.getStyle().label;
 
     const canvas = ctx.canvas;
     const canvasHeight = canvas.height;
@@ -24,7 +27,8 @@ function drawLabels(dv, position){
     ctx.textAlign = 'center'; 
 
     //set fontsize for yAxis and xAxis texts 
-    const fontSize = 15;
+    const fontSize = labelStyle.fontSize;
+    ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
     if(yAxis){
 
@@ -33,9 +37,7 @@ function drawLabels(dv, position){
         if(title){
             ctx.beginPath();
 
-            let angleInRadians = (-90 * (Math.PI/180))
-
-            ctx.font = fontSize+'px Arial';
+            let angleInRadians = (-90 * (Math.PI/180));
 
             //save the current canvas state
             ctx.save();
@@ -60,9 +62,7 @@ function drawLabels(dv, position){
         if(title){
             ctx.beginPath();
 
-            ctx.font = fontSize+"px Arial";
-
-            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-fontSize));
+            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-(fontSize/2)));
         }
     }
 }
@@ -70,6 +70,8 @@ function drawLabels(dv, position){
 function drawYAxis(dv, position){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
+
+    const labelStyle = dv.getStyle().label;
 
     const graphWidth = position.width;
     const graphHeight = position.height;
@@ -80,8 +82,8 @@ function drawYAxis(dv, position){
     const ranges = layout.ranges;
     let range = ranges.yRange;
 
-    const fontSize = layout.fontSize;
-    ctx.font = fontSize+"px Arial";
+    const fontSize = labelStyle.fontSize;
+    ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
     let axisX = graphX;
     let axisY = graphY+graphHeight;
@@ -137,6 +139,8 @@ function drawXAxis(dv, position){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
+    const labelStyle = dv.getStyle().label;
+
     const graphWidth = position.width;
     const graphHeight = position.height;
 
@@ -148,8 +152,11 @@ function drawXAxis(dv, position){
 
     const ranges = layout.ranges;
 
-    const fontSize = layout.fontSize;
-    ctx.font = fontSize+"px Arial";
+    const fontSize = labelStyle.fontSize;
+    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+
+    ctx.textBaseline = "hanging";
+    
 
     let axisX = graphX;
     let axisY = (graphY+graphHeight);
@@ -157,6 +164,8 @@ function drawXAxis(dv, position){
     if(firstDataType === "bar"){
         const barData = layout.barData;
 
+        const maxTextWidth = barData.maxTextWidth;
+        
         const categories = barData.barCategories;
         const catKeys = Array.from(categories.keys());
 
@@ -174,12 +183,39 @@ function drawXAxis(dv, position){
             //set text width
             const textWidth = ctx.measureText(label).width;
 
-            const textPosX = (axisX-(textWidth/2));
-            const textPosY = (axisY+(fontSize*2));
+            let textPosX = (axisX-(textWidth/2));
+            const textPosY = (axisY+(fontSize));
 
             //add xAxis range labels
             ctx.beginPath();
-            ctx.fillText(label, textPosX, textPosY);
+
+            let angle = 0;
+
+            if(maxTextWidth > step){
+                angle = -40
+                textPosX = axisX;
+
+                ctx.textAlign = "end";
+                ctx.textBaseline = "middle";
+            }
+
+            let angleInRadians = (angle * (Math.PI/180));
+
+            //save the current canvas state
+            ctx.save();
+
+            // Translate the canvas context to the desired position
+            ctx.translate(textPosX, textPosY);
+
+            // Rotate the canvas context by the specified angle
+            ctx.rotate(angleInRadians);
+
+            // Draw the rotated text
+            ctx.fillText(label, 0, 0);
+        
+            ctx.restore();
+
+            ctx.textAlign = "start";
         }
 
     }else {
@@ -210,13 +246,15 @@ function drawXAxis(dv, position){
                     const textWidth = ctx.measureText(label).width;
 
                     const textPosX = (axisX-(textWidth/2));
-                    const textPosY = (axisY+(fontSize*2));
+                    const textPosY = (axisY+(fontSize));
 
                     //draw lines 
                     ctx.beginPath();
                     ctx.moveTo(axisX, graphY);
                     ctx.lineTo(axisX, (graphY+graphHeight));
                     ctx.stroke();
+
+                    console.log("lime: ", textPosX, textPosY);
                     
 
                     //add xAxis range labels
@@ -232,6 +270,9 @@ function drawXAxis(dv, position){
         }
     }
 
+    //reset text baselien
+    ctx.textBaseline = "alphabetic";
+
 }
 
 const DrawAxis = (dv) => {
@@ -241,18 +282,47 @@ const DrawAxis = (dv) => {
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
 
+    let graphWidth = graphPosition.width;
+    let graphHeight = graphPosition.height;
+
+    let graphX = graphPosition.x;
+    let graphY = graphPosition.y;
+
+    //get the data type of the dataset
+    const firstDataType = layout.firstDataType;
+
+    if(firstDataType === "bar"){
+        
+        const barData = layout.barData;
+        const maxTextWidth = barData.maxTextWidth;
+
+        const categories = barData.barCategories;
+        const catKeys = Array.from(categories.keys());
+
+        const step = (graphWidth/catKeys.length);
+
+        if(maxTextWidth > step){
+            graphHeight -= (maxTextWidth/2);
+        }
+    }
+
+    const newGraphPosition = {x: graphX, y: graphY, width: graphWidth, height: graphHeight};
+    
+    //reset layout's graphPosition
+    layout.graphPosition = {...newGraphPosition};
+
     //draw a rectangle representing the graph area
     ctx.beginPath();
-    ctx.rect(graphPosition.x, graphPosition.y, graphPosition.width, graphPosition.height);
+    ctx.rect(newGraphPosition.x, newGraphPosition.y, (newGraphPosition.width-1), newGraphPosition.height);
     ctx.stroke();
 
     //Draw Y-axis, X-axis around the graph area
-    drawXAxis(dv, graphPosition);
-    drawYAxis(dv, graphPosition);
+    drawXAxis(dv, newGraphPosition);
+    drawYAxis(dv, newGraphPosition);
 
     //labels around the graph area
     DrawTitleLabel(dv);
-    drawLabels(dv, graphPosition);
+    drawLabels(dv, newGraphPosition);
 }
 
 export default DrawAxis;

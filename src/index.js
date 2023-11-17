@@ -1,10 +1,14 @@
 import * as dataVis from './data-visualization/index.js'
 import * as Calc from './data-visualization/helpers/math.js';
+import GetStyle from './data-visualization/helpers/style.js';
+import { splitTitleText } from './data-visualization/helpers/global.js';
+import * as Prop from './data-visualization/helpers/properties.js'
 
 function DataVision(targetId) {
     //styles 
     this.data = [];
     this.layout = {};
+    this.style = {};
 
     this.target = document.getElementById(targetId);
     this.canvas = document.createElement("canvas");
@@ -29,27 +33,33 @@ function DataVision(targetId) {
 
             const firstDataType = data[0]? data[0].type: null;
 
-            const canvas = this.getCanvas();
-            const width = canvas.width, height = canvas.height;
-
-            const graphPosition = Calc.graphPosition(firstDataType, width, height);
+            //set title text to multiple lines 
+            const titleText = layout.title? layout.title: "";
+            layout.titleLines = splitTitleText(this, titleText);
 
             layout.isBarChart = firstDataType === "bar"? true: false;
             layout.isPieChart = firstDataType === "pie"? true: false;
 
             //set layout default settings
-            layout.fontSize = 13;
             layout.customColorsIndex = 0;
             layout.firstDataType = firstDataType;
-            layout.graphPosition = graphPosition;
-            
 
             //set layout to new layout
             this.layout = {...layout};
+
+            Prop.setGraphPosition(this);
+
         }
     };
     this.getLayout = function (){
         return this.layout;
+    };
+
+    this.setStyle = function (){
+        this.style = GetStyle(this);
+    };
+    this.getStyle = function (){
+        return this.style;
     };
 
     //canvas
@@ -70,6 +80,11 @@ function DataVision(targetId) {
         return this.getCanvas().getContext("2d");
     };
 
+    //target 
+    this.getTarget = function (){
+        return this.target;
+    };
+
     this.addCanvasToTarget = function (){
         const canvas = document.createElement("canvas");
         canvas.width = this.canvas.width;
@@ -87,10 +102,20 @@ function DataVision(targetId) {
 }
 
 DataVision.prototype.plot = function (data, layout){
-    const canvasWidth = 700;
+    let size = 700;
+
+    const target = this.getTarget();
+    if(target){
+        size = Math.max(target.offsetWidth, target.offsetHeight);
+    }
+
+    const canvasWidth = size;
     const canvasHeight = (canvasWidth*0.75);
 
     this.updateCanvas(canvasWidth, canvasHeight);
+
+    //set styles
+    this.setStyle();
 
     //set data and layout
     this.setData(data);

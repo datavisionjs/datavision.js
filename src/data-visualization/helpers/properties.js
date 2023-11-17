@@ -1,4 +1,79 @@
 import * as Calc from './math.js'
+import * as Global from './global.js'
+
+export function setGraphPosition(dv){
+    const canvas = dv.getCanvas();
+    const width = canvas.width, height = canvas.height;
+
+    //define the graph dimensions
+    let graphWidth = width;
+    let graphHeight = height;
+
+    const style = dv.getStyle();
+    const titleLines = dv.getLayout().titleLines;
+    const titleFontSize = style.title.fontSize;
+
+    const labelFontSize = style.label.fontSize;
+
+    //layout 
+    const layout = dv.getLayout();
+    const xLabel = layout.xAxis? layout.xAxis.title: null;
+    const yLabel = layout.yAxis? layout.yAxis.title: null;
+
+    const firstDataType = layout.firstDataType;
+
+    const labelSpace = (labelFontSize*4);
+
+    //calculates horizontal position of the graph area
+    let graphX = 0;
+    //calculates vertical position of the graph area
+    let graphY = (titleFontSize*2);
+
+    if(titleLines.length > 1){
+        graphY += (titleFontSize*(titleLines.length-1));
+    }
+
+    //set graph height
+
+    if(firstDataType === "pie"){
+        graphY += labelFontSize;
+
+        graphWidth = (graphWidth*0.7);
+        graphHeight -= (graphY);
+    }else {
+
+        graphX = (labelSpace/2);
+
+        if(yLabel){
+            graphX += (labelSpace/2);
+        }
+
+        console.log("lSpace: ", labelSpace, graphHeight);
+
+        graphHeight -= ((graphY)+(labelSpace/2));
+
+        console.log(graphHeight);
+
+        if(xLabel){
+            if(xLabel.length > 0){
+                graphHeight -= (labelSpace/2);
+            }
+        }
+
+        graphWidth -= graphX;
+    }
+
+    const position = {
+        x: graphX,
+        y: graphY,
+        width: graphWidth,
+        height: graphHeight
+    };
+
+    //set graphposition
+    dv.layout = {...layout, graphPosition: position};
+
+}
 
 //set ranges to layout
 export function setRanges(dv){
@@ -89,14 +164,24 @@ export function setRanges(dv){
 
 
 export function setBar(dv){
+    const ctx = dv.getCtx();
     const layout = dv.getLayout();
     const data = [...dv.getData()];
+
+    const style = dv.getStyle();
+    const labelStyle = style.label;
+
+    const fontSize = labelStyle.fontSize;
+    ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
     //find y axis range 
     let yRange = null;
 
     //stores the number of bars for each category
     let categoryBarMax = 1;
+
+    //stores the width of the category with the highest text length
+    let maxTextWidth = 0;
 
     let barCategories = new Map();
 
@@ -141,11 +226,16 @@ export function setBar(dv){
                     let categoryValues = null;
                     let barColorValues = null;
 
+                    //set maxTextlength 
+                    const textWidth = ctx.measureText(xValue).width;
+                    textWidth > maxTextWidth? maxTextWidth = textWidth: null;
+
                     if(barCategories.has(xValue)){
                         const category = barCategories.get(xValue);
                         
                         categoryValues = [...category.yValues, yValue];
                         barColorValues = [...category.barColors, barColor];
+
                     }else {
                         categoryValues = [yValue];
                         barColorValues = [barColor];
@@ -196,7 +286,8 @@ export function setBar(dv){
         type: "bar", 
         yRange: yRange, 
         barCategories: barCategories,
-        categoryBarMax: categoryBarMax
+        categoryBarMax: categoryBarMax,
+        maxTextWidth: maxTextWidth
     };
 
     //set bardata to layout 
@@ -277,7 +368,11 @@ export function setPie(dv){
     //set arcRadius 
     const graphPosition = layout.graphPosition;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
-    layout.arcRadius = Math.round(0.5 * Math.min(graphWidth, graphHeight));
+    
+    let radius = Math.round(0.5 * Math.min(graphWidth, graphHeight));
+    radius < 0? radius = 0: null;
+
+    layout.arcRadius = radius;
 
     //replace the first pie  element
     data.splice(0, 1, newPieData);

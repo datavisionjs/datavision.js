@@ -9,29 +9,52 @@
     
     <script src="../dist/datavision.min.js"></script>
 
-    <div id="my-chart"></div>
+    <div id="my-chart" style="width:100%;max-width:600px"></div>
 
     <script>
 
-        var xValues = ["Coal", "Natural Gas", "Hydroelectric", "Wind", "Solar", "Nuclear"];
-        var yValues = [30, 25, 20, 15, 5, 5];
-       
+        let exp1 = "x";
+        let exp2 = "1.5*x";
+        let exp3 = "1.5*x + 7";
+        // Generate values
+
+        const x1Values = [];
+        const x2Values = [];
+        const x3Values = [];
+        const y1Values = [];
+        const y2Values = [];
+        const y3Values = [];
+
+        for (let x = 0; x <= 10; x += 1) {
+            x1Values.push(x);
+            x2Values.push(x);
+            x3Values.push(x);
+            y1Values.push(eval(exp1));
+            y2Values.push(eval(exp2));
+            y3Values.push(eval(exp3));
+        }
+
+        // Define Data
         const data = [
-            {
-                x: xValues,
-                y: yValues,
-                type: "bar",
-            }
+            {x: x1Values, y: y1Values, type:"line"},
+            {x: x2Values, y: y2Values, type:"line"},
+            {x: x3Values, y: y3Values, type:"line"}
         ];
 
-        let layout = {
-            title: "Types of Energy Sources in a Crountry's Power Generation"
-        }
+        // Define Layout
+        const layout = {
+            xAxis: {title: "Square Meters"},
+            yAxis: {title: "Price in Millions"},  
+            title: "House Prices vs. Size"
+        };
 
 
         const chart = new DataVision("my-chart");
 
         chart.plot(data, layout);
+        window.addEventListener('resize', function () {
+            chart.plot(data, layout);
+        });
     </script>
 </body>
 </html>

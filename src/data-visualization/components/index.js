@@ -27,7 +27,6 @@ const Chart = (dv) => {
                 Scatter(dv, dataset);
 
             }else if(type === "bar"){
-                //console.log("datasets: ", dataset);
 
                 Bar(dv, dataset);
             }else if(type === "pie"){

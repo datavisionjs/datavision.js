@@ -27,7 +27,7 @@ const DrawPieSlice = (dv, startDegrees, endDegrees) => {
 
     ctx.beginPath();
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 4;
     //draw arc line
     ctx.arc(midPoint.x, midPoint.y, radius, startAngle, endAngle);
 

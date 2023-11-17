@@ -8,12 +8,14 @@ function drawLabels(dv, graphPosition){
     const data = dv.getData();
     const layout = dv.getLayout();
 
+    const labelStyle = dv.getStyle().label;
+
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
-    const fontSize = layout.fontSize;
-    ctx.font = fontSize+"px Arial";
+    const fontSize = labelStyle.fontSize;
+    ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
     if(layout.isPieChart){
         const dataset = data[0];
@@ -23,7 +25,7 @@ function drawLabels(dv, graphPosition){
 
         const labelWidth = canvasWidth-(graphX+graphWidth);
         const labelHeight = canvasHeight-graphY;
-        const labelX = (graphX+graphWidth)+(fontSize*2);
+        const labelX = (graphX+graphWidth)+(fontSize);
 
         let startY = graphY;
 
@@ -36,7 +38,7 @@ function drawLabels(dv, graphPosition){
 
                 let pixelSpace = (fontSize*2);
 
-                if((catKeys*(fontSize*2)) >= graphHeight){
+                if((catKeys.length*(fontSize*2)) >= graphHeight){
                     pixelSpace = Math.round(labelHeight/catKeys.length);
                 }
 

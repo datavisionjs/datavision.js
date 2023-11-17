@@ -78,7 +78,9 @@ const DrawOutOfBoundLines = (dv, pos, size, position) => {
     }
 };
 
-const DrawLines = (ctx, type, size, position) => {
+const DrawLines = (dv, type, size, position) => {
+
+    const ctx = dv.getCtx();
 
     let pos = null;
 
@@ -93,7 +95,7 @@ const DrawLines = (ctx, type, size, position) => {
     ctx.lineWidth = size;
 
     //draw lines coming from out of bounds points
-    DrawOutOfBoundLines(ctx, pos, size, position);
+    DrawOutOfBoundLines(dv, pos, size, position);
 
     //draw lines and arc within graph bounds
     if(pos){
@@ -142,6 +144,7 @@ const DrawLines = (ctx, type, size, position) => {
         ctx.stroke();
         ctx.closePath();
     }
+    
 }
 
 export default DrawLines

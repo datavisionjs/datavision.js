@@ -131,7 +131,7 @@ const DrawElements = (dv, type, dataset) => {
                     const x = xValues[i];
                     const y = yValues[i];
 
-                    const size = 4;
+                    const size = 3;
                     
                     const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
                     

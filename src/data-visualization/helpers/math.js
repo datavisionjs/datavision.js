@@ -50,23 +50,31 @@ export function hasValidElements(arr) {
     }
 }
 
-export function graphPosition(type, canvasWidth, canvasHeight){
+export function graphPosition(dv, type, canvasWidth, canvasHeight){
     //define the graph dimensions
     let graphWidth = canvasWidth;
     let graphHeight = canvasHeight;
 
+    const style = dv.getStyle();
+    const titleLines = dv.getLayout().titleLines;
+    const titleFontSize = style.title.fontSize;
+
     //calculates horizontal position of the graph area
     let graphX = 0;
     //calculates vertical position of the graph area
-    let graphY = 0;
+    let graphY = (titleFontSize*3);
+
+    if(titleLines.length > 1){
+        graphY += (titleFontSize*(titleLines.length-1));
+    }
 
     if(type === "pie"){
-
+        graphY = (canvasHeight-graphHeight);
+        
         graphWidth = (canvasWidth * 0.65);
         graphHeight = (canvasHeight * 0.80);
 
         //calculates vertical position of the graph area
-        graphY = (canvasHeight-graphHeight);
 
     }else {
 
@@ -169,14 +177,10 @@ export function rangeOnAxis(range, maxDist){
 //calculates data position on graph
 export function posOnGraph(dv, position){
     const layout = dv.getLayout();
-    const dataType = dv.getFirstDataType();
-
-    const canvas = dv.ctx.canvas;
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
 
     //stores the position and dimensions of the graph area
-    const chartPosition = graphPosition(dataType, canvasWidth, canvasHeight);
+    //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
+    const chartPosition = layout.graphPosition;
 
     const ranges = layout.ranges;
 
@@ -218,7 +222,8 @@ export function posOnGraphYAxis(dv, y){
     const canvasHeight = canvas.height;
 
     //stores the position and dimensions of the graph area
-    const chartPosition = graphPosition(dataType, canvasWidth, canvasHeight);
+    //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
+    const chartPosition = layout.graphPosition;
 
     const ranges = layout.ranges;
 
