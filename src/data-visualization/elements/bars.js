@@ -10,16 +10,20 @@ const DrawBars = (dv, category, catKey, dataset) => {
     
 
     if(category && dataset){
-        
-        const yValues = category.yValues;
+        console.log("Loving the Blues!");
+        const isHorizontal = dataset.direction === "hr";
+
+        const values = category.values;
+
         const barColors = category.barColors;
 
         //stores the position and dimensions of the graph area
         const graphPosition = layout.graphPosition;
-        const graphX = graphPosition.x, graphWidth = graphPosition.width;
+        const graphX = graphPosition.x, graphY = graphPosition.y;
+        const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-
-        const yRange = Calc.rangeOnAxis(dataset.yRange, 10);
+        const maxDist = isHorizontal? 7: 10;
+        const range = Calc.rangeOnAxis(dataset.range, maxDist);
 
         const maxBarPerCategory = dataset.categoryBarMax;
 
@@ -27,38 +31,73 @@ const DrawBars = (dv, category, catKey, dataset) => {
         const catKeys = Array.from(categories.keys());
 
         const catPos = catKeys.indexOf(catKey);
-        const step = (graphWidth/catKeys.length);
-        const barWidth = (step/(maxBarPerCategory+1));
-
-        let axisX = (graphX+((step*catPos)+(barWidth/2)));
+        const step = isHorizontal? (graphHeight/catKeys.length): (graphWidth/catKeys.length);
+        const barSize = (step/(maxBarPerCategory+1));
 
         //find the starting position of the bar on the y-axis
-        const findY0 = Calc.posOnGraphYAxis(dv, 0);
-        const startY = findY0? findY0: Calc.posOnGraphYAxis(dv, yRange[0]);
+        const find0 = isHorizontal? Calc.posOnGraphXAxis(dv, 0): Calc.posOnGraphYAxis(dv, 0);
+        const start = find0? find0: isHorizontal? Calc.posOnGraphXAxis(dv, range[0]): Calc.posOnGraphYAxis(dv, range[0]);
 
-        for(var i = 0; i < yValues.length; i++){
-            const y = yValues[i];
 
-            const colorIndex = layout.customColorsIndex;
-            const defaultColor = customColors[colorIndex+i].code;
+        if(isHorizontal){
 
-            const barColor = barColors[i]? barColors[i]: defaultColor;
+            const barHeight = barSize;
+            let axisY = (graphY+((step*catPos)+(barHeight/2)));
 
-            const endY = Calc.posOnGraphYAxis(dv, y);
+            for(var i = 0; i < values.length; i++){
+                const x = values[i];
 
-            const barHeight = (startY-endY);
+                const colorIndex = layout.customColorsIndex;
+                const defaultColor = customColors[colorIndex+i].code;
 
-            if(startY && endY){
+                const barColor = barColors[i]? barColors[i]: defaultColor;
 
-                barColor? ctx.fillStyle = barColor: null;//set bar color if exists
-                
-                //draw bar
-                ctx.beginPath();
-                ctx.rect(axisX, endY, barWidth, barHeight);
-                ctx.fill();
+                const end = Calc.posOnGraphXAxis(dv, x);
+
+                const barWidth = (start-end);
+
+                if(start && end){
+
+                    barColor? ctx.fillStyle = barColor: null;//set bar color if exists
+                    
+                    //draw bar
+                    ctx.beginPath();
+                    ctx.rect(graphX, axisY, barWidth, barHeight);
+                    ctx.fill();
+                }
+
+                axisY += barWidth;
             }
 
-            axisX += barWidth;
+        }else {
+            const barWidth = barSize;
+
+            let axisX = (graphX+((step*catPos)+(barWidth/2)));
+
+            for(var i = 0; i < values.length; i++){
+                const y = values[i];
+
+                const colorIndex = layout.customColorsIndex;
+                const defaultColor = customColors[colorIndex+i].code;
+
+                const barColor = barColors[i]? barColors[i]: defaultColor;
+
+                const end = Calc.posOnGraphYAxis(dv, y);
+
+                const barHeight = (start-end);
+
+                if(start && end){
+
+                    barColor? ctx.fillStyle = barColor: null;//set bar color if exists
+                    
+                    //draw bar
+                    ctx.beginPath();
+                    ctx.rect(axisX, end, barWidth, barHeight);
+                    ctx.fill();
+                }
+
+                axisX += barWidth;
+            }
         }
 
         

@@ -13,40 +13,18 @@
 
     <script>
 
-        let exp1 = "x";
-        let exp2 = "1.5*x";
-        let exp3 = "1.5*x + 7";
-        // Generate values
+        const xArray = [55, 49, 44, 24, 15];
+        const yArray = ["Italy","France","Spain","USA","Argentina"];
 
-        const x1Values = [];
-        const x2Values = [];
-        const x3Values = [];
-        const y1Values = [];
-        const y2Values = [];
-        const y3Values = [];
+        const data = [{
+            x: xArray,
+            y: yArray,
+            type: "bar",
+            direction: "hr"
+        }];
 
-        for (let x = 0; x <= 10; x += 1) {
-            x1Values.push(x);
-            x2Values.push(x);
-            x3Values.push(x);
-            y1Values.push(eval(exp1));
-            y2Values.push(eval(exp2));
-            y3Values.push(eval(exp3));
-        }
+        const layout = {title:"World Wide Wine Production"};
 
-        // Define Data
-        const data = [
-            {x: x1Values, y: y1Values, type:"line"},
-            {x: x2Values, y: y2Values, type:"line"},
-            {x: x3Values, y: y3Values, type:"line"}
-        ];
-
-        // Define Layout
-        const layout = {
-            xAxis: {title: "Square Meters"},
-            yAxis: {title: "Price in Millions"},  
-            title: "House Prices vs. Size"
-        };
 
 
         const chart = new DataVision("my-chart");

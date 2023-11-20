@@ -213,13 +213,7 @@ export function posOnGraph(dv, position){
 }
 
 export function posOnGraphYAxis(dv, y){
-    const ctx = dv.getCtx();
     const layout = dv.getLayout();
-    const dataType = layout.firstDataType;
-
-    const canvas = ctx.canvas;
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
 
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
@@ -227,19 +221,47 @@ export function posOnGraphYAxis(dv, y){
 
     const ranges = layout.ranges;
 
-    const yRange = rangeOnAxis(ranges.yRange, 10);
-    const yRangeStart = yRange[0];
-    const yRangeEnd = yRange[1];
+    const range = rangeOnAxis(ranges.yRange, 10);
+    const rangeStart = range[0];
+    const rangeEnd = range[1];
 
-    const yRangeDiff = (yRangeEnd-yRangeStart);
+    const rangeDiff = (rangeEnd-rangeStart);
 
     //check if position is within range
-    if((y >= yRangeStart && y <= yRangeEnd)){
+    if((y >= rangeStart && y <= rangeEnd)){
 
-        const yPerc = ((y - yRangeStart)/yRangeDiff);
-        const newY = ((chartPosition.y+chartPosition.height)-(yPerc*chartPosition.height));
+        const perc = ((y - rangeStart)/rangeDiff);
+        const pos = ((chartPosition.y+chartPosition.height)-(perc*chartPosition.height));
         
-        return newY;
+        return pos;
+    }
+
+    return null;
+}
+
+export function posOnGraphXAxis(dv, x){
+    const layout = dv.getLayout();
+
+    //stores the position and dimensions of the graph area
+    //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
+    const chartPosition = layout.graphPosition;
+
+    const ranges = layout.ranges;
+
+    const range = rangeOnAxis(ranges.xRange, 7);
+    console.log("rnage: ", range, ranges.xRange);
+    const rangeStart = range[0];
+    const rangeEnd = range[1];
+
+    const rangeDiff = (rangeEnd-rangeStart);
+
+    //check if position is within range
+    if((x >= rangeStart && x <= rangeEnd)){
+
+        const perc = ((x - rangeStart)/rangeDiff);
+        const pos = ((chartPosition.x+chartPosition.width)-(perc*chartPosition.width));
+        
+        return pos;
     }
 
     return null;

@@ -22,6 +22,7 @@ const DrawElements = (dv, type, dataset) => {
     if(type === "bars"){
 
         if(layout.isBarChart){
+            const isHorizontal = dataset.direction === "hr";
             const categories = dataset.barCategories;
 
             const maxBarPerCategory = dataset.categoryBarMax;
@@ -29,8 +30,8 @@ const DrawElements = (dv, type, dataset) => {
 
             const categoryMidPoints = [];
 
-            const step = (graphWidth/catKeys.length);
-            let midPoint = (graphX+(step/2));
+            const step = isHorizontal? (graphHeight/catKeys.length): (graphWidth/catKeys.length);
+            let midPoint = isHorizontal? (graphY+(step/2)): (graphX+(step/2));
 
 
             for(var i = 0; i < catKeys.length; i++){

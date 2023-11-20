@@ -5,6 +5,8 @@ export function setGraphPosition(dv){
     const canvas = dv.getCanvas();
     const width = canvas.width, height = canvas.height;
 
+    const labelStyle = dv.getStyle().label;
+
     //define the graph dimensions
     let graphWidth = width;
     let graphHeight = height;
@@ -30,7 +32,7 @@ export function setGraphPosition(dv){
     let graphY = (titleFontSize*2);
 
     if(titleLines.length > 1){
-        graphY += (titleFontSize*(titleLines.length-1));
+        graphY = ((titleFontSize*titleLines.length)+(titleFontSize/2));
     }
 
     //set graph height
@@ -42,13 +44,11 @@ export function setGraphPosition(dv){
         graphHeight -= (graphY);
     }else {
 
-        graphX = (labelSpace/2);
+        graphX = labelFontSize;
 
         if(yLabel){
             graphX += (labelSpace/2);
         }
-
-        console.log("lSpace: ", labelSpace, graphHeight);
 
         graphHeight -= ((graphY)+(labelSpace/2));
 
@@ -174,8 +174,8 @@ export function setBar(dv){
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
-    //find y axis range 
-    let yRange = null;
+    //find y and x axis range 
+    let range = null;
 
     //stores the number of bars for each category
     let categoryBarMax = 1;
@@ -185,24 +185,36 @@ export function setBar(dv){
 
     let barCategories = new Map();
 
-    //get range from layout
-    if(layout){
-
-        const yMaxDist = 10;
-        const yAxis = layout.yAxis;
-        if(yAxis){
-            if(yAxis.range){
-                yRange = Calc.rangeOnAxis(yAxis.range, yMaxDist);
-            }
-        }
-    }
+    let direction = null;
 
     //get range from data 
     if(data){
 
+        direction = data.length > 0? data[0].direction: null;
+        const isHorizontal = direction === "hr";
+
+        //get range from layout
+        if(layout){
+
+            let maxDist = 10;
+            let axis = layout.yAxis;
+
+            if(isHorizontal){
+                maxDist = 7;
+                axis = layout.xAxis;
+            }
+            
+            if(axis){
+                if(axis.range){
+                    range = Calc.rangeOnAxis(axis.range, maxDist);
+                }
+            }
+            
+        }
+
         //get the data type of the dataset
         //const firstDataType = data[0]? data[0].type: null;
-        let tempYRange = yRange;
+        let tempRange = range;
 
         //loop through data and set xRange and yRange
         const tempData = [...data];
@@ -219,8 +231,9 @@ export function setBar(dv){
                 const barColors = dataset.barColors? dataset.barColors: [];
 
                 for(var j = 0; j < x.length; j++){
-                    const xValue = x[j];
-                    const yValue = y[j];
+                    const xValue = isHorizontal? y[j]: x[j];
+                    const yValue = isHorizontal? x[j]: y[j];
+
                     const barColor = barColors[j];
 
                     let categoryValues = null;
@@ -245,7 +258,7 @@ export function setBar(dv){
                         categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
                     }
 
-                    barCategories.set(xValue, {yValues: categoryValues, barColors: barColorValues});
+                    barCategories.set(xValue, {values: categoryValues, barColors: barColorValues});
 
                 }
 
@@ -253,14 +266,16 @@ export function setBar(dv){
                 dataset.type = null;
             }
             
-            if(!yRange){
+            if(!range){
+                const dataValues = isHorizontal? x: y;
+                console.log(dataValues);
+                const minAndMax = Calc.findMinAndMax(dataValues);
 
-                const yMinAndMax = Calc.findMinAndMax(y);
-                if(yMinAndMax){
-                    if(tempYRange){
-                        tempYRange = [Math.min(tempYRange[0],yMinAndMax.min), Math.max(tempYRange[1], yMinAndMax.max)];
+                if(minAndMax){
+                    if(tempRange){
+                        tempRange = [Math.min(tempRange[0],minAndMax.min), Math.max(tempRange[1], minAndMax.max)];
                     }else {
-                        tempYRange = [yMinAndMax.min, yMinAndMax.max];
+                        tempRange = [minAndMax.min, minAndMax.max];
                     }
                 }
             }
@@ -268,8 +283,8 @@ export function setBar(dv){
         }
 
         //round up the ranges
-        if(tempYRange){
-            yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
+        if(tempRange){
+            range = [Math.round(tempRange[0]), Math.round(tempRange[1])];
         }
 
 
@@ -277,17 +292,20 @@ export function setBar(dv){
     }
 
     //set ranges to layout
+    console.log("myRange: ", range);
     layout.ranges = {
-        yRange: yRange,
+        yRange: range,
+        xRange: range
     };
 
     //create a new bar data
     const newBarData = {
-        type: "bar", 
-        yRange: yRange, 
+        type: "bar",
+        range: range,
         barCategories: barCategories,
         categoryBarMax: categoryBarMax,
-        maxTextWidth: maxTextWidth
+        maxTextWidth: maxTextWidth,
+        direction: direction
     };
 
     //set bardata to layout 
