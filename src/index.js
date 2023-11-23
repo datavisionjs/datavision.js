@@ -12,6 +12,7 @@ function DataVision(targetId) {
 
     this.target = document.getElementById(targetId);
     this.canvas = document.createElement("canvas");
+    this.canvasCopy = document.createElement("canvas");
 
     //setter and getter 
 
@@ -63,16 +64,41 @@ function DataVision(targetId) {
     };
 
     //canvas
-    this.updateCanvas = function (width, height){
-        const canvas = this.canvas;
+    this.setCanvas = function (width, height){
+        const canvas = this.getCanvas();
 
         canvas.width = width;
         canvas.height = height;
 
         this.canvas = canvas;
     };
+    this.updateCanvas = function (){
+        const canvasCopy = this.getCanvas();
+
+        const ctx = this.getCtx();
+
+        ctx.drawImage(canvasCopy, 0, 0);
+    };
     this.getCanvas = function (){
         return this.canvas;
+    };
+
+
+    this.updateCanvasCopy = function (){
+        const canvas = this.getCanvas();
+
+        const canvasCopy = this.getCanvasCopy();
+        canvasCopy.width = canvas.width;
+        canvasCopy.height = canvas.height;
+
+        const ctx = canvasCopy.getContext("2d");
+
+        ctx.drawImage(canvas, 0, 0);
+
+        this.canvasCopy = canvasCopy;
+    };
+    this.getCanvasCopy = function (){
+        return this.canvasCopy;
     };
 
     //2d context 
@@ -112,7 +138,7 @@ DataVision.prototype.plot = function (data, layout){
     const canvasWidth = size;
     const canvasHeight = (canvasWidth*0.75);
 
-    this.updateCanvas(canvasWidth, canvasHeight);
+    this.setCanvas(canvasWidth, canvasHeight);
 
     //set styles
     this.setStyle();
@@ -125,6 +151,10 @@ DataVision.prototype.plot = function (data, layout){
 
     dataVis.Chart(this);
 
+    //update date canvas copy with main canvas
+    this.updateCanvasCopy();
+
+    //add main canvas to user target element
     this.addCanvasToTarget();
 }
 

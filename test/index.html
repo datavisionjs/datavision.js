@@ -13,17 +13,19 @@
 
     <script>
 
-        const xArray = [55, 49, 44, 24, 15];
-        const yArray = ["Italy","France","Spain","USA","Argentina"];
+    let exp = "Math.sin(x)";
 
-        const data = [{
-            x: xArray,
-            y: yArray,
-            type: "bar",
-            direction: "hr"
-        }];
+    // Generate values
+    const xValues = [];
+    const yValues = [];
+    for (let x = 0; x <= 10; x += 0.1) {
+        xValues.push(x);
+        yValues.push(eval(exp));
+    }
 
-        const layout = {title:"World Wide Wine Production"};
+    // Display using Plotly
+    const data = [{x:xValues, y:yValues, type:"line"}];
+    const layout = {title: "y = " + exp};
 
 
 
@@ -33,6 +35,8 @@
         window.addEventListener('resize', function () {
             chart.plot(data, layout);
         });
+
+        
     </script>
 </body>
 </html>

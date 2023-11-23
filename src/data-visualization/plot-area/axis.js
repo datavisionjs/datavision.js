@@ -412,14 +412,18 @@ const DrawAxis = (dv) => {
         }else {
             let range = ranges.yRange;
             if(range){
+                const rangeStart = range[0];
                 const rangeEnd = range[1];
 
                 const fontSize = labelStyle.fontSize;
                 ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
-                const textWidth = ctx.measureText(rangeEnd).width;
+                const rangeStartWidth = ctx.measureText(rangeStart).width;
+                const rangeEndWidth = ctx.measureText(rangeEnd).width;
 
-                if(rangeEnd){
+                const textWidth = rangeStartWidth > rangeEndWidth? rangeStartWidth: rangeEndWidth;
+
+                if(rangeStart && rangeEnd){
                     graphX += (textWidth);
                     graphWidth = (canvasWidth-graphX);
                 }
