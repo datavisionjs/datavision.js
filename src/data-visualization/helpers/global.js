@@ -1,4 +1,55 @@
 
+//adds event listeners
+export function on(element, event, handler, eventAlt) {
+    if (element && typeof element === 'object') {
+        if (element.addEventListener) {
+
+            if(!hasEvent(element, event, handler)){
+                element.addEventListener(event, handler, false);
+            }
+
+            if (eventAlt && !hasEvent(element, eventAlt, handler)) {
+                element.addEventListener(eventAlt, handler, false);
+            }
+        } else if (element.attachEvent) {
+            if(!hasEvent(element, event, handler)){
+                element.attachEvent('on' + event, handler);
+            }
+
+            if (eventAlt && !hasEvent(element, eventAlt, handler)) {
+                element.attachEvent('on' + eventAlt, handler);
+            }
+        }
+    }
+}
+
+//check if the event is already attached
+function hasEvent(element, eventName, handler){
+    return element._eventHandlers && element._eventHandlers[eventName] &&
+    element._eventHandlers[eventName].includes(handler);
+}
+
+
+//get mouse position
+export function getMousePosition(event){
+
+    if(event){
+        const target = event.target;
+
+        const rect = target.getBoundingClientRect(); // Get the canvas bounding box
+
+        // Calculate the mouse position relative to the canvas
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        return {x: mouseX, y: mouseY};
+    }
+
+    return null;
+};
+
+
+//plit graph title text
 export function splitTitleText(dv, text) {
     const canvas = dv.getCanvas();
     const ctx = dv.getCtx();
@@ -30,6 +81,14 @@ export function splitTitleText(dv, text) {
 
     lines.push(currentLine);
     return lines;
+}
+
+//shorten text 
+export function shortenText(text, maxLength){
+    if (text.length > maxLength) {
+        return text.substr(0, maxLength) + '...';
+    }
+    return text;
 }
 
 //get space for charts like line scatter and bar

@@ -6,11 +6,11 @@ const DrawPieSlice = (dv, startDegrees, endDegrees) => {
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const graphPosition = layout.graphPosition;
+    const graphPosition = layout.pieGraphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-    const radius = layout.arcRadius;
+    const radius = Calc.getArcRadius(graphWidth, graphHeight);
     const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+radius);
 
     const startPoint = Calc.calculatePointOnCircle(startDegrees, radius, {x: arcCenterX, y: arcCenterY});
@@ -22,8 +22,6 @@ const DrawPieSlice = (dv, startDegrees, endDegrees) => {
     //angels are in radians
     const startAngle = (startDegrees)*degreesToRadians;
     const endAngle = (endDegrees)*degreesToRadians;
-
-    console.log("deg: ", startDegrees, endDegrees);
 
     ctx.beginPath();
     ctx.strokeStyle = "white";

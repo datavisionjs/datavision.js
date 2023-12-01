@@ -9,7 +9,7 @@ const DrawTitleLabel = (dv) => {
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width;
 
-    const position = layout.graphPosition;
+    const position = layout.axisGraphPosition;
     const graphY = position.y;
 
     let titleLines = layout.titleLines;

@@ -5,31 +5,17 @@ import DrawAxis from "./axis";
 import DrawArc from './arc.js';
 
 const plotArea = (dv) => {
+    //set chart properties
+    Prop.setUpChart(dv);
+    Prop.setGraphPosition(dv);
+
     const layout = dv.getLayout();
-    const type = layout.firstDataType;
     
-    const axisCharts = ["line", "scatter", "bar"];
-
-    if(axisCharts.includes(type)){
-        //set ranges to layout
-        if(type === "bar"){
-            layout.isBarChart = true;
-            Prop.setBar(dv);
-        }else {
-            Prop.setRanges(dv);
-        }
-
-        //draw axis
-        DrawAxis(dv);
-
-    }else if(type === "pie"){
-
-        layout.isPieChart = true;
-        Prop.setPie(dv);
-        
-        //draw arc
-        DrawArc(dv);
-    }
+    //draw axis 
+    layout.hasAxisData? DrawAxis(dv): null;
+    
+     //draw arc
+    layout.hasPieData? DrawArc(dv): null;
 };
 
 export default plotArea;

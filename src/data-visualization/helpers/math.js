@@ -32,6 +32,10 @@ export function findMinAndMax(arr) {
     }
 }
 
+export function isAllNumbers(arr) {
+    return arr.every(element => typeof element === 'number');
+}
+
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
     // Convert degrees to radians
     const radians = (Math.PI / 180) * degrees;
@@ -173,96 +177,170 @@ export function rangeOnAxis(range, maxDist){
     return [start, end];
 }
 
+//get the minimun and max from a data of all numbers and return as range
+export function rangeFromData(arr){
+    if(isAllNumbers(arr)){
+        const minAndMax = findMinAndMax(arr);
+
+        if(minAndMax){
+            return [minAndMax.min, minAndMax.max];
+        }
+    }
+    return null;
+}
+
 
 //calculates data position on graph
 export function posOnGraph(dv, position){
-    const layout = dv.getLayout();
+    const x = posOnGraphXAxis(dv, position.x);
+    const y = posOnGraphYAxis(dv, position.y);
 
-    //stores the position and dimensions of the graph area
-    //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
-    const chartPosition = layout.graphPosition;
-
-    const ranges = layout.ranges;
-
-    const xRange = rangeOnAxis(ranges.xRange, 7);
-    const xRangeStart = xRange? xRange[0]: null;
-    const xRangeEnd = xRange? xRange[1]: null;
-
-    const xRangeDiff = (xRangeEnd-xRangeStart);
-
-    const yRange = rangeOnAxis(ranges.yRange, 10);
-    const yRangeStart = yRange? yRange[0]: null;
-    const yRangeEnd = yRange? yRange[1]: null;
-
-    const yRangeDiff = (yRangeEnd-yRangeStart);
-
-    //check if position is within range
-    if((position.x >= xRangeStart && position.x <= xRangeEnd) && (position.y >= yRangeStart && position.y <= yRangeEnd)){
-        
-        const xPerc = ((position.x - xRangeStart)/xRangeDiff);
-        const yPerc = ((position.y - yRangeStart)/yRangeDiff);
-        
-        const x = (chartPosition.x+(xPerc*chartPosition.width));
-        const y = ((chartPosition.y+chartPosition.height)-(yPerc*chartPosition.height));
-        
-        return {x: x, y: y};
-    }
-
-    return null;
-    
+    return {x: x, y: y};
 }
 
 export function posOnGraphYAxis(dv, y){
     const layout = dv.getLayout();
 
+    const axisData = layout.axisData;
+    const isHorizontal = axisData.direction === "hr";
+
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
-    const chartPosition = layout.graphPosition;
+    const chartPosition = layout.axisGraphPosition;
+    const chartY = chartPosition.y;
+    const chartHeight = chartPosition.height;
 
     const ranges = layout.ranges;
 
-    const range = rangeOnAxis(ranges.yRange, 10);
-    const rangeStart = range[0];
-    const rangeEnd = range[1];
+    const yRange = isHorizontal? ranges.labelRange: ranges.valueRange;
 
-    const rangeDiff = (rangeEnd-rangeStart);
+    if(yRange){
+        const range = rangeOnAxis(yRange, 10);
+        const rangeStart = range[0];
+        const rangeEnd = range[1];
 
-    //check if position is within range
-    if((y >= rangeStart && y <= rangeEnd)){
+        const rangeDiff = (rangeEnd-rangeStart);
 
-        const perc = ((y - rangeStart)/rangeDiff);
-        const pos = ((chartPosition.y+chartPosition.height)-(perc*chartPosition.height));
-        
-        return pos;
+        //check if position is within range
+        if((y >= rangeStart && y <= rangeEnd)){
+
+            const perc = ((y - rangeStart)/rangeDiff);
+            const pos = ((chartY+chartHeight)-(perc*chartHeight));
+            
+            return pos;
+        }
     }
 
-    return null;
+    return y;
 }
 
 export function posOnGraphXAxis(dv, x){
     const layout = dv.getLayout();
 
+    const axisData = layout.axisData;
+    const isHorizontal = axisData.direction === "hr";
+
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
-    const chartPosition = layout.graphPosition;
+    const chartPosition = layout.axisGraphPosition;
+    const chartX = chartPosition.x;
+    const chartWidth = chartPosition.width;
 
     const ranges = layout.ranges;
 
-    const range = rangeOnAxis(ranges.xRange, 7);
-    console.log("rnage: ", range, ranges.xRange);
-    const rangeStart = range[0];
-    const rangeEnd = range[1];
+    const xRange = isHorizontal? ranges.valueRange: ranges.labelRange;
 
-    const rangeDiff = (rangeEnd-rangeStart);
+    if(xRange){
+        const range = rangeOnAxis(xRange, 7);
+    
+        const rangeStart = range[0];
+        const rangeEnd = range[1];
 
-    //check if position is within range
-    if((x >= rangeStart && x <= rangeEnd)){
+        const rangeDiff = (rangeEnd-rangeStart);
 
-        const perc = ((x - rangeStart)/rangeDiff);
-        const pos = ((chartPosition.x+chartPosition.width)-(perc*chartPosition.width));
+        //check if position is within range
+        if((x >= rangeStart && x <= rangeEnd)){
+
+            const perc = ((x - rangeStart)/rangeDiff);
+            const pos = (chartX+(perc*chartWidth));
+            
+            return pos;
+        }
+    }
+    
+    return x;
+    
+}
+
+
+export function getAxisPosition(dv, label, value){
+    return {
+        x: getAxisLabelPosition(dv, label),
+        y: getAxisValuePosition(dv, value)
+    };
+}
+
+export function getAxisLabelPosition(dv, label){
+    const layout = dv.getLayout();
+
+    const graphPosition = layout.axisGraphPosition;
+    const graphX = graphPosition.x;
+    const graphWidth = graphPosition.width;
+
+    const axisData = layout.axisData;
+    const labelIsAllNumbers = axisData.labelIsAllNumbers;
+
+    const axisLabels = axisData.labels;
+
+    if(!labelIsAllNumbers){
+        const step = (graphWidth/axisLabels.length);
+        const halfStep = (step/2);
+        const index = axisLabels.indexOf(label);
         
-        return pos;
+        if(index >= 0){
+
+            label = (graphX+((step*index)+halfStep));
+        }
+    }else {
+        label = posOnGraphXAxis(dv, label);
     }
 
-    return null;
+    return label;
 }
+
+export function getAxisValuePosition(dv, value){
+    const layout = dv.getLayout();
+
+    const graphPosition = layout.axisGraphPosition;
+    const graphY = graphPosition.y;
+    const graphHeight = graphPosition.height;
+
+    const axisData = layout.axisData;
+    const valueIsAllNumbers = axisData.valueIsAllNumbers;
+
+    const axisValues = axisData.values;
+
+    if(!valueIsAllNumbers){
+        const step = (graphHeight/axisValues.length);
+        const halfStep = (step/2);
+        const index = axisValues.indexOf(value);
+        
+        if(index >= 0){
+            value = ((graphY+graphHeight)-((step*index)+halfStep));
+        }
+    }else {
+        value = posOnGraphYAxis(dv, value);
+    }
+
+    return value;
+}
+
+
+//get arcRadius 
+export function getArcRadius(width, height){
+    
+    let radius = Math.round(0.5 * Math.min(width, height));
+    radius < 0? radius = 0: null;
+
+    return radius;
+};

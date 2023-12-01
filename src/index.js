@@ -1,8 +1,14 @@
 import * as dataVis from './data-visualization/index.js'
+
+//import helpers
 import * as Calc from './data-visualization/helpers/math.js';
 import GetStyle from './data-visualization/helpers/style.js';
-import { splitTitleText } from './data-visualization/helpers/global.js';
 import * as Prop from './data-visualization/helpers/properties.js'
+import DisplayToolTip from './data-visualization/helpers/tooltip.js';
+
+//import all global functions 
+import * as Global from './data-visualization/helpers/global.js';
+
 
 function DataVision(targetId) {
     //styles 
@@ -11,6 +17,8 @@ function DataVision(targetId) {
     this.style = {};
 
     this.target = document.getElementById(targetId);
+    this.targetCanvas = document.createElement("canvas");
+
     this.canvas = document.createElement("canvas");
     this.canvasCopy = document.createElement("canvas");
 
@@ -30,16 +38,16 @@ function DataVision(targetId) {
 
         if(layout){
             //get the data type of the dataset
-            const data = this.getData();
+            //const data = this.getData();
 
-            const firstDataType = data[0]? data[0].type: null;
+            //const firstDataType = data[0]? data[0].type: null;
 
             //set title text to multiple lines 
             const titleText = layout.title? layout.title: "";
-            layout.titleLines = splitTitleText(this, titleText);
+            layout.titleLines = Global.splitTitleText(this, titleText);
 
-            layout.isBarChart = firstDataType === "bar"? true: false;
-            layout.isPieChart = firstDataType === "pie"? true: false;
+            //layout.isBarChart = firstDataType === "bar"? true: false;
+            //layout.isPieChart = firstDataType === "pie"? true: false;
 
             //set layout default settings
             layout.customColorsIndex = 0;
@@ -47,8 +55,6 @@ function DataVision(targetId) {
 
             //set layout to new layout
             this.layout = {...layout};
-
-            Prop.setGraphPosition(this);
 
         }
     };
@@ -71,13 +77,6 @@ function DataVision(targetId) {
         canvas.height = height;
 
         this.canvas = canvas;
-    };
-    this.updateCanvas = function (){
-        const canvasCopy = this.getCanvas();
-
-        const ctx = this.getCtx();
-
-        ctx.drawImage(canvasCopy, 0, 0);
     };
     this.getCanvas = function (){
         return this.canvas;
@@ -111,13 +110,33 @@ function DataVision(targetId) {
         return this.target;
     };
 
+    this.getTargetCanvas = function (){
+        return this.targetCanvas;
+    };
+    this.updateTargetCanvas = function (){
+        const canvasCopy = this.getCanvasCopy();
+        const canvas = this.getTargetCanvas();
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.drawImage(canvasCopy, 0, 0);
+    };
     this.addCanvasToTarget = function (){
-        const canvas = document.createElement("canvas");
+        const canvas = this.getTargetCanvas();
         canvas.width = this.canvas.width;
         canvas.height = this.canvas.height;
         
         const ctx = canvas.getContext("2d");
         ctx.drawImage(this.getCanvas(), 0, 0);
+
+        //set event on canvas
+        const dv = this; //get datavision object
+        Global.on(canvas, "mousemove", function (event){
+            const mousePosition = Global.getMousePosition(event);
+            DisplayToolTip(dv, mousePosition);
+        }, "touchend");
        
         if(this.target){
             this.target.innerHTML = "";
@@ -136,7 +155,7 @@ DataVision.prototype.plot = function (data, layout){
     }
 
     const canvasWidth = size;
-    const canvasHeight = (canvasWidth*0.75);
+    const canvasHeight = (canvasWidth*0.6);
 
     this.setCanvas(canvasWidth, canvasHeight);
 

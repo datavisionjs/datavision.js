@@ -13,21 +13,21 @@
 
     <script>
 
-    let exp = "Math.sin(x)";
+const xArray = ["Italy","France","Spain","USA","Argentina is a nice country for the"];
+const yArray = [55, 49, 44, 24, 15];
 
-    // Generate values
-    const xValues = [];
-    const yValues = [];
-    for (let x = 0; x <= 10; x += 0.1) {
-        xValues.push(x);
-        yValues.push(eval(exp));
+const data = [
+    {
+        label: "Hello",
+        labels: xArray,
+        values: yArray,
+        type: "bar",
+        direction: "hr",
+        hole: 0.8
     }
+];
 
-    // Display using Plotly
-    const data = [{x:xValues, y:yValues, type:"line"}];
-    const layout = {title: "y = " + exp};
-
-
+const layout = {title:"World Wide Wine Production"};
 
         const chart = new DataVision("my-chart");
 

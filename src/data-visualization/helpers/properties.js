@@ -5,8 +5,6 @@ export function setGraphPosition(dv){
     const canvas = dv.getCanvas();
     const width = canvas.width, height = canvas.height;
 
-    const labelStyle = dv.getStyle().label;
-
     //define the graph dimensions
     let graphWidth = width;
     let graphHeight = height;
@@ -22,8 +20,6 @@ export function setGraphPosition(dv){
     const xLabel = layout.xAxis? layout.xAxis.title: null;
     const yLabel = layout.yAxis? layout.yAxis.title: null;
 
-    const firstDataType = layout.firstDataType;
-
     const labelSpace = (labelFontSize*4);
 
     //calculates horizontal position of the graph area
@@ -35,135 +31,56 @@ export function setGraphPosition(dv){
         graphY = ((titleFontSize*titleLines.length)+(titleFontSize/2));
     }
 
-    //set graph height
+    //axis 
+    const axisY = graphY;
+    let axisX = labelFontSize;
 
-    if(firstDataType === "pie"){
-        graphY += labelFontSize;
-
-        graphWidth = (graphWidth*0.7);
-        graphHeight -= (graphY);
-    }else {
-
-        graphX = labelFontSize;
-
-        if(yLabel){
-            graphX += (labelSpace/2);
-        }
-
-        graphHeight -= ((graphY)+(labelSpace/2));
-
-        console.log(graphHeight);
-
-        if(xLabel){
-            if(xLabel.length > 0){
-                graphHeight -= (labelSpace/2);
-            }
-        }
-
-        graphWidth -= graphX;
+    if(yLabel){
+        axisX += (labelSpace/2);
     }
 
-    const position = {
-        x: graphX,
-        y: graphY,
-        width: graphWidth,
-        height: graphHeight
+    let axisHeight = ((graphHeight)-((graphY)+(labelSpace/2)));
+
+    if(xLabel){
+        if(xLabel.length > 0){
+            axisHeight -= (labelSpace/2);
+        }
+    }
+
+    const axisWidth = (graphWidth-graphX);
+
+    const axisPosition = {
+        x: axisX,
+        y: axisY,
+        width: axisWidth,
+        height: axisHeight
     };
+
+
+    //pie
+    const pieX = graphX, pieY = graphY += labelFontSize;
+    const pieWidth = (graphWidth*0.8), pieHeight = (graphHeight-graphY);
+
+    const piePosition = {
+        x: pieX,
+        y: pieY,
+        width: pieWidth,
+        height: pieHeight,
+    }
+
 
     //set graphposition
-    dv.layout = {...layout, graphPosition: position};
-
-}
-
-//set ranges to layout
-export function setRanges(dv){
-
-    const layout = dv.getLayout();
-
-    //find x axis range 
-    let xRange = null;
-    let yRange = null;
-
-    //get range from layout
-    if(layout){
-
-        const xMaxDist = 7;
-        const xAxis = layout.xAxis;
-
-        if(xAxis){
-            if(xAxis.range){
-                xRange = Calc.rangeOnAxis(xAxis.range, xMaxDist);
-            }
-        }
-
-        const yMaxDist = 10;
-        const yAxis = layout.yAxis;
-        if(yAxis){
-            if(yAxis.range){
-                yRange = Calc.rangeOnAxis(yAxis.range, yMaxDist);
-            }
-        }
-    }
-
-    //get range from data 
-    if(data){
-
-        if(!xRange || !yRange){
-            
-            let tempXRange = xRange;
-            let tempYRange = yRange;
-
-            //loop through data and set xRange and yRange
-            for(let i = 0; i < data.length; i++){
-                const dataset = data[i];
-                const x = dataset.x;
-                const y = dataset.y;
-
-                if(!xRange){
-
-                    const xMinAndMax = Calc.findMinAndMax(x);
-                    if(xMinAndMax){
-                        if(tempXRange){
-                            tempXRange = [Math.min(tempXRange[0],xMinAndMax.min), Math.max(tempXRange[1], xMinAndMax.max)];
-                        }else {
-                            tempXRange = [xMinAndMax.min, xMinAndMax.max];
-                        }
-                    }
-                }
-
-                if(!yRange){
-
-                    const yMinAndMax = Calc.findMinAndMax(y);
-                    if(yMinAndMax){
-                        if(tempYRange){
-                            tempYRange = [Math.min(tempYRange[0],yMinAndMax.min), Math.max(tempYRange[1], yMinAndMax.max)];
-                        }else {
-                            tempYRange = [yMinAndMax.min, yMinAndMax.max];
-                        }
-                    }
-                }
-
-            }
-
-            //round up the ranges
-            if(tempXRange){
-                xRange = [Math.round(tempXRange[0]), Math.round(tempXRange[1])];
-            }
-            if(tempYRange){
-                yRange = [Math.round(tempYRange[0]), Math.round(tempYRange[1])];
-            }
-        }
-
-    }
-    //set ranges to layout
-    layout.ranges = {
-        xRange: xRange,
-        yRange: yRange,
+    dv.layout = {
+        ...layout, 
+        axisGraphPosition: axisPosition, 
+        pieGraphPosition: piePosition
     };
+
 }
 
 
-export function setBar(dv){
+
+export function setUpChart(dv){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
     const data = [...dv.getData()];
@@ -174,227 +91,223 @@ export function setBar(dv){
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
-    //find y and x axis range 
-    let range = null;
-
     //stores the number of bars for each category
-    let categoryBarMax = 1;
+    let maxBarPerCategory = 1;
 
     //stores the width of the category with the highest text length
-    let maxTextWidth = 0;
+    let axisMaxLabelWidth = 0;
+    let axisMaxValueWidth = 0;
 
-    let barCategories = new Map();
+    let pieMaxLabelWidth = 0;
 
-    let direction = null;
+    const newData = [];
+
+    const axisLabels = [];
+    const axisValues = [];
+
+    //all pie labels and values
+    const pieLabels = [];
+    const pieValues = [];
+
+
+    const axisChartTypes = ["line", "scatter", "bar"];
+    let hasAxisData = false;
+    let hasPieData = false;
+    let axisDirection = null;
 
     //get range from data 
     if(data){
-
-        direction = data.length > 0? data[0].direction: null;
-        const isHorizontal = direction === "hr";
-
-        //get range from layout
-        if(layout){
-
-            let maxDist = 10;
-            let axis = layout.yAxis;
-
-            if(isHorizontal){
-                maxDist = 7;
-                axis = layout.xAxis;
-            }
-            
-            if(axis){
-                if(axis.range){
-                    range = Calc.rangeOnAxis(axis.range, maxDist);
-                }
-            }
-            
-        }
-
-        //get the data type of the dataset
-        //const firstDataType = data[0]? data[0].type: null;
-        let tempRange = range;
-
+        
         //loop through data and set xRange and yRange
         const tempData = [...data];
         const tempDataLength = tempData.length;
 
-        for(let i = 0; i < tempDataLength; i++){
-            const dataset = {...tempData[i]};
-
-            const x = dataset.x;
-            const y = dataset.y;
-            const dataType = dataset.type;
-            
-            if(dataType === "bar"){
-                const barColors = dataset.barColors? dataset.barColors: [];
-
-                for(var j = 0; j < x.length; j++){
-                    const xValue = isHorizontal? y[j]: x[j];
-                    const yValue = isHorizontal? x[j]: y[j];
-
-                    const barColor = barColors[j];
-
-                    let categoryValues = null;
-                    let barColorValues = null;
-
-                    //set maxTextlength 
-                    const textWidth = ctx.measureText(xValue).width;
-                    textWidth > maxTextWidth? maxTextWidth = textWidth: null;
-
-                    if(barCategories.has(xValue)){
-                        const category = barCategories.get(xValue);
-                        
-                        categoryValues = [...category.yValues, yValue];
-                        barColorValues = [...category.barColors, barColor];
-
-                    }else {
-                        categoryValues = [yValue];
-                        barColorValues = [barColor];
-                    }
-
-                    if(categoryValues){
-                        categoryValues.length > categoryBarMax? categoryBarMax = categoryValues.length: null;
-                    }
-
-                    barCategories.set(xValue, {values: categoryValues, barColors: barColorValues});
-
-                }
-
-                //set bar data type to null
-                dataset.type = null;
-            }
-            
-            if(!range){
-                const dataValues = isHorizontal? x: y;
-                console.log(dataValues);
-                const minAndMax = Calc.findMinAndMax(dataValues);
-
-                if(minAndMax){
-                    if(tempRange){
-                        tempRange = [Math.min(tempRange[0],minAndMax.min), Math.max(tempRange[1], minAndMax.max)];
-                    }else {
-                        tempRange = [minAndMax.min, minAndMax.max];
-                    }
-                }
-            }
-
-        }
-
-        //round up the ranges
-        if(tempRange){
-            range = [Math.round(tempRange[0]), Math.round(tempRange[1])];
-        }
-
-
-
-    }
-
-    //set ranges to layout
-    console.log("myRange: ", range);
-    layout.ranges = {
-        yRange: range,
-        xRange: range
-    };
-
-    //create a new bar data
-    const newBarData = {
-        type: "bar",
-        range: range,
-        barCategories: barCategories,
-        categoryBarMax: categoryBarMax,
-        maxTextWidth: maxTextWidth,
-        direction: direction
-    };
-
-    //set bardata to layout 
-    layout.barData = newBarData;
-
-    //replace the first bar element
-    data.splice(0, 1, newBarData);
-
-    //set data to dv
-    dv.setData(data);
-}
-
-export function setPie(dv){
-    const data = [...dv.getData()];
-    const layout = dv.getLayout();
-
-    let pieCategories = new Map();
-
-    let valuesLength = 0;
-
-    //get range from data 
-    if(data){
-
-        //loop through data and set xRange and yRange
-        const tempData = [...data];
-        const tempDataLength = tempData.length;
+        const barDataset = {type: "bar"};
+        const barCategories = new Map();
+        let hasBarDataset = false;
 
         for(let i = 0; i < tempDataLength; i++){
             const dataset = {...tempData[i]};
 
             const labels = dataset.labels;
             const values = dataset.values;
+            const dataType = dataset.type;
 
-            if(labels && values){
-                const dataType = dataset.type;
-                
-                if(dataType === "pie"){
-                    const pieColors = dataset.pieColors? dataset.pieColors: [];
+            const newPieDataset = {...dataset};
+            const newPieLabels = [];
+            const newPieValues = [];
+            let pieTotalValues = 0;
 
-                    for(var j = 0; j < labels.length; j++){
-                        const label = labels[j];
-                        const value = values[j];
-                        const pieColor = pieColors[j];
+            const labelIsAllNumbers = Calc.isAllNumbers(labels);
+            const valueIsAllNumbers = Calc.isAllNumbers(values);
+            
+            for(let j = 0; j < labels.length; j++){
+                const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
+                const value = valueIsAllNumbers? Math.round(values[j]): values[j];
 
-                        //subtract from valuesLength if exist
-                        if(pieCategories.has(label)){
-                            const lastValue = pieCategories.get(label).value;
-                            !isNaN(lastValue)? valuesLength -= lastValue: null;
-                        }
-                        
-                        !isNaN(value)? valuesLength += value: null;
+                //set maxTextlength
+                const labelWidth = ctx.measureText(label).width;
+                const valueWidth = ctx.measureText(value).width;
 
-                        pieCategories.set(label, {value: value, pieColor: pieColor});
+                if(dataType === "bar"){
+                    let labelValues = [value];
+
+                    if(barCategories.has(label)){
+                        const lastData = barCategories.get(label);
+                        labelValues = [...lastData.values, value];
                     }
 
-                    //set pie data type to null
-                    dataset.type = null;
+                    //set maxBarPerCategory if labelValues is more then the current value.
+                    labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
+
+                    barCategories.set(label, {values: labelValues});
+
+                    dataset.direction === "hr"? axisDirection = "hr": null;
+                    hasBarDataset = true;
+                }else if(dataType === "pie"){
+                    
+                    //set all pie data into universal pie labels and values 
+                    if(pieLabels.includes(label)){
+                        const index = pieLabels.indexOf(label);
+                        const currentValue = pieValues[index];
+
+                        pieValues[index] = (currentValue+value);
+                    }else {
+                        pieLabels.push(label);
+                        pieValues.push(value);
+                    }
+
+                    //set new pie dataset labels and values 
+                    if(newPieLabels.includes(label)){
+                        const index = newPieLabels.indexOf(label);
+                        const currentValue = newPieValues[index];
+
+                        newPieValues[index] = (currentValue+value);
+                    }else {
+                        newPieLabels.push(label);
+                        newPieValues.push(value);
+                    }
+
+                    pieTotalValues += value;
+
+                    //set max width of axis labels and values for pie charts
+                    labelWidth > pieMaxLabelWidth? pieMaxLabelWidth = labelWidth: null;
+
                 }
-            }else {
-                //set error if labels and values not found 
-                console.error("Pie chart not defined properly!");
+
+                //set max width of axis labels and values
+                if(axisChartTypes.includes(dataType)){
+                    labelWidth > axisMaxLabelWidth? axisMaxLabelWidth = labelWidth: null;
+                    valueWidth > axisMaxValueWidth? axisMaxValueWidth = valueWidth: null;
+                }
+
+                //set axis labels and values 
+                if(axisLabels.indexOf(label) === -1){
+                    axisLabels.push(label);
+                }
+                
+                if(axisValues.indexOf(value) === -1){
+                    axisValues.push(value);
+                }
+
             }
 
+            //push axis dataset whose data type is not bar
+            if(axisChartTypes.includes(dataType)){
+                hasAxisData = true;
+                 //if not a bar dataset push the dataset to newData 
+                dataType !== "bar"? newData.push(dataset): null;
+            }
+            
+            //push pie dataset
+            if(dataType === "pie"){
+                hasPieData = true;
+                
+                newPieDataset.labels = newPieLabels;
+                newPieDataset.values = newPieValues;
+                newPieDataset.totalValues = pieTotalValues;
+                newPieDataset.type = "pie";
+
+                newData.push(newPieDataset);
+            }  
+
+        }
+
+        //if bar is in data set the bar 
+        if(hasBarDataset){
+
+            barDataset.categories = barCategories;
+            barDataset.maxBarPerCategory = maxBarPerCategory;
+
+            barDataset.direction = axisDirection;
+            newData.unshift(barDataset);
         }
 
     }
 
-    //create a new pie data
-    const newPieData = {
-        type: "pie", 
-        pieCategories: pieCategories,
-        valuesLength: valuesLength
+    const axisLabelIsAllNumbers = Calc.isAllNumbers(axisLabels);
+    const axisValueIsAllNumbers = Calc.isAllNumbers(axisValues);
+
+    const isHorizontal = axisDirection === "hr";
+
+    //set layout ranges 
+    let labelRange = Calc.rangeFromData(axisLabels);
+    let valueRange = Calc.rangeFromData(axisValues);
+
+    if(layout.xAxis){
+        const range = layout.xAxis.range;
+        range? labelRange = range: null;
+    }
+
+    if(layout.yAxis){
+        const range = layout.yAxis.range;
+        range? labelRange = range: null;
+    }
+
+    layout.ranges = {
+        labelRange: labelRange,
+        valueRange: valueRange,
     };
 
-    //set pie data to layout 
-    layout.pieData = newPieData;
+    //set datasetlabels 
+    let datasetLabels = [];
+    for(let i = 0; i < newData.length; i++){
+        const dataset = newData[i];
+        const labels = dataset.labels;
+        const dataType = dataset.type;
+        const label = dataset.label;
 
-    //set arcRadius 
-    const graphPosition = layout.graphPosition;
-    const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+        if(axisChartTypes.includes(dataType)){
+            const newLabel = datasetLabels.length;
+            label? datasetLabels.push(label): datasetLabels.push("Dataset " + newLabel);
+        }else if(dataType === "pie"){
+            datasetLabels = [...datasetLabels, ...labels];
+        }
+    }
+    layout.datasetLabels = datasetLabels;
+
+    //set axis data 
+    layout.axisData = {
+        labels: isHorizontal? axisValues: axisLabels,
+        values: isHorizontal? axisLabels: axisValues,
+        maxLabelWidth: isHorizontal? axisMaxValueWidth: axisMaxLabelWidth,
+        maxValueWidth: isHorizontal? axisMaxLabelWidth: axisMaxValueWidth,
+        labelIsAllNumbers: isHorizontal? axisValueIsAllNumbers: axisLabelIsAllNumbers,
+        valueIsAllNumbers: isHorizontal? axisLabelIsAllNumbers: axisValueIsAllNumbers,
+        direction: axisDirection
+    };
+
+    //set pie data
+    layout.pieData = {
+        labels: pieLabels,
+        values: pieValues,
+        maxLabelWidth: pieMaxLabelWidth,
+    };
     
-    let radius = Math.round(0.5 * Math.min(graphWidth, graphHeight));
-    radius < 0? radius = 0: null;
+    //set whether for not a particular chart type exists.
+    layout.hasAxisData = hasAxisData;
+    layout.hasPieData = hasPieData;
 
-    layout.arcRadius = radius;
-
-    //replace the first pie  element
-    data.splice(0, 1, newPieData);
-
-     //set data to dv
-     dv.setData(data);
+    //set data to dv
+    dv.setData(newData);
 }

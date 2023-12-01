@@ -10,7 +10,6 @@ const DrawBars = (dv, category, catKey, dataset) => {
     
 
     if(category && dataset){
-        console.log("Loving the Blues!");
         const isHorizontal = dataset.direction === "hr";
 
         const values = category.values;
@@ -18,31 +17,36 @@ const DrawBars = (dv, category, catKey, dataset) => {
         const barColors = category.barColors;
 
         //stores the position and dimensions of the graph area
-        const graphPosition = layout.graphPosition;
+        const graphPosition = layout.axisGraphPosition;
         const graphX = graphPosition.x, graphY = graphPosition.y;
         const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
         const maxDist = isHorizontal? 7: 10;
-        const range = Calc.rangeOnAxis(dataset.range, maxDist);
 
-        const maxBarPerCategory = dataset.categoryBarMax;
+        const ranges = layout.ranges;
+        let range = ranges.valueRange;
+        range = Calc.rangeOnAxis(range, maxDist);
 
-        const categories = dataset.barCategories;
+        const maxBarPerCategory = dataset.maxBarPerCategory;
+
+        const categories = dataset.categories;
         const catKeys = Array.from(categories.keys());
 
         const catPos = catKeys.indexOf(catKey);
         const step = isHorizontal? (graphHeight/catKeys.length): (graphWidth/catKeys.length);
+        const halfStep = (step * 0.5);
         const barSize = (step/(maxBarPerCategory+1));
 
         //find the starting position of the bar on the y-axis
-        const find0 = isHorizontal? Calc.posOnGraphXAxis(dv, 0): Calc.posOnGraphYAxis(dv, 0);
-        const start = find0? find0: isHorizontal? Calc.posOnGraphXAxis(dv, range[0]): Calc.posOnGraphYAxis(dv, range[0]);
+        const find0 = Calc.posOnGraphYAxis(dv, 0);
+        const startPos = range? isHorizontal? Calc.posOnGraphXAxis(dv, range[0]): Calc.posOnGraphYAxis(dv, range[0]): null;
+        const start = find0? find0: startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
 
 
         if(isHorizontal){
 
             const barHeight = barSize;
-            let axisY = (graphY+((step*catPos)+(barHeight/2)));
+            let axisY = ((graphY+graphHeight)-((step*catPos)+(barHeight/2)));
 
             for(var i = 0; i < values.length; i++){
                 const x = values[i];
@@ -50,11 +54,11 @@ const DrawBars = (dv, category, catKey, dataset) => {
                 const colorIndex = layout.customColorsIndex;
                 const defaultColor = customColors[colorIndex+i].code;
 
-                const barColor = barColors[i]? barColors[i]: defaultColor;
+                const barColor = barColors? barColors[i]: defaultColor;
 
-                const end = Calc.posOnGraphXAxis(dv, x);
+                const end = Calc.getAxisLabelPosition(dv, x);
 
-                const barWidth = (start-end);
+                const barWidth = Math.abs(start-end);
 
                 if(start && end){
 
@@ -62,11 +66,11 @@ const DrawBars = (dv, category, catKey, dataset) => {
                     
                     //draw bar
                     ctx.beginPath();
-                    ctx.rect(graphX, axisY, barWidth, barHeight);
+                    ctx.rect(graphX, (axisY-barHeight), barWidth, barHeight);
                     ctx.fill();
                 }
 
-                axisY += barWidth;
+                axisY -= barHeight;
             }
 
         }else {
@@ -80,9 +84,9 @@ const DrawBars = (dv, category, catKey, dataset) => {
                 const colorIndex = layout.customColorsIndex;
                 const defaultColor = customColors[colorIndex+i].code;
 
-                const barColor = barColors[i]? barColors[i]: defaultColor;
+                const barColor = barColors? barColors[i]: defaultColor;
 
-                const end = Calc.posOnGraphYAxis(dv, y);
+                const end = Calc.getAxisValuePosition(dv, y);
 
                 const barHeight = (start-end);
 

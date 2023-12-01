@@ -17,9 +17,8 @@ const Chart = (dv) => {
         ctx.lineJoin = "round";
 
         if(type){
-
             if(type === "line"){
-
+                
                 Line(dv, dataset);
 
             }else if(type === "scatter"){

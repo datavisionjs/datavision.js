@@ -15,94 +15,92 @@ const DrawElements = (dv, type, dataset) => {
 
     const colorIndex = (layout.customColorsIndex);
 
-    const graphPosition = layout.graphPosition;
-    const graphX = graphPosition.x, graphY = graphPosition.y;
-    const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
     if(type === "bars"){
 
-        if(layout.isBarChart){
-            const isHorizontal = dataset.direction === "hr";
-            const categories = dataset.barCategories;
+        const categories = dataset.categories;
 
-            const maxBarPerCategory = dataset.categoryBarMax;
-            const catKeys = Array.from(categories.keys());
-
-            const categoryMidPoints = [];
-
-            const step = isHorizontal? (graphHeight/catKeys.length): (graphWidth/catKeys.length);
-            let midPoint = isHorizontal? (graphY+(step/2)): (graphX+(step/2));
+        const maxBarPerCategory = dataset.maxBarPerCategory;
+        const catKeys = Array.from(categories.keys());
 
 
-            for(var i = 0; i < catKeys.length; i++){
-                const catKey = catKeys[i];
-                const category = categories.get(catKey);
+        for(var i = 0; i < catKeys.length; i++){
+            const catKey = catKeys[i];
+            const category = categories.get(catKey);
 
-                DrawBars(dv, category, catKey, dataset);
-
-                //push mid point and increment by step;
-                categoryMidPoints.push(midPoint);
-                midPoint += step;
-            }
-
-            if(maxBarPerCategory){
-                layout.customColorsIndex = (colorIndex+maxBarPerCategory);
-            }
-
-
-            //set categories mid points to barData 
-            //the mid points will be used as x values to plot lines for mixed charts
-            layout.barData.categoryMidPoints = categoryMidPoints;
+            DrawBars(dv, category, catKey, dataset);
         }
+
+        if(maxBarPerCategory){
+            layout.customColorsIndex = (colorIndex+maxBarPerCategory);
+        }
+        
 
     }else if(type === "pie"){
+
+        const graphPosition = layout.pieGraphPosition;
+        const graphX = graphPosition.x, graphY = graphPosition.y;
+        const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+
+        const radius = (Math.min(graphWidth, graphHeight)/2);
         
-        if(layout.isPieChart){
-            const categories = dataset.pieCategories;
-            const valuesLength = dataset.valuesLength;
+        //const labels = dataset.labels;
+        const values = dataset.values;
+        const colors = dataset.colors;
 
-            if(categories){
-                const catKeys = Array.from(categories.keys());
+        const totalValues = dataset.totalValues;
 
-                let degrees = -90;
+        if(values){
 
-                let startDegrees = degrees;
-                
-                for(var i = 0; i < catKeys.length; i++){
-                    //get defaultColor
-                    const defaultColor = customColors[i].code;
+            let degrees = -90;
 
-                    //begin
-                    const catKey = catKeys[i];
-                    const category = categories.get(catKey);
-                    
-                    const pieColor = category.pieColor;
+            let startDegrees = degrees;
+            
+            for(var i = 0; i < values.length; i++){
+                //get defaultColor
+                const defaultColor = customColors[i].code;
+               
+                const pieColor = colors? colors[i]: null;
 
-                    //set fillColor
-                    const fillColor = pieColor? pieColor: defaultColor;
-                    fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
+                //set fillColor
+                const fillColor = pieColor? pieColor: defaultColor;
+                fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
 
-                    const value = category.value;
+                const value = values[i];
 
-                    if(!isNaN(value)){
-                        const valPercent = (value/valuesLength);
-                        degrees += (valPercent*360);
+                if(!isNaN(value)){
 
-                        const endDegrees = degrees;
+                    const valPercent = (value/totalValues);
+                    degrees += (valPercent*360);
 
-                        DrawPieSlice(dv, startDegrees, endDegrees);
+                    const endDegrees = degrees;
 
-                        startDegrees = endDegrees;
-                    }
-                    
+                    DrawPieSlice(dv, startDegrees, endDegrees);
+
+                    startDegrees = endDegrees;
                 }
+                
             }
-
         }
+
+        //draw hole in pie to create a daughnut chart
+        const halfWidth = graphWidth/2, halfHeight = graphHeight/2;
+
+        const hole = dataset.hole? dataset.hole: 0;
+        const holeRadius = (hole*radius);
+
+        ctx.beginPath();
+        ctx.fillStyle = "#fff";
+        ctx.arc((graphX+halfWidth), (graphY+halfHeight), holeRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        
     }else {
 
         if(dataset){
 
+            const axisData = layout.axisData;
+            const isHorizontal = axisData.direction === "hr";
+            
             const defaultColor = customColors[colorIndex].code;
 
             let fillColor = dataset.fillColor;
@@ -122,28 +120,28 @@ const DrawElements = (dv, type, dataset) => {
             ctx.strokeStyle = strokeColor;
 
             //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
-            const xValues = !layout.isBarChart? dataset.x: layout.barData.categoryMidPoints;;
-            const yValues = dataset.y;
+            const labels = isHorizontal? dataset.values: dataset.labels;
+            const values = isHorizontal? dataset.labels: dataset.values;
 
-            if(xValues){
+            if(labels){
                 
-                for(var i = 0; i < xValues.length; i++){
+                for(var i = 0; i < labels.length; i++){
 
-                    const x = xValues[i];
-                    const y = yValues[i];
+                    let label = labels[i];
+                    let value = values[i];
+
 
                     const size = 3;
                     
-                    const positionType = i === 0? "start": i === (xValues.length-1)? "end": "";
+                    const positionType = i === 0? "start": i === (labels.length-1)? "end": "";
                     
-                    if(y || y === 0){ //proceed if y is valid
+                    if(value || value === 0){ //proceed if y is valid
 
-                        const position = {x: x, y: y};
+                        const position = Calc.getAxisPosition(dv, label, value);
 
                         if(type === "arcs"){
 
                         }else if(type === "lines"){
-
                             DrawLines(dv, positionType, size, position);
 
                         }else if(type === "points"){

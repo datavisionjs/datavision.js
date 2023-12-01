@@ -7,19 +7,19 @@ let isLeftBoundDone = false;
 
 let lastGraphBoundPos = null; //stores position on graph
 
-const DrawOutOfBoundLines = (dv, pos, size, position) => {
+const DrawOutOfBoundLines = (dv, size, position) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
     if(!layout.isBarChart){
         const ranges = layout.ranges;
-        const xRange = ranges.xRange;
+        const xRange = ranges.labelRange;
         const xRangeStart = xRange? xRange[0]: null;
         const xRangeEnd = xRange? xRange[1]: null;
 
         //draw lines coming out of graph bounds
-        if(pos){
+        if(position){
 
             //draw lines from left bound
             if(isOutOfGraphBounds){
@@ -33,13 +33,13 @@ const DrawOutOfBoundLines = (dv, pos, size, position) => {
 
                 const leftBoundPos  = {x: xRangeStart, y: leftBoundY};
 
-                const newPos = Calc.posOnGraph(dv, leftBoundPos);
+                //const newPos = Calc.posOnGraph(dv, leftBoundPos);
 
                 if(newPos){
                     ctx.beginPath();
-                    ctx.moveTo(newPos.x, newPos.y);
+                    ctx.moveTo(leftBoundPos.x, leftBoundPos.y);
             
-                    ctx.lineTo(pos.x, pos.y);
+                    ctx.lineTo(position.x, position.y);
                 }
 
                 isLeftBoundDone = true;
@@ -65,10 +65,10 @@ const DrawOutOfBoundLines = (dv, pos, size, position) => {
 
                 const rightBoundPos = {x: xRangeEnd, y: rightBoundY};
 
-                const newPos = Calc.posOnGraph(dv, rightBoundPos);
+                //const newPos = Calc.posOnGraph(dv, rightBoundPos);
 
                 if(newPos){
-                    ctx.lineTo(newPos.x, newPos.y);
+                    ctx.lineTo(rightBoundPos.x, rightBoundPos.y);
                 }
 
                 //reset left bound done
@@ -82,50 +82,44 @@ const DrawLines = (dv, type, size, position) => {
 
     const ctx = dv.getCtx();
 
-    let pos = null;
-
-    if(layout.isBarChart){
-        const y = Calc.posOnGraphYAxis(dv, position.y);
-        pos = {x: position.x, y: y};
-    }else {
-        pos = Calc.posOnGraph(dv, position);
-    }
-
     //add style 
     ctx.lineWidth = size;
 
     //draw lines coming from out of bounds points
-    DrawOutOfBoundLines(dv, pos, size, position);
+    DrawOutOfBoundLines(dv, size, position);
+
+
+    console.log("wowowowwoow");
 
     //draw lines and arc within graph bounds
-    if(pos){
+    if(position){
 
         if(type === "start"){
 
             //draw circle at the points
             ctx.beginPath();
-            ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+            ctx.arc(position.x, position.y, size, 0, Math.PI * 2);
             ctx.fill();
             ctx.closePath();
 
             ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
+            ctx.moveTo(position.x, position.y);
 
         }else {
 
-            ctx.lineTo(pos.x, pos.y);
+            ctx.lineTo(position.x, position.y);
 
             ctx.stroke();
             ctx.closePath();
 
             //draw circle at the points
             ctx.beginPath();
-            ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+            ctx.arc(position.x, position.y, size, 0, Math.PI * 2);
             ctx.fill();
             ctx.closePath();
 
             ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
+            ctx.moveTo(position.x, position.y);
 
         }
 

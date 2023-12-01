@@ -80,10 +80,10 @@ function drawYAxis(dv, position){
     const graphY = position.y;
 
     //get the data type of the dataset
-    const firstDataType = layout.firstDataType;
+    //const firstDataType = layout.firstDataType;
 
-    const ranges = layout.ranges;
-    let range = ranges.yRange;
+    //const ranges = layout.ranges;
+    //let range = ranges.yRange;
     
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
@@ -91,32 +91,83 @@ function drawYAxis(dv, position){
     let axisX = graphX;
     let axisY = graphY+graphHeight;
 
-    //set barData
-    const barData = layout.barData;
+    //set axisData
+    const axisData = layout.axisData;
 
-    //check if bar has a horizontal direction
-    const isHorizontal = barData? barData.direction === "hr": false;
+    const values = axisData.values;
 
-    if(firstDataType === "bar" && isHorizontal){
+    if(axisData.valueIsAllNumbers){
+        values.sort((a, b) => a - b);
 
-        //const maxTextWidth = barData.maxTextWidth;
+        const maxDist = 10;
+
+        let range = [values[0], values[values.length-1]];
+
+        range = Calc.rangeOnAxis(range, maxDist);
+
+        if(range){
+
+            console.log("myRange: ", range);
+
+            const rangeStart = range[0];
+
+            const step = Calc.rangeStep(range, maxDist);
+
+            let dist = Calc.axisDist(range, maxDist);
+
+            let pixelStep = (graphHeight/dist);
+            pixelStep < 1? pixelStep = 1: null;
+
+            let value = 0;
+
+            let iterator = 1;
+
+            //set iterator to 2 if the highest label length is 2 times the size of the step
+            fontSize > pixelStep? iterator += Math.round(fontSize/pixelStep): null;
+
+
+            for(let i = 0; i < dist; i += iterator){
+
+                value = ((rangeStart)+(step*i));
+                axisY = ((graphY+graphHeight)-(pixelStep*i));
+
+                //set text width
+                const textWidth = ctx.measureText(value).width;
+                
+                const textPosX = ((axisX-textWidth)-(fontSize));
+                const textPosY = (axisY+Math.floor(fontSize/2));
+
+                //draw lines 
+                ctx.beginPath();
+                ctx.strokeStyle = "black";
+                ctx.moveTo((graphX+graphWidth), axisY);
+                ctx.lineTo((graphX-(fontSize/2)), (axisY));
+                ctx.stroke();
+                
+                //add xAxis range labels
+                ctx.beginPath();
+                ctx.fillText(value, textPosX, textPosY);
+
+            }
+        }
+
+    }else {
+         //const maxTextWidth = barData.maxTextWidth;
         
-        const categories = barData.barCategories;
-        const catKeys = Array.from(categories.keys());
-
-        let step = (graphHeight/catKeys.length);
-        step < 1? step = 1: null;
-
-        let iterator = 1;
-
-        //set iterator to 2 if the highest label length is 2 times the size of the step
-        fontSize > step? iterator += Math.round(fontSize/step): null;
-        
-        for(var i = 0; i < catKeys.length; i += iterator){
-
-            axisY = (graphY+((step/2)+(step*i)));
-
-            const label = catKeys[i];
+ 
+         let step = (graphHeight/values.length);
+         step < 1? step = 1: null;
+ 
+         let iterator = 1;
+ 
+         //set iterator to 2 if the highest label length is 2 times the size of the step
+         fontSize > step? iterator += Math.round(fontSize/step): null;
+         
+         for(var i = 0; i < values.length; i += iterator){
+ 
+            axisY = ((graphY+graphHeight)-((step/2)+(step*i)));
+ 
+            const value = values[i];
 
             const textPosX = (axisX-(fontSize));
             const textPosY = (axisY);
@@ -125,72 +176,16 @@ function drawYAxis(dv, position){
             ctx.beginPath();
             ctx.textAlign = "end";
             ctx.textBaseline = "middle";
-
-            // Draw the rotated text
-            ctx.fillText(label, textPosX, textPosY);
-
-            ctx.textAlign = "start";
-            ctx.textBaseline = "alphabetic";
-    
-        }
-
-    }else {
-
-        if(range){
-            const maxDist = 10;
-
-            range = Calc.rangeOnAxis(range, maxDist);
-
-            if(range){
-
-                const rangeStart = range[0];
-
-                const step = Calc.rangeStep(range, maxDist);
-
-                let dist = Calc.axisDist(range, maxDist);
-
-                let pixelStep = (graphHeight/dist);
-                pixelStep < 1? pixelStep = 1: null;
-
-                let label = 0;
-
-                let iterator = 1;
-
-                //set iterator to 2 if the highest label length is 2 times the size of the step
-                fontSize > pixelStep? iterator += Math.round(fontSize/pixelStep): null;
-
-                console.log("iterate: ", iterator, fontSize, pixelStep);
-
-                for(let i = 0; i < dist; i += iterator){
-
-                    label = ((rangeStart)+(step*i));
-                    axisY = ((graphY+graphHeight)-(pixelStep*i));
-
-                    //set text width
-                    const textWidth = ctx.measureText(label).width;
-                    
-                    const textPosX = ((axisX-textWidth)-(fontSize));
-                    const textPosY = (axisY+Math.floor(fontSize/2));
-
-                    //draw lines 
-                    ctx.beginPath();
-                    ctx.strokeStyle = "gray";
-                    ctx.moveTo((graphX+graphWidth), axisY);
-                    ctx.lineTo((graphX), (axisY));
-                    ctx.stroke();
-                    
-                    //add xAxis range labels
-                    ctx.beginPath();
-                    ctx.fillText(label, textPosX, textPosY);
-
-                    //label += step;
-                    //axisY -= pixelStep;
-
-                }
-            }
-
-        }
+ 
+             // Draw the rotated text
+             ctx.fillText(value, textPosX, textPosY);
+ 
+             ctx.textAlign = "start";
+             ctx.textBaseline = "alphabetic";
+     
+         }
     }
+
 
 }
 
@@ -208,9 +203,9 @@ function drawXAxis(dv, position){
     const graphY = position.y;
 
     //get the data type of the dataset
-    const firstDataType = layout.firstDataType;
+    //const firstDataType = layout.firstDataType;
 
-    const ranges = layout.ranges;
+    //const ranges = layout.ranges;
 
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
@@ -222,32 +217,85 @@ function drawXAxis(dv, position){
     let axisY = (graphY+graphHeight);
 
     //set barData
-    const barData = layout.barData;
+    const axisData = layout.axisData;
 
-    //check if bar has a horizontal direction
-    const isHorizontal = barData? barData.direction === "hr": false;
-    
+    const labels = axisData.labels;
 
-    if(firstDataType === "bar" && !isHorizontal){
+    if(axisData.labelIsAllNumbers){
+        labels.sort((a, b) => a - b);
 
-        const maxTextWidth = barData.maxTextWidth;
+        const maxDist = 7;
+
+        let range = [labels[0], labels[labels.length-1]];
+
+        range = Calc.rangeOnAxis(range, maxDist);
+
+        if(range){
+
+            const rangeStart = range[0];
+            const rangeEnd = range[1];
+
+            const step = Calc.rangeStep(range, maxDist);
+
+
+            let dist = Calc.axisDist(range, maxDist);
+
+            let pixelStep = (graphWidth/dist);
+            pixelStep < 1? pixelStep = 1: null;
+
+            let label = 0;
+
+            //get max label width 
+            const maxLabelWidth = ctx.measureText(rangeEnd).width;
+
+            let iterator = 1;
+            
+            //set iterator to 2 if the highest label length is 2 times the size of the step
+            maxLabelWidth > pixelStep? iterator += Math.round(maxLabelWidth/pixelStep): null;
+
+            for(let i = 0; i < dist; i += iterator){
+
+                label = ((rangeStart)+(step*i));
+                axisX = (graphX+(pixelStep*i));
+
+                //set text width
+                const textWidth = ctx.measureText(label).width;
+
+                const textPosX = (axisX-(textWidth/2));
+                const textPosY = (axisY+(fontSize));
+
+                //draw lines 
+                ctx.beginPath();
+                ctx.moveTo(axisX, graphY);
+                ctx.lineTo(axisX, ((graphY+graphHeight)+(fontSize/2)));
+                ctx.stroke();
+
+                console.log("lime: ", textPosX, textPosY);
+                
+
+                //add xAxis range labels
+                ctx.beginPath();
+                ctx.fillText(label, textPosX, textPosY);
+
+            }
+        }
+
+    }else {
+        const maxLabelWidth = axisData.maxLabelWidth;
         
-        const categories = barData.barCategories;
-        const catKeys = Array.from(categories.keys());
-
-        let step = (graphWidth/catKeys.length);
+        let step = (graphWidth/labels.length);
         step < 1? step = 1: null;
 
         let iterator = 1;
 
         //set iterator to 2 if the highest label length is 2 times the size of the step
-        (maxTextWidth/2) > step? iterator += Math.round((maxTextWidth/2)/step): null;
+        (maxLabelWidth/2) > step? iterator += Math.round((maxLabelWidth/2)/step): null;
         
-        for(var i = 0; i < catKeys.length; i += iterator){
+        for(var i = 0; i < labels.length; i += iterator){
 
             axisX = (graphX+((step/2)+(step*i)));
 
-            const label = catKeys[i];
+            const label = labels[i];
 
             //set text width
             const textWidth = ctx.measureText(label).width;
@@ -260,7 +308,8 @@ function drawXAxis(dv, position){
 
             let angle = 0;
 
-            if(maxTextWidth > step){
+            console.log("max: ", maxLabelWidth, step);
+            if(maxLabelWidth > step){
                 angle = -40
                 textPosX = axisX;
 
@@ -286,67 +335,6 @@ function drawXAxis(dv, position){
 
             ctx.textAlign = "start";
         }
-
-    }else {
-        let range = ranges.xRange;
-
-        if(range){
-
-            const maxDist = 7;
-
-            range = Calc.rangeOnAxis(range, maxDist);
-
-            if(range){
-
-                const rangeStart = range[0];
-                const rangeEnd = range[1];
-
-                const step = Calc.rangeStep(range, maxDist);
-
-
-                let dist = Calc.axisDist(range, maxDist);
-
-                let pixelStep = (graphWidth/dist);
-                pixelStep < 1? pixelStep = 1: null;
-
-                let label = 0;
-
-                //get max label width 
-                const maxLabelWidth = ctx.measureText(rangeEnd).width;
-
-                let iterator = 1;
-                
-                //set iterator to 2 if the highest label length is 2 times the size of the step
-                maxLabelWidth > pixelStep? iterator += Math.round(maxLabelWidth/pixelStep): null;
-
-                for(let i = 0; i < dist; i += iterator){
-
-                    label = ((rangeStart)+(step*i));
-                    axisX = (graphX+(pixelStep*i));
-
-                    //set text width
-                    const textWidth = ctx.measureText(label).width;
-
-                    const textPosX = (axisX-(textWidth/2));
-                    const textPosY = (axisY+(fontSize));
-
-                    //draw lines 
-                    ctx.beginPath();
-                    ctx.moveTo(axisX, graphY);
-                    ctx.lineTo(axisX, (graphY+graphHeight));
-                    ctx.stroke();
-
-                    console.log("lime: ", textPosX, textPosY);
-                    
-
-                    //add xAxis range labels
-                    ctx.beginPath();
-                    ctx.fillText(label, textPosX, textPosY);
-
-                }
-            }
-
-        }
     }
 
     //reset text baselien
@@ -362,10 +350,8 @@ const DrawAxis = (dv) => {
 
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
-
     //stores the position and dimensions of the graph area
-    const graphPosition = layout.graphPosition;
+    const graphPosition = layout.axisGraphPosition;
 
     let graphWidth = graphPosition.width;
     let graphHeight = graphPosition.height;
@@ -373,71 +359,35 @@ const DrawAxis = (dv) => {
     let graphX = graphPosition.x;
     let graphY = graphPosition.y;
 
-    //get the data type of the dataset
-    const firstDataType = layout.firstDataType;
+    //set axisData
+    const axisData = layout.axisData;
 
+    //adjust graphheight base on label max text size
+    const maxLabelWidth = axisData.maxLabelWidth;
 
-    //set barData
-    const barData = layout.barData;
+    const labels = axisData.labels;
+    
+    //adjust graphX and height base on values max text size
+    const maxValueWidth = axisData.maxValueWidth;
 
-    //check if bar has a horizontal direction
-    const isHorizontal = barData? barData.direction === "hr": false;
-
-    if(firstDataType === "bar"){
+    if(maxValueWidth > 0){
+        graphX += maxValueWidth;
+        graphWidth = (canvasWidth-graphX);
         
-        const maxTextWidth = barData.maxTextWidth;
-
-        const categories = barData.barCategories;
-        const catKeys = Array.from(categories.keys());
-
-        if(!isHorizontal){
-            const step = (graphWidth/catKeys.length);
-            if(maxTextWidth > step){
-                graphHeight -= (maxTextWidth/2);
-            }
-        }
     }
 
-    const ranges = layout.ranges;
-
-    if(ranges){
-        
-        if(firstDataType === "bar" && isHorizontal){
-            const maxTextWidth = barData.maxTextWidth;
-
-            if(maxTextWidth > graphX){
-                graphX += maxTextWidth;
-                graphWidth = (canvasWidth-graphX);
-            }
-        }else {
-            let range = ranges.yRange;
-            if(range){
-                const rangeStart = range[0];
-                const rangeEnd = range[1];
-
-                const fontSize = labelStyle.fontSize;
-                ctx.font = fontSize+"px "+labelStyle.fontFamily;
-
-                const rangeStartWidth = ctx.measureText(rangeStart).width;
-                const rangeEndWidth = ctx.measureText(rangeEnd).width;
-
-                const textWidth = rangeStartWidth > rangeEndWidth? rangeStartWidth: rangeEndWidth;
-
-                if(rangeStart && rangeEnd){
-                    graphX += (textWidth);
-                    graphWidth = (canvasWidth-graphX);
-                }
-            
-
-            }
-        }
+    
+    const labelStep = (graphWidth/labels.length); //set label step after calculating graphWidth
+    if(maxLabelWidth > labelStep){
+        graphHeight -= (maxLabelWidth/2);
     }
+
 
 
     const newGraphPosition = {x: graphX, y: graphY, width: graphWidth, height: graphHeight};
     
     //reset layout's graphPosition
-    layout.graphPosition = {...newGraphPosition};
+    layout.axisGraphPosition = {...newGraphPosition};
 
     //draw a rectangle representing the graph area
     ctx.beginPath();
