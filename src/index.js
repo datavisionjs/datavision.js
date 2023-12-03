@@ -22,6 +22,8 @@ function DataVision(targetId) {
     this.canvas = document.createElement("canvas");
     this.canvasCopy = document.createElement("canvas");
 
+    this.tempCanvas = document.createElement("canvas");
+
     //setter and getter 
 
     //data 
@@ -51,7 +53,6 @@ function DataVision(targetId) {
 
             //set layout default settings
             layout.customColorsIndex = 0;
-            layout.firstDataType = firstDataType;
 
             //set layout to new layout
             this.layout = {...layout};
@@ -103,6 +104,10 @@ function DataVision(targetId) {
     //2d context 
     this.getCtx = function (){
         return this.getCanvas().getContext("2d");
+    };
+
+    this.getTempCanvas = function (){
+        return this.tempCanvas;
     };
 
     //target 

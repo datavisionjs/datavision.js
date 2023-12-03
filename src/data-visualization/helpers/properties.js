@@ -22,6 +22,11 @@ export function setGraphPosition(dv){
 
     const labelSpace = (labelFontSize*4);
 
+    const axisData = layout.axisData;
+    const labels = axisData.labels;
+    const maxLabelWidth = axisData.maxLabelWidth;
+    const maxValueWidth = axisData.maxValueWidth;
+
     //calculates horizontal position of the graph area
     let graphX = 0;
     //calculates vertical position of the graph area
@@ -31,49 +36,59 @@ export function setGraphPosition(dv){
         graphY = ((titleFontSize*titleLines.length)+(titleFontSize/2));
     }
 
-    //axis 
-    const axisY = graphY;
-    let axisX = labelFontSize;
-
+    //x and y side title labels
     if(yLabel){
-        axisX += (labelSpace/2);
-    }
-
-    let axisHeight = ((graphHeight)-((graphY)+(labelSpace/2)));
-
-    if(xLabel){
-        if(xLabel.length > 0){
-            axisHeight -= (labelSpace/2);
+        if(yLabel.length > 0){
+            graphX += (labelSpace/2);
         }
     }
 
-    const axisWidth = (graphWidth-graphX);
+    if(xLabel){
+        if(xLabel.length > 0){
+            graphHeight -= ((graphY)+(labelSpace/2));
+        }
+    }
 
-    const axisPosition = {
-        x: axisX,
-        y: axisY,
-        width: axisWidth,
-        height: axisHeight
-    };
+    //values (y-axis)
+    const widthSide = (width*2.0);
+    if(maxValueWidth > 0){
+        maxValueWidth > widthSide? graphX += widthSide: graphX += (maxValueWidth+labelFontSize);
+    }
 
+    //datasetlabels 
+    const datasetNameData = layout.datasetNameData;
+    const isDatasetName = datasetNameData.isDatasetName;
+    const datasetMaxNameWidth = datasetNameData.maxNameWidth;
 
-    //pie
-    const pieX = graphX, pieY = graphY += labelFontSize;
-    const pieWidth = (graphWidth*0.8), pieHeight = (graphHeight-graphY);
+    if(isDatasetName){
+        datasetMaxNameWidth > widthSide? graphWidth -= (graphX+widthSide): graphWidth -= (graphX+datasetMaxNameWidth+(labelFontSize*2));
+    }else {
+        graphWidth -= (graphX);
+    }
 
-    const piePosition = {
-        x: pieX,
-        y: pieY,
-        width: pieWidth,
-        height: pieHeight,
+    const labelStep = (graphWidth/labels.length); //set label step after calculating graphWidth
+    
+    if(maxLabelWidth > labelStep && maxLabelWidth > (labelFontSize*2)){
+        graphHeight -= (graphY)+(maxLabelWidth*0.7)+labelFontSize;
+
+        //console.log("width: ", (graphY+graphHeight), maxLabelWidth);
+    }else {
+        graphHeight -= ((graphY)+(labelFontSize*2));
+    }
+    
+    
+    const graphPosition = {
+        x: graphX,
+        y: graphY,
+        width: graphWidth,
+        height: graphHeight,
     }
 
 
     //set graphposition
     dv.layout = {
         ...layout, 
-        axisGraphPosition: axisPosition, 
-        pieGraphPosition: piePosition
+        graphPosition: graphPosition
     };
 
 }
@@ -100,8 +115,12 @@ export function setUpChart(dv){
 
     let pieMaxLabelWidth = 0;
 
-    const newData = [];
+    const axisData = [];
+    const pieData = [];
 
+    let axisDataCount = 0;
+
+    //all axischart labels and values
     const axisLabels = [];
     const axisValues = [];
 
@@ -115,6 +134,10 @@ export function setUpChart(dv){
     let hasPieData = false;
     let axisDirection = null;
 
+    //dataset names data
+    let datasetNameMaxWidth = 0;
+    let totalDatasetName = 0;
+
     //get range from data 
     if(data){
         
@@ -124,11 +147,13 @@ export function setUpChart(dv){
 
         const barDataset = {type: "bar"};
         const barCategories = new Map();
+        const barDatasetNames = [];
         let hasBarDataset = false;
 
         for(let i = 0; i < tempDataLength; i++){
             const dataset = {...tempData[i]};
 
+            const dataName = dataset.name;
             const labels = dataset.labels;
             const values = dataset.values;
             const dataType = dataset.type;
@@ -140,32 +165,78 @@ export function setUpChart(dv){
 
             const labelIsAllNumbers = Calc.isAllNumbers(labels);
             const valueIsAllNumbers = Calc.isAllNumbers(values);
-            
-            for(let j = 0; j < labels.length; j++){
-                const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
-                const value = valueIsAllNumbers? Math.round(values[j]): values[j];
 
-                //set maxTextlength
-                const labelWidth = ctx.measureText(label).width;
-                const valueWidth = ctx.measureText(value).width;
+            if(axisChartTypes.includes(dataType)){
+
+                for(let j = 0; j < labels.length; j++){
+                    const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
+                    const value = valueIsAllNumbers? Math.round(values[j]): values[j];
+    
+                    //set maxTextlength
+                    const labelWidth = ctx.measureText(label).width;
+                    const valueWidth = ctx.measureText(value).width;
+    
+                    if(dataType === "bar"){
+                        let labelValues = [value];
+    
+                        if(barCategories.has(label)){
+                            const lastData = barCategories.get(label);
+                            labelValues = [...lastData.values, value];
+                        }
+    
+                        //set maxBarPerCategory if labelValues is more then the current value.
+                        labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
+    
+                        barCategories.set(label, {values: labelValues});
+    
+                        dataset.direction === "hr"? axisDirection = "hr": null;
+                        hasBarDataset = true;
+                    }
+    
+                   
+                    labelWidth > axisMaxLabelWidth? axisMaxLabelWidth = labelWidth: null;
+                    valueWidth > axisMaxValueWidth? axisMaxValueWidth = valueWidth: null;
+                    
+    
+                    //set axis labels and values 
+                    if(axisLabels.indexOf(label) === -1){
+                        axisLabels.push(label);
+                    }
+                    
+                    if(axisValues.indexOf(value) === -1){
+                        axisValues.push(value);
+                    }
+    
+                }
+
+                hasAxisData = true;
+
+                //if not a bar dataset push the dataset to newData 
+                const newDataName = dataName? dataName: "Dataset " + axisDataCount;
+                const newDataNameWidth = ctx.measureText(newDataName).width;
 
                 if(dataType === "bar"){
-                    let labelValues = [value];
+                    barDatasetNames.push(newDataName);
+                }else {
+                    dataset.name = newDataName;
+                    axisData.push(dataset);
+                }
 
-                    if(barCategories.has(label)){
-                        const lastData = barCategories.get(label);
-                        labelValues = [...lastData.values, value];
-                    }
+                //set dataset name max width and total on axis charts
+                newDataNameWidth > datasetNameMaxWidth? datasetNameMaxWidth = newDataNameWidth: null;
+                totalDatasetName += 1;
 
-                    //set maxBarPerCategory if labelValues is more then the current value.
-                    labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
+                axisDataCount++;
+            }else if(dataType === "pie"){
 
-                    barCategories.set(label, {values: labelValues});
+                for(let j = 0; j < labels.length; j++){
+                    const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
+                    const value = valueIsAllNumbers? Math.round(values[j]): values[j];
+    
+                    //set maxTextlength
+                    const labelWidth = ctx.measureText(label).width;
+                    const valueWidth = ctx.measureText(value).width;
 
-                    dataset.direction === "hr"? axisDirection = "hr": null;
-                    hasBarDataset = true;
-                }else if(dataType === "pie"){
-                    
                     //set all pie data into universal pie labels and values 
                     if(pieLabels.includes(label)){
                         const index = pieLabels.indexOf(label);
@@ -195,32 +266,7 @@ export function setUpChart(dv){
 
                 }
 
-                //set max width of axis labels and values
-                if(axisChartTypes.includes(dataType)){
-                    labelWidth > axisMaxLabelWidth? axisMaxLabelWidth = labelWidth: null;
-                    valueWidth > axisMaxValueWidth? axisMaxValueWidth = valueWidth: null;
-                }
-
-                //set axis labels and values 
-                if(axisLabels.indexOf(label) === -1){
-                    axisLabels.push(label);
-                }
-                
-                if(axisValues.indexOf(value) === -1){
-                    axisValues.push(value);
-                }
-
-            }
-
-            //push axis dataset whose data type is not bar
-            if(axisChartTypes.includes(dataType)){
-                hasAxisData = true;
-                 //if not a bar dataset push the dataset to newData 
-                dataType !== "bar"? newData.push(dataset): null;
-            }
-            
-            //push pie dataset
-            if(dataType === "pie"){
+                 //push pie dataset
                 hasPieData = true;
                 
                 newPieDataset.labels = newPieLabels;
@@ -228,22 +274,28 @@ export function setUpChart(dv){
                 newPieDataset.totalValues = pieTotalValues;
                 newPieDataset.type = "pie";
 
-                newData.push(newPieDataset);
-            }  
+                pieData.push(newPieDataset);
+
+                //set dataset name max width and total on pie
+                pieMaxLabelWidth > datasetNameMaxWidth? datasetNameMaxWidth = pieMaxLabelWidth: null;
+                totalDatasetName += labels.length;
+            }
 
         }
 
         //if bar is in data set the bar 
         if(hasBarDataset){
-
+            barDataset.names = barDatasetNames;
             barDataset.categories = barCategories;
             barDataset.maxBarPerCategory = maxBarPerCategory;
 
             barDataset.direction = axisDirection;
-            newData.unshift(barDataset);
+            axisData.unshift(barDataset);
         }
 
     }
+
+    const newData = [...axisData, ...pieData];
 
     const axisLabelIsAllNumbers = Calc.isAllNumbers(axisLabels);
     const axisValueIsAllNumbers = Calc.isAllNumbers(axisValues);
@@ -269,22 +321,13 @@ export function setUpChart(dv){
         valueRange: valueRange,
     };
 
-    //set datasetlabels 
-    let datasetLabels = [];
-    for(let i = 0; i < newData.length; i++){
-        const dataset = newData[i];
-        const labels = dataset.labels;
-        const dataType = dataset.type;
-        const label = dataset.label;
 
-        if(axisChartTypes.includes(dataType)){
-            const newLabel = datasetLabels.length;
-            label? datasetLabels.push(label): datasetLabels.push("Dataset " + newLabel);
-        }else if(dataType === "pie"){
-            datasetLabels = [...datasetLabels, ...labels];
-        }
-    }
-    layout.datasetLabels = datasetLabels;
+    //
+    layout.datasetNameData = {
+        isDatasetName: totalDatasetName > 1,
+        maxNameWidth: datasetNameMaxWidth,
+        total: totalDatasetName
+    };
 
     //set axis data 
     layout.axisData = {

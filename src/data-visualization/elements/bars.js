@@ -17,7 +17,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
         const barColors = category.barColors;
 
         //stores the position and dimensions of the graph area
-        const graphPosition = layout.axisGraphPosition;
+        const graphPosition = layout.graphPosition;
         const graphX = graphPosition.x, graphY = graphPosition.y;
         const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 

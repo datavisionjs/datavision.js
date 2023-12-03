@@ -9,13 +9,13 @@ const DrawTitleLabel = (dv) => {
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width;
 
-    const position = layout.axisGraphPosition;
+    const position = layout.graphPosition;
     const graphY = position.y;
 
     let titleLines = layout.titleLines;
 
     //set text alignment
-    ctx.textAlign = 'center'; 
+    ctx.textAlign = 'center';
 
     if(titleLines){
 

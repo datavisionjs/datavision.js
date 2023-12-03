@@ -13,21 +13,19 @@
 
     <script>
 
-const xArray = ["Italy","France","Spain","USA","Argentina is a nice country for the"];
-const yArray = [55, 49, 44, 24, 15];
+        const xArray = ["Italy","France","Spain","Afghanistan","Argentina"];
+        const yArray = [55, 49, 44, 24, 15];
 
-const data = [
-    {
-        label: "Hello",
-        labels: xArray,
-        values: yArray,
-        type: "bar",
-        direction: "hr",
-        hole: 0.8
-    }
-];
+        const data = [
+            {
+                labels: xArray,
+                values: yArray,
+                type: "pie",
+                hole: 0.7
+            }
+        ];
 
-const layout = {title:"World Wide Wine Production"};
+        const layout = {title:"World Wide Wine Production"};
 
         const chart = new DataVision("my-chart");
 

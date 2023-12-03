@@ -38,7 +38,13 @@ const DrawElements = (dv, type, dataset) => {
 
     }else if(type === "pie"){
 
-        const graphPosition = layout.pieGraphPosition;
+        const tempCanvas = dv.getTempCanvas();
+        tempCanvas.width = ctx.canvas.width;
+        tempCanvas.height = ctx.canvas.height;
+
+        const tempCtx = tempCanvas.getContext("2d");
+
+        const graphPosition = layout.graphPosition;
         const graphX = graphPosition.x, graphY = graphPosition.y;
         const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
@@ -64,7 +70,7 @@ const DrawElements = (dv, type, dataset) => {
 
                 //set fillColor
                 const fillColor = pieColor? pieColor: defaultColor;
-                fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
+                fillColor? tempCtx.fillStyle = fillColor: null;//set bar color if exists
 
                 const value = values[i];
 
@@ -75,7 +81,7 @@ const DrawElements = (dv, type, dataset) => {
 
                     const endDegrees = degrees;
 
-                    DrawPieSlice(dv, startDegrees, endDegrees);
+                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees);
 
                     startDegrees = endDegrees;
                 }
@@ -89,10 +95,14 @@ const DrawElements = (dv, type, dataset) => {
         const hole = dataset.hole? dataset.hole: 0;
         const holeRadius = (hole*radius);
 
-        ctx.beginPath();
-        ctx.fillStyle = "#fff";
-        ctx.arc((graphX+halfWidth), (graphY+halfHeight), holeRadius, 0, 2 * Math.PI);
-        ctx.fill();
+        tempCtx.globalCompositeOperation = "destination-out";
+        tempCtx.globalAlpha = 1;
+        tempCtx.beginPath();
+        tempCtx.arc((graphX+halfWidth), (graphY+halfHeight), holeRadius, 0, 2 * Math.PI);
+        tempCtx.fill();
+        tempCtx.globalCompositeOperation = 'source-over';
+
+        ctx.drawImage(tempCanvas, 0, 0);
         
     }else {
 

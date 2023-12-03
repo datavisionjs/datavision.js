@@ -54,53 +54,6 @@ export function hasValidElements(arr) {
     }
 }
 
-export function graphPosition(dv, type, canvasWidth, canvasHeight){
-    //define the graph dimensions
-    let graphWidth = canvasWidth;
-    let graphHeight = canvasHeight;
-
-    const style = dv.getStyle();
-    const titleLines = dv.getLayout().titleLines;
-    const titleFontSize = style.title.fontSize;
-
-    //calculates horizontal position of the graph area
-    let graphX = 0;
-    //calculates vertical position of the graph area
-    let graphY = (titleFontSize*3);
-
-    if(titleLines.length > 1){
-        graphY += (titleFontSize*(titleLines.length-1));
-    }
-
-    if(type === "pie"){
-        graphY = (canvasHeight-graphHeight);
-        
-        graphWidth = (canvasWidth * 0.65);
-        graphHeight = (canvasHeight * 0.80);
-
-        //calculates vertical position of the graph area
-
-    }else {
-
-        graphWidth = (canvasWidth * 0.85);
-        graphHeight = (canvasHeight * 0.65);
-
-        //calculates horizontal position of the graph area
-        graphX = (canvasWidth - graphWidth) * 0.75;
-        //calculates vertical position of the graph area
-        graphY = (canvasHeight-graphHeight)/2;
-
-    }
-
-
-    return {
-        x: graphX,
-        y: graphY,
-        width: graphWidth,
-        height: graphHeight
-    };
-} 
-
 export function axisDist(range, maxDist){
     if(!range) return null;
    
@@ -206,7 +159,7 @@ export function posOnGraphYAxis(dv, y){
 
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
-    const chartPosition = layout.axisGraphPosition;
+    const chartPosition = layout.graphPosition;
     const chartY = chartPosition.y;
     const chartHeight = chartPosition.height;
 
@@ -242,7 +195,7 @@ export function posOnGraphXAxis(dv, x){
 
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
-    const chartPosition = layout.axisGraphPosition;
+    const chartPosition = layout.graphPosition;
     const chartX = chartPosition.x;
     const chartWidth = chartPosition.width;
 
@@ -283,7 +236,7 @@ export function getAxisPosition(dv, label, value){
 export function getAxisLabelPosition(dv, label){
     const layout = dv.getLayout();
 
-    const graphPosition = layout.axisGraphPosition;
+    const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x;
     const graphWidth = graphPosition.width;
 
@@ -311,7 +264,7 @@ export function getAxisLabelPosition(dv, label){
 export function getAxisValuePosition(dv, value){
     const layout = dv.getLayout();
 
-    const graphPosition = layout.axisGraphPosition;
+    const graphPosition = layout.graphPosition;
     const graphY = graphPosition.y;
     const graphHeight = graphPosition.height;
 

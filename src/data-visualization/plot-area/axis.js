@@ -2,8 +2,6 @@
 
 import * as Calc from '../helpers/math.js'
 
-import DrawTitleLabel from './titleLabel.js';
-
 
 function drawLabels(dv, position){
     const ctx = dv.getCtx();
@@ -308,7 +306,7 @@ function drawXAxis(dv, position){
 
             let angle = 0;
 
-            console.log("max: ", maxLabelWidth, step);
+            console.log("max: ", axisY, fontSize);
             if(maxLabelWidth > step){
                 angle = -40
                 textPosX = axisX;
@@ -345,62 +343,22 @@ function drawXAxis(dv, position){
 const DrawAxis = (dv) => {
     const ctx = dv.getCtx();
 
-    const canvas = ctx.canvas;
-    const canvasWidth = canvas.width;
-
     const layout = dv.getLayout();
 
     //stores the position and dimensions of the graph area
-    const graphPosition = layout.axisGraphPosition;
-
-    let graphWidth = graphPosition.width;
-    let graphHeight = graphPosition.height;
-
-    let graphX = graphPosition.x;
-    let graphY = graphPosition.y;
-
-    //set axisData
-    const axisData = layout.axisData;
-
-    //adjust graphheight base on label max text size
-    const maxLabelWidth = axisData.maxLabelWidth;
-
-    const labels = axisData.labels;
-    
-    //adjust graphX and height base on values max text size
-    const maxValueWidth = axisData.maxValueWidth;
-
-    if(maxValueWidth > 0){
-        graphX += maxValueWidth;
-        graphWidth = (canvasWidth-graphX);
-        
-    }
-
-    
-    const labelStep = (graphWidth/labels.length); //set label step after calculating graphWidth
-    if(maxLabelWidth > labelStep){
-        graphHeight -= (maxLabelWidth/2);
-    }
-
-
-
-    const newGraphPosition = {x: graphX, y: graphY, width: graphWidth, height: graphHeight};
-    
-    //reset layout's graphPosition
-    layout.axisGraphPosition = {...newGraphPosition};
+    const graphPosition = layout.graphPosition;
 
     //draw a rectangle representing the graph area
     ctx.beginPath();
-    ctx.rect(newGraphPosition.x, newGraphPosition.y, (newGraphPosition.width-1), newGraphPosition.height);
+    ctx.rect(graphPosition.x, graphPosition.y, (graphPosition.width-1), graphPosition.height);
     ctx.stroke();
 
     //Draw Y-axis, X-axis around the graph area
-    drawXAxis(dv, newGraphPosition);
-    drawYAxis(dv, newGraphPosition);
+    drawXAxis(dv, graphPosition);
+    drawYAxis(dv, graphPosition);
 
     //labels around the graph area
-    DrawTitleLabel(dv);
-    drawLabels(dv, newGraphPosition);
+    drawLabels(dv, graphPosition);
 }
 
 export default DrawAxis;
