@@ -88,9 +88,6 @@ const DrawLines = (dv, type, size, position) => {
     //draw lines coming from out of bounds points
     DrawOutOfBoundLines(dv, size, position);
 
-
-    console.log("wowowowwoow");
-
     //draw lines and arc within graph bounds
     if(position){
 

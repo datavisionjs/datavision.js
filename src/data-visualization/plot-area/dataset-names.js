@@ -38,14 +38,23 @@ const DrawDatasetNames = (dv) => {
         if(dataset){
             let labels = dataset.labels;
             const dataType = dataset.type;
-            const colors = dataset.colors;
+            let colors = dataset.colors;
 
             const axisChartTypes = ["line", "scatter", "bar"];
             if(axisChartTypes.includes(dataType)){
                 if(dataType === "bar"){
                     labels = dataset.names;
+                    const categories = dataset.categories;
+                    const firstCat = Array.from(categories.values())[0];
+
+                    colors = firstCat.colors;
+                    console.log("col: ", colors);
+
                 }else {
                     labels = [dataset.name];
+
+                    const designColor = dataset.design.color;
+                    colors = Array.isArray(designColor)? designColor: [designColor];
                 }
             }
 

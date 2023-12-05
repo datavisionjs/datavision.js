@@ -1,5 +1,7 @@
-import * as Calc from './math.js'
-import * as Global from './global.js'
+import * as Calc from './math.js';
+import * as Global from './global.js';
+
+import customColors from '../helpers/colors.js';
 
 export function setGraphPosition(dv){
     const canvas = dv.getCanvas();
@@ -157,6 +159,7 @@ export function setUpChart(dv){
             const labels = dataset.labels;
             const values = dataset.values;
             const dataType = dataset.type;
+            const design = dataset.design;
 
             const newPieDataset = {...dataset};
             const newPieLabels = [];
@@ -178,16 +181,18 @@ export function setUpChart(dv){
     
                     if(dataType === "bar"){
                         let labelValues = [value];
+                        let colorValues = [design? Array.isArray(design.color)? design.color[j]: design.color: customColors[axisDataCount].code];
     
                         if(barCategories.has(label)){
                             const lastData = barCategories.get(label);
                             labelValues = [...lastData.values, value];
+                            colorValues = [...lastData.colors, ...colorValues];
                         }
     
                         //set maxBarPerCategory if labelValues is more then the current value.
                         labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
     
-                        barCategories.set(label, {values: labelValues});
+                        barCategories.set(label, {values: labelValues, colors: colorValues});
     
                         dataset.direction === "hr"? axisDirection = "hr": null;
                         hasBarDataset = true;
@@ -219,6 +224,8 @@ export function setUpChart(dv){
                     barDatasetNames.push(newDataName);
                 }else {
                     dataset.name = newDataName;
+                    dataset.design = setUpAxisChartDesign(design, axisDataCount);
+                    console.log(dataType, dataset.design);
                     axisData.push(dataset);
                 }
 
@@ -313,7 +320,7 @@ export function setUpChart(dv){
 
     if(layout.yAxis){
         const range = layout.yAxis.range;
-        range? labelRange = range: null;
+        range? valueRange = range: null;
     }
 
     layout.ranges = {
@@ -353,4 +360,18 @@ export function setUpChart(dv){
 
     //set data to dv
     dv.setData(newData);
+}
+
+
+//get non bar axis chart design
+function setUpAxisChartDesign(design, count){
+    const newDesign = design? design: {};
+
+    //set deign color
+    !newDesign.color? newDesign.color = customColors[count].code: null;
+
+    //set design size 
+    !newDesign.size? newDesign.size = 3: null;
+
+    return newDesign;
 }

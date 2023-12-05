@@ -110,24 +110,12 @@ const DrawElements = (dv, type, dataset) => {
 
             const axisData = layout.axisData;
             const isHorizontal = axisData.direction === "hr";
-            
-            const defaultColor = customColors[colorIndex].code;
 
-            let fillColor = dataset.fillColor;
-            let strokeColor = dataset.strokeColor;
+            const color = dataset.design.color;
+            const designSize = dataset.design.size;
 
-            if(!strokeColor){
-                strokeColor = defaultColor;
-            }
-
-            if(!fillColor){
-                fillColor = defaultColor;
-            }
-
-            layout.customColorsIndex = (colorIndex+1);
-
-            ctx.fillStyle = fillColor;
-            ctx.strokeStyle = strokeColor;
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
 
             //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
             const labels = isHorizontal? dataset.values: dataset.labels;
@@ -141,7 +129,7 @@ const DrawElements = (dv, type, dataset) => {
                     let value = values[i];
 
 
-                    const size = 3;
+                    const size = Array.isArray(designSize)? designSize[i]: designSize;
                     
                     const positionType = i === 0? "start": i === (labels.length-1)? "end": "";
                     

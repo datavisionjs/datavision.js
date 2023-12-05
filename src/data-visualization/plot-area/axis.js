@@ -95,11 +95,15 @@ function drawYAxis(dv, position){
     const values = axisData.values;
 
     if(axisData.valueIsAllNumbers){
-        values.sort((a, b) => a - b);
-
         const maxDist = 10;
 
-        let range = [values[0], values[values.length-1]];
+        const ranges = layout.ranges;
+
+        values.sort((a, b) => a - b);
+
+        const dataRange = [values[0], values[values.length-1]];
+
+        let range = ranges? ranges.valueRange: dataRange;
 
         range = Calc.rangeOnAxis(range, maxDist);
 
@@ -203,8 +207,6 @@ function drawXAxis(dv, position){
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
 
-    //const ranges = layout.ranges;
-
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
@@ -220,11 +222,15 @@ function drawXAxis(dv, position){
     const labels = axisData.labels;
 
     if(axisData.labelIsAllNumbers){
-        labels.sort((a, b) => a - b);
-
         const maxDist = 7;
 
-        let range = [labels[0], labels[labels.length-1]];
+        const ranges = layout.ranges;
+
+        labels.sort((a, b) => a - b);
+
+        const dataRange = [labels[0], labels[labels.length-1]];
+
+        let range = ranges? ranges.labelRange: dataRange;
 
         range = Calc.rangeOnAxis(range, maxDist);
 
@@ -232,6 +238,8 @@ function drawXAxis(dv, position){
 
             const rangeStart = range[0];
             const rangeEnd = range[1];
+
+            console.log("start: ", rangeStart);
 
             const step = Calc.rangeStep(range, maxDist);
 
