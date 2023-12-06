@@ -242,7 +242,6 @@ export function setUpChart(dv){
     
                     //set maxTextlength
                     const labelWidth = ctx.measureText(label).width;
-                    const valueWidth = ctx.measureText(value).width;
 
                     //set all pie data into universal pie labels and values 
                     if(pieLabels.includes(label)){

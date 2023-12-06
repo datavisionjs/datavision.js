@@ -36,6 +36,10 @@ export function isAllNumbers(arr) {
     return arr.every(element => typeof element === 'number');
 }
 
+export function hasDecimal(number){
+    return number !== Math.floor(number);
+}
+
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
     // Convert degrees to radians
     const radians = (Math.PI / 180) * degrees;
@@ -175,13 +179,13 @@ export function posOnGraphYAxis(dv, y){
         const rangeDiff = (rangeEnd-rangeStart);
 
         //check if position is within range
-        if((y >= rangeStart && y <= rangeEnd)){
+        //if((y >= rangeStart && y <= rangeEnd)){
 
             const perc = ((y - rangeStart)/rangeDiff);
             const pos = ((chartY+chartHeight)-(perc*chartHeight));
             
             return pos;
-        }
+        //}
     }
 
     return y;
@@ -212,13 +216,13 @@ export function posOnGraphXAxis(dv, x){
         const rangeDiff = (rangeEnd-rangeStart);
 
         //check if position is within range
-        if((x >= rangeStart && x <= rangeEnd)){
+        //if((x >= rangeStart && x <= rangeEnd)){
 
             const perc = ((x - rangeStart)/rangeDiff);
             const pos = (chartX+(perc*chartWidth));
             
             return pos;
-        }
+        //}
     }
     
     return x;
@@ -297,3 +301,30 @@ export function getArcRadius(width, height){
 
     return radius;
 };
+
+
+//calculate chart Area
+
+export function getChartArea(dv, layout){
+    const target = dv.getTarget();
+
+    const layoutWidth = layout.width;
+    const layoutHeight = layout.height;
+
+    let width = 0, height = 0;
+    if(target){
+        width = Math.max(target.offsetWidth, target.offsetHeight);
+        height = (width*0.6);
+    }
+
+    
+    if(layoutWidth || layoutHeight){
+        width = layoutWidth;
+        height = layoutHeight;
+    }
+
+    return {
+        width: width,
+        height: height
+    };
+}

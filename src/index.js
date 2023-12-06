@@ -152,17 +152,10 @@ function DataVision(targetId) {
 }
 
 DataVision.prototype.plot = function (data, layout){
-    let size = 700;
+    
+    const chartArea = Calc.getChartArea(this, layout);
 
-    const target = this.getTarget();
-    if(target){
-        size = Math.max(target.offsetWidth, target.offsetHeight);
-    }
-
-    const canvasWidth = size;
-    const canvasHeight = (canvasWidth*0.6);
-
-    this.setCanvas(canvasWidth, canvasHeight);
+    this.setCanvas(chartArea.width, chartArea.height);
 
     //set styles
     this.setStyle();

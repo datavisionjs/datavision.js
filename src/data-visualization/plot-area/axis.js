@@ -91,6 +91,7 @@ function drawYAxis(dv, position){
 
     //set axisData
     const axisData = layout.axisData;
+    const isHorizontal = axisData.direction === "hr";
 
     const values = axisData.values;
 
@@ -103,7 +104,7 @@ function drawYAxis(dv, position){
 
         const dataRange = [values[0], values[values.length-1]];
 
-        let range = ranges? ranges.valueRange: dataRange;
+        let range = ranges? isHorizontal? ranges.labelRange: ranges.valueRange: dataRange;
 
         range = Calc.rangeOnAxis(range, maxDist);
 
@@ -218,6 +219,7 @@ function drawXAxis(dv, position){
 
     //set barData
     const axisData = layout.axisData;
+    const isHorizontal = axisData.direction === "hr";
 
     const labels = axisData.labels;
 
@@ -230,7 +232,7 @@ function drawXAxis(dv, position){
 
         const dataRange = [labels[0], labels[labels.length-1]];
 
-        let range = ranges? ranges.labelRange: dataRange;
+        let range = ranges? isHorizontal? ranges.valueRange: ranges.labelRange: dataRange;
 
         range = Calc.rangeOnAxis(range, maxDist);
 
