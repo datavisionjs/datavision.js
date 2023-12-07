@@ -27,12 +27,21 @@
                     color: "purple",
                     size: 8,
                 }
+            },{
+                labels: xValues,
+                values: yValues,
+                type: 'bar',
+                direction: "hr",
+                design: {
+                    color: "red",
+                    size: 8,
+                }
             },
             
         ];
 
         const layout = {
-            //yAxis: {range: [9, 60]},
+            //yAxis: {range: [9, 30]},
             xAxis: {range: [0, 7]},
             title:"Bubble chart Example",
         };

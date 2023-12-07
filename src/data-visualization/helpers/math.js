@@ -176,16 +176,17 @@ export function posOnGraphYAxis(dv, y){
         const rangeStart = range[0];
         const rangeEnd = range[1];
 
+        console.log("rangeEnd ", rangeEnd, rangeStart);
+
         const rangeDiff = (rangeEnd-rangeStart);
 
-        //check if position is within range
-        //if((y >= rangeStart && y <= rangeEnd)){
 
-            const perc = ((y - rangeStart)/rangeDiff);
-            const pos = ((chartY+chartHeight)-(perc*chartHeight));
+        const value = y > rangeEnd? rangeEnd: y;
+
+        const perc = ((value - rangeStart)/rangeDiff);
+        const pos = ((chartY+chartHeight)-(perc*chartHeight));
             
-            return pos;
-        //}
+        return pos;
     }
 
     return y;
@@ -215,14 +216,12 @@ export function posOnGraphXAxis(dv, x){
 
         const rangeDiff = (rangeEnd-rangeStart);
 
-        //check if position is within range
-        //if((x >= rangeStart && x <= rangeEnd)){
+        const value = x > rangeEnd? rangeEnd: x;
 
-            const perc = ((x - rangeStart)/rangeDiff);
-            const pos = (chartX+(perc*chartWidth));
+        const perc = ((value - rangeStart)/rangeDiff);
+        const pos = (chartX+(perc*chartWidth));
             
-            return pos;
-        //}
+        return pos;
     }
     
     return x;
