@@ -30,81 +30,89 @@ const DrawDatasetNames = (dv) => {
 
     const datasetData = dv.getData();
 
-    let startY = (graphY+(fontSize/2));
+    let hasMultiBarChart = false;
 
-    for(let o = 0; o < datasetData.length; o++){
-        const dataset = datasetData[o];
+    if(datasetData.length === 1){
+        const dataset = datasetData[0];
+        dataset.type === "bar"? dataset.names.length > 1? hasMultiBarChart = true: null: null; 
+    }
 
-        if(dataset){
-            let labels = dataset.labels;
-            const dataType = dataset.type;
-            let colors = dataset.colors;
+    
+    if(datasetData.length > 1 || !layout.hasAxisData || hasMultiBarChart){
 
-            const axisChartTypes = ["line", "scatter", "bar"];
-            if(axisChartTypes.includes(dataType)){
-                if(dataType === "bar"){
-                    labels = dataset.names;
-                    const categories = dataset.categories;
-                    const firstCat = Array.from(categories.values())[0];
+        let startY = (graphY+(fontSize/2));
 
-                    colors = firstCat.colors;
-                    console.log("col: ", colors);
+        for(let o = 0; o < datasetData.length; o++){
+            const dataset = datasetData[o];
 
-                }else {
-                    labels = [dataset.name];
+            if(dataset){
+                let labels = dataset.labels;
+                const dataType = dataset.type;
+                let colors = dataset.colors;
 
-                    const designColor = dataset.design.color;
-                    colors = Array.isArray(designColor)? designColor: [designColor];
-                }
-            }
+                const axisChartTypes = ["line", "scatter", "bar"];
+                if(axisChartTypes.includes(dataType)){
+                    if(dataType === "bar"){
+                        labels = dataset.names;
+                        const categories = dataset.categories;
+                        const firstCat = Array.from(categories.values())[0];
 
+                        colors = firstCat.colors;
 
-            if(labels){
+                    }else {
+                        labels = [dataset.name];
 
-                let pixelSpace = (fontSize*2);
-
-                if((datasetTotal*(fontSize*2)) >= (graphHeight+(fontSize/2))){
-                    pixelSpace = Math.round(labelAreaHeight/datasetTotal);
-                }
-
-                for (let i = 0; i < labels.length; i++) {
-
-                    //set defualtColor
-                    const defaultColor = customColors[i].code;
-
-                    let label = labels[i];
-                    const labelWidth = ctx.measureText(label).width;
-
-                    if((labelWidth+fontSize) > labelAreaWidth){
-                        if(label.length > 3){
-                            const estSizePerChar = (labelWidth/label.length);
-                            label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
-                            console.log(label);
-                        }
+                        const designColor = dataset.design.color;
+                        colors = Array.isArray(designColor)? designColor: [designColor];
                     }
+                }
+
+                if(labels){
+
+                    let pixelSpace = (fontSize*2);
+
+                    if((datasetTotal*(fontSize*2)) >= (graphHeight+(fontSize/2))){
+                        pixelSpace = Math.round(labelAreaHeight/datasetTotal);
+                    }
+
+                    for (let i = 0; i < labels.length; i++) {
+
+                        //set defualtColor
+                        const defaultColor = customColors[i].code;
+
+                        let label = labels[i];
+                        const labelWidth = ctx.measureText(label).width;
+
+                        if((labelWidth+fontSize) > labelAreaWidth){
+                            if(label.length > 3){
+                                const estSizePerChar = (labelWidth/label.length);
+                                label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
+                            }
+                        }
+                        
+
+                        const pieColor = colors? dataType === "bar"? colors[i][0]: colors[i]: null;
+
+                        const fillColor = pieColor? pieColor: defaultColor;
+                        fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
+
                     
+                        const textPosX = (labelX+(fontSize)), textPosY = startY;
 
-                    const pieColor = colors? colors[i]: null;
+                        ctx.beginPath();
+                        ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
+                        ctx.fill();
 
-                    const fillColor = pieColor? pieColor: defaultColor;
-                    fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
+                        //add text
+                        ctx.beginPath();
+                        ctx.fillStyle = "black";
+                        ctx.textAlign = "start";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText(label, textPosX, textPosY);
 
-                
-                    const textPosX = (labelX+(fontSize)), textPosY = startY;
-
-                    ctx.beginPath();
-                    ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
-                    ctx.fill();
-
-                    //add text
-                    ctx.beginPath();
-                    ctx.fillStyle = "black";
-                    ctx.textAlign = "start";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(label, textPosX, textPosY);
-
-                    startY += pixelSpace;
-                    
+                        startY += pixelSpace;
+                        
+                    }
                 }
             }
         }

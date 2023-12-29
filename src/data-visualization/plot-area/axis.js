@@ -96,27 +96,26 @@ function drawYAxis(dv, position){
     const values = axisData.values;
 
     if(axisData.valueIsAllNumbers){
-        const maxDist = 10;
+        const tickData = layout.tickData.value;
 
-        const ranges = layout.ranges;
+        //const maxDist = 7;
+
+        //const ranges = layout.ranges;
 
         values.sort((a, b) => a - b);
 
-        const dataRange = [values[0], values[values.length-1]];
+        //const dataRange = [values[0], values[values.length-1]];
 
-        let range = ranges? isHorizontal? ranges.labelRange: ranges.valueRange: dataRange;
-
-        range = Calc.rangeOnAxis(range, maxDist);
-
+        //let range = ranges? isHorizontal? ranges.labelRange: ranges.valueRange: dataRange;
+        let range = tickData.range;
+        
         if(range){
-
-            console.log("myRange: ", range);
 
             const rangeStart = range[0];
 
-            const step = Calc.rangeStep(range, maxDist);
+            const step = tickData.interval;
 
-            let dist = Calc.axisDist(range, maxDist);
+            let dist = tickData.count;
 
             let pixelStep = (graphHeight/dist);
             pixelStep < 1? pixelStep = 1: null;
@@ -128,10 +127,10 @@ function drawYAxis(dv, position){
             //set iterator to 2 if the highest label length is 2 times the size of the step
             fontSize > pixelStep? iterator += Math.round(fontSize/pixelStep): null;
 
-
-            for(let i = 0; i < dist; i += iterator){
+            for(let i = 0; i <= dist; i += iterator){
 
                 value = ((rangeStart)+(step*i));
+
                 axisY = ((graphY+graphHeight)-(pixelStep*i));
 
                 //set text width
@@ -224,7 +223,7 @@ function drawXAxis(dv, position){
     const labels = axisData.labels;
 
     if(axisData.labelIsAllNumbers){
-        const maxDist = 7;
+        const tickData = layout.tickData.label;
 
         const ranges = layout.ranges;
 
@@ -234,19 +233,17 @@ function drawXAxis(dv, position){
 
         let range = ranges? isHorizontal? ranges.valueRange: ranges.labelRange: dataRange;
 
-        range = Calc.rangeOnAxis(range, maxDist);
+        range = tickData.range;
 
         if(range){
 
             const rangeStart = range[0];
             const rangeEnd = range[1];
 
-            console.log("start: ", rangeStart);
-
-            const step = Calc.rangeStep(range, maxDist);
+            const step = tickData.interval;
 
 
-            let dist = Calc.axisDist(range, maxDist);
+            let dist = tickData.count;
 
             let pixelStep = (graphWidth/dist);
             pixelStep < 1? pixelStep = 1: null;
@@ -261,7 +258,9 @@ function drawXAxis(dv, position){
             //set iterator to 2 if the highest label length is 2 times the size of the step
             maxLabelWidth > pixelStep? iterator += Math.round(maxLabelWidth/pixelStep): null;
 
-            for(let i = 0; i < dist; i += iterator){
+            ctx.textAlign = "center";
+
+            for(let i = 0; i <= dist; i += iterator){
 
                 label = ((rangeStart)+(step*i));
                 axisX = (graphX+(pixelStep*i));
@@ -269,7 +268,7 @@ function drawXAxis(dv, position){
                 //set text width
                 const textWidth = ctx.measureText(label).width;
 
-                const textPosX = (axisX-(textWidth/2));
+                const textPosX = (axisX);
                 const textPosY = (axisY+(fontSize));
 
                 //draw lines 
@@ -277,8 +276,6 @@ function drawXAxis(dv, position){
                 ctx.moveTo(axisX, graphY);
                 ctx.lineTo(axisX, ((graphY+graphHeight)+(fontSize/2)));
                 ctx.stroke();
-
-                console.log("lime: ", textPosX, textPosY);
                 
 
                 //add xAxis range labels
@@ -308,15 +305,16 @@ function drawXAxis(dv, position){
             //set text width
             const textWidth = ctx.measureText(label).width;
 
-            let textPosX = (axisX-(textWidth/2));
+            let textPosX = (axisX);
             const textPosY = (axisY+(fontSize));
 
             //add xAxis range labels
             ctx.beginPath();
+            ctx.textAlign = "center";
+            //ctx.textBaseline = "middle";
 
             let angle = 0;
 
-            console.log("max: ", axisY, fontSize);
             if(maxLabelWidth > step){
                 angle = -40
                 textPosX = axisX;
@@ -340,12 +338,11 @@ function drawXAxis(dv, position){
             ctx.fillText(label, 0, 0);
         
             ctx.restore();
-
-            ctx.textAlign = "start";
         }
     }
 
     //reset text baselien
+    ctx.textAlign = "start";
     ctx.textBaseline = "alphabetic";
 
 }
@@ -360,7 +357,7 @@ const DrawAxis = (dv) => {
 
     //draw a rectangle representing the graph area
     ctx.beginPath();
-    ctx.rect(graphPosition.x, graphPosition.y, (graphPosition.width-1), graphPosition.height);
+    ctx.rect((graphPosition.x+1), graphPosition.y, (graphPosition.width-2), graphPosition.height);
     ctx.stroke();
 
     //Draw Y-axis, X-axis around the graph area

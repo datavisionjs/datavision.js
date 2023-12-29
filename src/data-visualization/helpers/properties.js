@@ -25,7 +25,11 @@ export function setGraphPosition(dv){
     const labelSpace = (labelFontSize*4);
 
     const axisData = layout.axisData;
+
     const labels = axisData.labels;
+
+    const labelIsAllNumbers = axisData.labelIsAllNumbers;
+
     const maxLabelWidth = axisData.maxLabelWidth;
     const maxValueWidth = axisData.maxValueWidth;
 
@@ -65,15 +69,14 @@ export function setGraphPosition(dv){
     if(isDatasetName){
         datasetMaxNameWidth > widthSide? graphWidth -= (graphX+widthSide): graphWidth -= (graphX+datasetMaxNameWidth+(labelFontSize*2));
     }else {
-        graphWidth -= (graphX);
+        labelIsAllNumbers? graphWidth -= (graphX+(maxLabelWidth/2)): graphWidth -= (graphX);
+        
     }
 
     const labelStep = (graphWidth/labels.length); //set label step after calculating graphWidth
     
     if(maxLabelWidth > labelStep && maxLabelWidth > (labelFontSize*2)){
         graphHeight -= (graphY)+(maxLabelWidth*0.7)+labelFontSize;
-
-        //console.log("width: ", (graphY+graphHeight), maxLabelWidth);
     }else {
         graphHeight -= ((graphY)+(labelFontSize*2));
     }
@@ -93,6 +96,81 @@ export function setGraphPosition(dv){
         graphPosition: graphPosition
     };
 
+}
+
+
+function getTickData(range){ 
+    if(!range) return {count: 0, range: range};
+
+    let desiredTickCount = 10;
+
+    const min = range[0], max = range[1];
+
+    let rangeStart = min, rangeEnd = max;
+    let tickCount = desiredTickCount;
+    let interval = 0;
+    
+    if(!isNaN(min) && !isNaN(max)){
+        if(min <= 0 && max >= 0){
+            desiredTickCount = Math.round(desiredTickCount/2);
+            const rangeDiff = max - 0;
+
+            // Calculate the interval size based on the desired number of ticks
+            const intervalSize = rangeDiff / Math.max(desiredTickCount - 1, 1);
+
+            interval = Calc.getTicksInterval(intervalSize);
+
+            const topTickCount = Math.ceil(rangeDiff / interval);
+            const bottomTickCount = Math.ceil(Math.abs(min)/interval);
+
+            tickCount = (topTickCount+bottomTickCount);
+            rangeStart = -(bottomTickCount*interval);
+            rangeEnd = (interval*(topTickCount));
+        }else {
+
+            if(min <= 0){
+                const rangeDiff = max - min;
+
+                // Calculate the interval size based on the desired number of ticks
+                const intervalSize = rangeDiff / Math.max(desiredTickCount - 1, 1);
+
+                interval = Calc.getTicksInterval(intervalSize);
+
+                rangeEnd = -(Calc.getTicksInterval(Math.abs(rangeEnd), true));
+
+                tickCount = Math.ceil(Math.abs(rangeEnd-min)/interval);
+
+                rangeStart = -((Math.abs(rangeEnd))+(interval*(tickCount)));
+            
+            }else if(min > 0){
+                console.log("we in");
+                rangeStart = Calc.getTicksInterval(rangeStart, true);
+
+                const rangeDiff = rangeEnd - rangeStart;
+
+                const newTickCount = rangeDiff < 1000? desiredTickCount: Math.round(desiredTickCount/2);
+
+                // Calculate the interval size based on the desired number of ticks
+                const intervalSize = rangeDiff / Math.max(newTickCount - 1, 1);
+
+                interval = Calc.getTicksInterval(intervalSize);
+
+                console.log("intervals: ", rangeStart, rangeEnd, max, interval);
+
+                // Calculate the number of ticks
+                tickCount = Math.ceil(rangeDiff / interval);
+
+                rangeEnd = rangeStart + (interval*(tickCount));
+            }
+
+        }
+    }
+
+    return {
+        count: tickCount,
+        range: [rangeStart, rangeEnd],
+        interval: interval,
+    }
 }
 
 
@@ -168,25 +246,45 @@ export function setUpChart(dv){
 
             const labelIsAllNumbers = Calc.isAllNumbers(labels);
             const valueIsAllNumbers = Calc.isAllNumbers(values);
+            
 
             if(axisChartTypes.includes(dataType)){
 
+                const currentBarLabels = [];
                 for(let j = 0; j < labels.length; j++){
                     const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
                     const value = valueIsAllNumbers? Math.round(values[j]): values[j];
     
                     //set maxTextlength
                     const labelWidth = ctx.measureText(label).width;
-                    const valueWidth = ctx.measureText(value).width;
+
+                    //If there's a value between 0 and -10 set the value to -10 and for measurement.
+                    const valueToMeasure = valueIsAllNumbers? value < 0 && value > 10? -10: value: value;
+                    const valueWidth = ctx.measureText(valueToMeasure).width;
     
                     if(dataType === "bar"){
-                        let labelValues = [value];
-                        let colorValues = [design? Array.isArray(design.color)? design.color[j]: design.color: customColors[axisDataCount].code];
+                        let labelValues = [[value]];
+                        let colorValues = [[design? Array.isArray(design.color)? design.color[j]: design.color: customColors[axisDataCount].code]];
     
                         if(barCategories.has(label)){
+
                             const lastData = barCategories.get(label);
-                            labelValues = [...lastData.values, value];
-                            colorValues = [...lastData.colors, ...colorValues];
+                            const lastDataValues = lastData.values;
+                            const lastLabelValues = lastDataValues[lastDataValues.length-1];
+
+                            const lastDataColors = lastData.colors;
+                            const lastColorValues = lastDataColors[lastDataColors.length-1];
+                            
+                            if(currentBarLabels.includes(label)){
+                                lastLabelValues.push(...labelValues[0]);
+                                lastColorValues.push(...colorValues[0]);
+
+                                labelValues = [...lastDataValues];
+                                colorValues = [...lastDataColors];
+                            }else {
+                                labelValues = [...lastDataValues, ...labelValues];
+                                colorValues = [...lastDataColors, ...colorValues];
+                            }
                         }
     
                         //set maxBarPerCategory if labelValues is more then the current value.
@@ -196,6 +294,8 @@ export function setUpChart(dv){
     
                         dataset.direction === "hr"? axisDirection = "hr": null;
                         hasBarDataset = true;
+                        //push label to currentBarLabels 
+                        currentBarLabels.push(label);
                     }
     
                    
@@ -225,7 +325,6 @@ export function setUpChart(dv){
                 }else {
                     dataset.name = newDataName;
                     dataset.design = setUpAxisChartDesign(design, axisDataCount);
-                    console.log(dataType, dataset.design);
                     axisData.push(dataset);
                 }
 
@@ -236,39 +335,41 @@ export function setUpChart(dv){
                 axisDataCount++;
             }else if(dataType === "pie"){
 
-                for(let j = 0; j < labels.length; j++){
+                for(let j = 0; j < values.length; j++){
                     const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
                     const value = valueIsAllNumbers? Math.round(values[j]): values[j];
-    
-                    //set maxTextlength
-                    const labelWidth = ctx.measureText(label).width;
+                    
+                    if(value >= 0){
+                        //set maxTextlength
+                        const labelWidth = ctx.measureText(label).width;
 
-                    //set all pie data into universal pie labels and values 
-                    if(pieLabels.includes(label)){
-                        const index = pieLabels.indexOf(label);
-                        const currentValue = pieValues[index];
+                        //set all pie data into universal pie labels and values 
+                        if(pieLabels.includes(label)){
+                            const index = pieLabels.indexOf(label);
+                            const currentValue = pieValues[index];
 
-                        pieValues[index] = (currentValue+value);
-                    }else {
-                        pieLabels.push(label);
-                        pieValues.push(value);
+                            pieValues[index] = (currentValue+value);
+                        }else {
+                            pieLabels.push(label);
+                            pieValues.push(value);
+                        }
+
+                        //set new pie dataset labels and values 
+                        if(newPieLabels.includes(label)){
+                            const index = newPieLabels.indexOf(label);
+                            const currentValue = newPieValues[index];
+
+                            newPieValues[index] = (currentValue+value);
+                        }else {
+                            newPieLabels.push(label);
+                            newPieValues.push(value);
+                        }
+
+                        pieTotalValues += value;
+
+                        //set max width of axis labels and values for pie charts
+                        labelWidth > pieMaxLabelWidth? pieMaxLabelWidth = labelWidth: null;
                     }
-
-                    //set new pie dataset labels and values 
-                    if(newPieLabels.includes(label)){
-                        const index = newPieLabels.indexOf(label);
-                        const currentValue = newPieValues[index];
-
-                        newPieValues[index] = (currentValue+value);
-                    }else {
-                        newPieLabels.push(label);
-                        newPieValues.push(value);
-                    }
-
-                    pieTotalValues += value;
-
-                    //set max width of axis labels and values for pie charts
-                    labelWidth > pieMaxLabelWidth? pieMaxLabelWidth = labelWidth: null;
 
                 }
 
@@ -314,17 +415,51 @@ export function setUpChart(dv){
 
     if(layout.xAxis){
         const range = layout.xAxis.range;
-        range? labelRange = range: null;
+        range? labelRange = range: [null, null];
     }
 
     if(layout.yAxis){
         const range = layout.yAxis.range;
-        range? valueRange = range: null;
+        range? valueRange = range: [null, null];
     }
 
+    console.log("yRange: ", valueRange);
+
+    const labelTick = getTickData(labelRange);
+    const valueTick = getTickData(valueRange);
+
+    console.log("value tick: ", valueTick)
+
+    //set axis max label width with tick ranges 
+    const valueTickRange = valueTick.range;
+    const labelTickRange = labelTick.range;
+
+    const valueTickRangeStart = valueTickRange[0], valueTickRangeEnd = valueTickRange[1];
+    const labelTickRangeStart = labelTickRange[0], labelTickRangeEnd = labelTickRange[1];
+    
+    const valueTickRangeStartWidth = valueTickRangeStart? ctx.measureText(valueTickRangeStart).width: 0;
+    const valueTickRangeEndWidth = valueTickRangeEnd? ctx.measureText(valueTickRangeEnd).width: 0;
+
+    const labelTickRangeStartWidth = labelTickRangeStart? ctx.measureText(labelTickRangeStart).width: 0;
+    const labelTickRangeEndWidth = labelTickRangeEnd? ctx.measureText(labelTickRangeEnd).width: 0;
+    
+    //set axisMaxValueWidth
+    axisMaxValueWidth = Math.max(axisMaxValueWidth, Math.max(valueTickRangeStartWidth, valueTickRangeEndWidth));
+    
+    //set axisMaxLabelWidth
+    axisMaxLabelWidth = Math.max(axisMaxLabelWidth, Math.max(labelTickRangeStartWidth, labelTickRangeEndWidth));
+
+    //set labout tickData 
+    layout.tickData = {
+        label: isHorizontal? valueTick: labelTick,
+        value: isHorizontal? labelTick: valueTick,
+    };
+
+
+
     layout.ranges = {
-        labelRange: labelRange,
-        valueRange: valueRange,
+        labelRange: labelTick.range,
+        valueRange: valueTick.range
     };
 
 

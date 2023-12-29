@@ -40,6 +40,10 @@ export function hasDecimal(number){
     return number !== Math.floor(number);
 }
 
+export function haveOppositeSigns(num1, num2) {
+    return (num1 >= 0 && num2 < 0) || (num1 < 0 && num2 >= 0);
+}
+
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
     // Convert degrees to radians
     const radians = (Math.PI / 180) * degrees;
@@ -58,80 +62,19 @@ export function hasValidElements(arr) {
     }
 }
 
-export function axisDist(range, maxDist){
-    if(!range) return null;
-   
-    const start = range[0];
-    const rangeEnd = range[1];
 
-    const rangeDiff = Math.abs(rangeEnd-start);
-    const step = rangeStep(range, maxDist);
+export function getTicksInterval(intervalSize, isReverse){
+    const niceNumbers = [1, 2, 5, 10];
 
-    let dist = Math.round(rangeDiff/step);
-    
-    if((start+(dist*step)) < rangeEnd){
-        dist++;
+    // Round the interval size to a nice number (1, 2, 5, or 10)
+    const magnitude = Math.pow(10, Math.floor(Math.log10(intervalSize)));
+
+    if(isReverse){
+        niceNumbers.reverse();
+        return niceNumbers.find(n => n * magnitude <= intervalSize) * magnitude;
+    }else {
+        return niceNumbers.find(n => n * magnitude >= intervalSize) * magnitude;
     }
-
-    return dist;
-}
-
-
-//calculates axis steps on canvas
-export function rangeStep(range, maxDist){
-
-    if(!range) return null;
-    
-    const roundedNumbers = [1, 2, 5, 10, 20, 50, 100];
-
-    const rangeStart = range[0];
-    const rangeEnd = range[1];
-
-    const rangeDiff = Math.abs(rangeEnd-rangeStart);
-
-
-
-    const estStep = (rangeDiff/maxDist); //estimated distribution steps 
-
-    const remainder100 = (estStep % 100);
-
-    const roundedRemainder100 = roundedNumbers.filter(number=> number >= remainder100)[0];
-
-    const step = (estStep-remainder100)+roundedRemainder100;
-
-    return step;
-}
-
-//generate range that'll be shown on axis
-export function rangeOnAxis(range, maxDist){
-
-    if(!range) return null;
-
-    let start = range[0];
-    let end = range[1];
-
-    //calculate start
-    if(start >= 10){
-        start = Math.floor(start / 10) * 10;
-    }else if(start >= 5){
-        start = Math.floor(start / 5) * 5;
-    }else if(start >= 2){
-        start = Math.floor(start / 2) * 2;
-    }else if(start >= 0) {
-        start = 0;
-    }else if(start > 10){
-        start = Math.floor(start);
-    }else if(start <= -10){
-        start = Math.floor(start / 10) * 10;
-    }
-
-    //calculate end
-    const step = rangeStep([start, end], maxDist);
-    const dist = axisDist([start, end], maxDist);
-    
-    end = (start+(dist*step));
-
-    return [start, end];
 }
 
 //get the minimun and max from a data of all numbers and return as range
@@ -143,7 +86,7 @@ export function rangeFromData(arr){
             return [minAndMax.min, minAndMax.max];
         }
     }
-    return null;
+    return [null, null];
 }
 
 
@@ -169,19 +112,16 @@ export function posOnGraphYAxis(dv, y){
 
     const ranges = layout.ranges;
 
-    const yRange = isHorizontal? ranges.labelRange: ranges.valueRange;
+    const range = isHorizontal? ranges.labelRange: ranges.valueRange;
 
-    if(yRange){
-        const range = rangeOnAxis(yRange, 10);
+    if(range){
         const rangeStart = range[0];
         const rangeEnd = range[1];
-
-        console.log("rangeEnd ", rangeEnd, rangeStart);
 
         const rangeDiff = (rangeEnd-rangeStart);
 
 
-        const value = y > rangeEnd? rangeEnd: y;
+        const value = y;
 
         const perc = ((value - rangeStart)/rangeDiff);
         const pos = ((chartY+chartHeight)-(perc*chartHeight));
@@ -206,17 +146,16 @@ export function posOnGraphXAxis(dv, x){
 
     const ranges = layout.ranges;
 
-    const xRange = isHorizontal? ranges.valueRange: ranges.labelRange;
+    const range = isHorizontal? ranges.valueRange: ranges.labelRange;
 
-    if(xRange){
-        const range = rangeOnAxis(xRange, 7);
+    if(range){
     
         const rangeStart = range[0];
         const rangeEnd = range[1];
 
         const rangeDiff = (rangeEnd-rangeStart);
 
-        const value = x > rangeEnd? rangeEnd: x;
+        const value = x;
 
         const perc = ((value - rangeStart)/rangeDiff);
         const pos = (chartX+(perc*chartWidth));

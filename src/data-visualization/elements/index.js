@@ -144,6 +144,14 @@ const DrawElements = (dv, type, dataset) => {
 
                         }else if(type === "points"){
 
+                            const designLine = dataset.design.line;
+                            const lineColor = designLine? designLine.color? designLine.color: color: color;
+                            const lineSize = designLine? designLine.size? designLine.size: 0: 0;
+                            
+                            //set line color and size
+                            ctx.strokeStyle = lineColor;
+                            ctx.lineWidth = lineSize;
+                            
                             DrawPoints(dv, size, position);
                         }
 

@@ -7,27 +7,31 @@ const DrawBars = (dv, category, catKey, dataset) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
+
+    const axisData = layout.axisData;
+    const valueIsAllNumbers = axisData.valueIsAllNumbers;
+
+    console.log("cat: ", category);
     
 
     if(category && dataset){
         const isHorizontal = dataset.direction === "hr";
 
         const values = category.values;
-
         const barColors = category.colors;
+
+
 
         //stores the position and dimensions of the graph area
         const graphPosition = layout.graphPosition;
         const graphX = graphPosition.x, graphY = graphPosition.y;
         const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-        const maxDist = isHorizontal? 7: 10;
-
         const ranges = layout.ranges;
         let range = ranges.valueRange;
-        range = Calc.rangeOnAxis(range, maxDist);
 
         const rangeStart = range[0] < 0? 0: range[0];
+        const rangeEnd = range[1];
         
 
         const maxBarPerCategory = dataset.maxBarPerCategory;
@@ -41,77 +45,108 @@ const DrawBars = (dv, category, catKey, dataset) => {
 
         //find the starting position of the bar on the y-axis
         //const find0 = Calc.posOnGraphYAxis(dv, 0);
-        const startPos = range? isHorizontal? Calc.posOnGraphXAxis(dv, rangeStart): Calc.posOnGraphYAxis(dv, rangeStart): null;
+        const startPos = range? isHorizontal? Calc.getAxisLabelPosition(dv, rangeStart): Calc.getAxisValuePosition(dv, rangeStart): null;
         //const start = find0? find0: startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
         const start = startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
 
-        console.log("startRange: ", rangeStart, startPos, start);
-
-        if(isHorizontal){
+        if(isHorizontal){ 
 
             const barHeight = barSize;
             let axisY = ((graphY+graphHeight)-((step*catPos)+(barHeight/2)));
 
             for(var i = 0; i < values.length; i++){
-                const x = values[i];
 
-                const colorIndex = layout.customColorsIndex;
-                const defaultColor = customColors[colorIndex+i].code;
+                const valuesItem = values[i];
+                const colorsItem = barColors[i];
 
-                const barColor = barColors? barColors[i]: defaultColor;
+                let newStart = start;
+                for(let o = 0; o < valuesItem.length; o++){
+                    const value = valuesItem[o];
+                    const x = value > rangeEnd? rangeEnd: value;
+                
 
-                const end = Calc.getAxisLabelPosition(dv, x);
+                    const colorIndex = layout.customColorsIndex;
+                    const defaultColor = customColors[colorIndex+i].code;
 
-                if(x > range[0]){
-                    const barWidth = (end-start);
+                    const barColor = colorsItem? colorsItem[o]? colorsItem[o]: defaultColor: defaultColor;
 
-                    if(start && end){
 
-                        barColor? ctx.fillStyle = barColor: null;//set bar color if exists
-                        
-                        //draw bar
-                        ctx.beginPath();
-                        ctx.rect(startPos, (axisY-barHeight), barWidth, barHeight);
-                        ctx.fill();
+                    const end = Calc.getAxisLabelPosition(dv, x);
+
+                    if(end >= graphY){
+                        const barWidth = (end-newStart);
+
+                        if(newStart && end){
+
+                            barColor? ctx.fillStyle = barColor: null;//set bar color if exists
+                            
+                            //draw bar
+                            ctx.beginPath();
+                            ctx.rect(startPos, (axisY-barHeight), barWidth, barHeight);
+                            ctx.fill();
+                        }
                     }
 
-                    axisY -= barHeight;
+                    newStart = newStart < end? start: end;
+
+                    if(valueIsAllNumbers){
+                        const nextValue = valuesItem[o+1]
+                        nextValue? Calc.haveOppositeSigns(x, nextValue) ? newStart = start: null: null;
+                    }
                 }
+
+                axisY -= barHeight;
             }
 
         }else {
+
             const barWidth = barSize;
 
             let axisX = (graphX+((step*catPos)+(barWidth/2)));
 
             for(var i = 0; i < values.length; i++){
-                const y = values[i];
+                
+                const valuesItem = values[i];
+                const colorsItem = barColors[i];
 
-                const colorIndex = layout.customColorsIndex;
-                const defaultColor = customColors[colorIndex+i].code;
+                let newStart = start;
+                for(let o = 0; o < valuesItem.length; o++){
+                    const value = valuesItem[o];
 
-                const barColor = barColors? barColors[i]: defaultColor;
+                    let y = value > rangeEnd? rangeEnd: value;
+                    
+                    const colorIndex = layout.customColorsIndex;
+                    const defaultColor = customColors[colorIndex+i].code;
 
-                const end = Calc.getAxisValuePosition(dv, y);
+                    const barColor = colorsItem? colorsItem[o]? colorsItem[o]: defaultColor: defaultColor;
 
-                if(y > range[0]){
+                    const end = Calc.getAxisValuePosition(dv, y);
 
-                    const barHeight = (start-end);
+                    const barHeight = (newStart-end);
 
-                    console.log("val: ", y, start, end, barHeight);
+                    if((graphY+graphHeight) >= end){
+                        if(newStart && end){
 
-                    if(start && end){
-
-                        barColor? ctx.fillStyle = barColor: null;//set bar color if exists
-                        
-                        //draw bar
-                        ctx.beginPath();
-                        ctx.rect(axisX, end, barWidth, barHeight);
-                        ctx.fill();
+                            barColor? ctx.fillStyle = barColor: null;//set bar color if exists
+                            
+                            //draw bar
+                            ctx.beginPath();
+                            ctx.rect(axisX, end, barWidth, barHeight);
+                            ctx.fill();
+                        }
                     }
 
-                    axisX += barWidth;
+                    newStart = newStart < end? start: end;
+
+                    if(valueIsAllNumbers){
+                        const nextValue = valuesItem[o+1]
+                        nextValue? Calc.haveOppositeSigns(y, nextValue) ? newStart = start: null: null;
+                    }
+
                 }
+
+                axisX += (barWidth);
+
             }
         }
 

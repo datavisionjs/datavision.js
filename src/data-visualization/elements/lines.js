@@ -7,7 +7,7 @@ let isLeftBoundDone = false;
 
 let lastGraphBoundPos = null; //stores position on graph
 
-const DrawOutOfBoundLines = (dv, size, position) => {
+const DrawOutOfBoundLines = (dv, position) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
@@ -84,20 +84,15 @@ const DrawLines = (dv, type, size, position) => {
 
     //add style 
     ctx.lineWidth = size;
+    ctx.lineCap = "round";
 
     //draw lines coming from out of bounds points
-    DrawOutOfBoundLines(dv, size, position);
+    DrawOutOfBoundLines(dv, position);
 
     //draw lines and arc within graph bounds
     if(position){
 
         if(type === "start"){
-
-            //draw circle at the points
-            ctx.beginPath();
-            ctx.arc(position.x, position.y, size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.closePath();
 
             ctx.beginPath();
             ctx.moveTo(position.x, position.y);
@@ -107,12 +102,6 @@ const DrawLines = (dv, type, size, position) => {
             ctx.lineTo(position.x, position.y);
 
             ctx.stroke();
-            ctx.closePath();
-
-            //draw circle at the points
-            ctx.beginPath();
-            ctx.arc(position.x, position.y, size, 0, Math.PI * 2);
-            ctx.fill();
             ctx.closePath();
 
             ctx.beginPath();

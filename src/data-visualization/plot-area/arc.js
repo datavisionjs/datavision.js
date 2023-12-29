@@ -13,8 +13,6 @@ const DrawArc = (dv) => {
     const radius = Calc.getArcRadius(graphWidth, graphHeight);
     const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+radius);
 
-    console.log(graphX, (graphWidth/2), ctx.canvas.width);
-
     //draw a rectangle representing the graph area
     ctx.beginPath();
     
