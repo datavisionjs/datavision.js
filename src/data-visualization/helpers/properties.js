@@ -143,7 +143,6 @@ function getTickData(range){
                 rangeStart = -((Math.abs(rangeEnd))+(interval*(tickCount)));
             
             }else if(min > 0){
-                console.log("we in");
                 rangeStart = Calc.getTicksInterval(rangeStart, true);
 
                 const rangeDiff = rangeEnd - rangeStart;
@@ -154,8 +153,6 @@ function getTickData(range){
                 const intervalSize = rangeDiff / Math.max(newTickCount - 1, 1);
 
                 interval = Calc.getTicksInterval(intervalSize);
-
-                console.log("intervals: ", rangeStart, rangeEnd, max, interval);
 
                 // Calculate the number of ticks
                 tickCount = Math.ceil(rangeDiff / interval);
@@ -263,14 +260,22 @@ export function setUpChart(dv){
                     const valueWidth = ctx.measureText(valueToMeasure).width;
     
                     if(dataType === "bar"){
+                        const customColor = customColors[axisDataCount].code;
+
                         let labelValues = [[value]];
-                        let colorValues = [[design? Array.isArray(design.color)? design.color[j]: design.color: customColors[axisDataCount].code]];
+                                              //positive value count , negative value count
+                        let labelValuesCount = [[value >= 0? value: 0, value < 0? value: 0]];
+                        
+                        let colorValues = [[design? Array.isArray(design.color)? j < design.color.length? design.color[j]: customColor : design.color: customColor]];
     
                         if(barCategories.has(label)){
 
                             const lastData = barCategories.get(label);
                             const lastDataValues = lastData.values;
                             const lastLabelValues = lastDataValues[lastDataValues.length-1];
+
+                            const lastDataValuesCount = lastData.valuesCount;
+                            const lastValuesCount = lastDataValuesCount[lastDataValuesCount.length-1];
 
                             const lastDataColors = lastData.colors;
                             const lastColorValues = lastDataColors[lastDataColors.length-1];
@@ -279,10 +284,26 @@ export function setUpChart(dv){
                                 lastLabelValues.push(...labelValues[0]);
                                 lastColorValues.push(...colorValues[0]);
 
+                                if(valueIsAllNumbers){
+                                    const lastValue = value >= 0? lastValuesCount[0]: lastValuesCount[1];
+                                    const sumValue = (lastValue+value);
+
+                                    console.log("lastie: ", lastValuesCount, value);
+                                    value >= 0? lastDataValuesCount[lastDataValuesCount.length-1][0] = sumValue: null;
+                                    value < 0? lastDataValuesCount[lastDataValuesCount.length-1][1] = sumValue: null;
+                                    
+                                    //add to axisValue
+                                    if(axisValues.indexOf(sumValue) === -1){
+                                        axisValues.push(sumValue);
+                                    }
+                                }
+
                                 labelValues = [...lastDataValues];
                                 colorValues = [...lastDataColors];
+                                labelValuesCount = lastDataValuesCount;
                             }else {
                                 labelValues = [...lastDataValues, ...labelValues];
+                                labelValuesCount = [...lastDataValuesCount, ...labelValuesCount];
                                 colorValues = [...lastDataColors, ...colorValues];
                             }
                         }
@@ -290,10 +311,11 @@ export function setUpChart(dv){
                         //set maxBarPerCategory if labelValues is more then the current value.
                         labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
     
-                        barCategories.set(label, {values: labelValues, colors: colorValues});
+                        barCategories.set(label, {values: labelValues, valuesCount: labelValuesCount,  colors: colorValues});
     
                         dataset.direction === "hr"? axisDirection = "hr": null;
                         hasBarDataset = true;
+
                         //push label to currentBarLabels 
                         currentBarLabels.push(label);
                     }
@@ -423,12 +445,8 @@ export function setUpChart(dv){
         range? valueRange = range: [null, null];
     }
 
-    console.log("yRange: ", valueRange);
-
     const labelTick = getTickData(labelRange);
     const valueTick = getTickData(valueRange);
-
-    console.log("value tick: ", valueTick)
 
     //set axis max label width with tick ranges 
     const valueTickRange = valueTick.range;

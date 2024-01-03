@@ -193,7 +193,6 @@ export function getAxisLabelPosition(dv, label){
         const index = axisLabels.indexOf(label);
         
         if(index >= 0){
-
             label = (graphX+((step*index)+halfStep));
         }
     }else {

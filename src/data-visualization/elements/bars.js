@@ -1,17 +1,48 @@
 import * as Calc from '../helpers/math.js'
 import customColors from '../helpers/colors.js';
 
+function barItemSort(valuesItem, colorsItem, isSort) {
+    if (!isSort) {
+        return {
+            values: valuesItem,
+            colors: colorsItem
+        };
+    }
+
+    const positive = [];
+    const positiveColors = [];
+    const negative = [];
+    const negativeColors = [];
+
+    for (let i = 0; i < valuesItem.length; i++) {
+        const item = valuesItem[i];
+        const color = colorsItem[i];
+
+        if (item >= 0) {
+            positive.push(item);
+            positiveColors.push(color);
+        } else {
+            negative.push(item);
+            negativeColors.push(color);
+        }
+    }
+
+    const sortedValues = [...positive, ...negative];
+    const sortedColors = [...positiveColors, ...negativeColors];
+
+    return {
+        values: sortedValues,
+        colors: sortedColors
+    };
+}
+
+
 //draw the bars
 
 const DrawBars = (dv, category, catKey, dataset) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
-
-    const axisData = layout.axisData;
-    const valueIsAllNumbers = axisData.valueIsAllNumbers;
-
-    console.log("cat: ", category);
     
 
     if(category && dataset){
@@ -19,6 +50,9 @@ const DrawBars = (dv, category, catKey, dataset) => {
 
         const values = category.values;
         const barColors = category.colors;
+
+        const axisData = layout.axisData;
+        const valueIsAllNumbers = isHorizontal? axisData.labelIsAllNumbers: axisData.valueIsAllNumbers;
 
 
 
@@ -60,8 +94,11 @@ const DrawBars = (dv, category, catKey, dataset) => {
                 const colorsItem = barColors[i];
 
                 let newStart = start;
+                let lastValue = 0;
                 for(let o = 0; o < valuesItem.length; o++){
-                    const value = valuesItem[o];
+                    const item = valuesItem[o];
+                    const value = valueIsAllNumbers? (item+lastValue): item;
+                   
                     const x = value > rangeEnd? rangeEnd: value;
                 
 
@@ -92,6 +129,8 @@ const DrawBars = (dv, category, catKey, dataset) => {
                     if(valueIsAllNumbers){
                         const nextValue = valuesItem[o+1]
                         nextValue? Calc.haveOppositeSigns(x, nextValue) ? newStart = start: null: null;
+                        
+                        lastValue += value;
                     }
                 }
 
@@ -105,13 +144,17 @@ const DrawBars = (dv, category, catKey, dataset) => {
             let axisX = (graphX+((step*catPos)+(barWidth/2)));
 
             for(var i = 0; i < values.length; i++){
+
+                const itemSort = barItemSort(values[i], barColors[i], valueIsAllNumbers);
                 
-                const valuesItem = values[i];
-                const colorsItem = barColors[i];
+                const valuesItem = itemSort.values;
+                const colorsItem = itemSort.colors;
 
                 let newStart = start;
+                let lastValue = 0;
                 for(let o = 0; o < valuesItem.length; o++){
-                    const value = valuesItem[o];
+                    const item = valuesItem[o];
+                    const value = valueIsAllNumbers? (item+lastValue): item;
 
                     let y = value > rangeEnd? rangeEnd: value;
                     
@@ -136,11 +179,16 @@ const DrawBars = (dv, category, catKey, dataset) => {
                         }
                     }
 
-                    newStart = newStart < end? start: end;
+                    //newStart = newStart < end? start: end;
 
                     if(valueIsAllNumbers){
                         const nextValue = valuesItem[o+1]
-                        nextValue? Calc.haveOppositeSigns(y, nextValue) ? newStart = start: null: null;
+                        const isOpposite = nextValue? Calc.haveOppositeSigns(y, nextValue): false;
+                        
+                        isOpposite? newStart = start: newStart = end;
+                        isOpposite? lastValue = 0: lastValue += value;
+
+                        console.log(catKey, y, lastValue, nextValue, newStart, start);
                     }
 
                 }
