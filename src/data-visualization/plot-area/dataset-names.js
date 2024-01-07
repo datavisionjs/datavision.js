@@ -19,11 +19,12 @@ const DrawDatasetNames = (dv) => {
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+    const yAxisRight = graphPosition.yAxisRight;
 
-    const labelAreaWidth = (canvasWidth-(graphX+graphWidth));
+    const labelAreaWidth = (canvasWidth*0.2);
     const labelAreaHeight = (canvasHeight-graphY);
 
-    const labelX = (graphX+graphWidth)+fontSize;
+    const labelX = ((graphX+graphWidth)+yAxisRight)+fontSize;
 
     const datasetNameData = layout.datasetNameData;
     const datasetTotal = datasetNameData.total;
@@ -83,7 +84,7 @@ const DrawDatasetNames = (dv) => {
                         let label = labels[i];
                         const labelWidth = ctx.measureText(label).width;
 
-                        if((labelWidth+fontSize) > labelAreaWidth){
+                        if((labelWidth+pixelSpace) > labelAreaWidth){
                             if(label.length > 3){
                                 const estSizePerChar = (labelWidth/label.length);
                                 label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));

@@ -98,11 +98,8 @@ export function posOnGraph(dv, position){
     return {x: x, y: y};
 }
 
-export function posOnGraphYAxis(dv, y){
+export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
     const layout = dv.getLayout();
-
-    const axisData = layout.axisData;
-    const isHorizontal = axisData.direction === "hr";
 
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
@@ -110,33 +107,41 @@ export function posOnGraphYAxis(dv, y){
     const chartY = chartPosition.y;
     const chartHeight = chartPosition.height;
 
-    const ranges = layout.ranges;
 
-    const range = isHorizontal? ranges.labelRange: ranges.valueRange;
+    const axisData = layout.axisData;
 
-    if(range){
-        const rangeStart = range[0];
-        const rangeEnd = range[1];
+    !yAxisName? yAxisName = "y1": null;
+    const yAxis = axisData.values[yAxisName];
 
-        const rangeDiff = (rangeEnd-rangeStart);
+    //!xAxisName? xAxisName = "x1": null;
+    //const xAxis = axisData.labels[xAxisName];
+
+    //const isHorizontal = axisData.direction === "hr";
+
+    if(yAxis){
+        const range = yAxis.range;
+
+        if(range){
+            const rangeStart = range[0];
+            const rangeEnd = range[1];
+
+            const rangeDiff = (rangeEnd-rangeStart);
 
 
-        const value = y;
+            const value = y;
 
-        const perc = ((value - rangeStart)/rangeDiff);
-        const pos = ((chartY+chartHeight)-(perc*chartHeight));
-            
-        return pos;
+            const perc = ((value - rangeStart)/rangeDiff);
+            const pos = ((chartY+chartHeight)-(perc*chartHeight));
+                
+            return pos;
+        }
     }
 
     return y;
 }
 
-export function posOnGraphXAxis(dv, x){
+export function posOnGraphXAxis(dv, x, axisName){
     const layout = dv.getLayout();
-
-    const axisData = layout.axisData;
-    const isHorizontal = axisData.direction === "hr";
 
     //stores the position and dimensions of the graph area
     //const chartPosition = graphPosition(dv, dataType, canvasWidth, canvasHeight);
@@ -144,23 +149,28 @@ export function posOnGraphXAxis(dv, x){
     const chartX = chartPosition.x;
     const chartWidth = chartPosition.width;
 
-    const ranges = layout.ranges;
+    const axisData = layout.axisData;
 
-    const range = isHorizontal? ranges.valueRange: ranges.labelRange;
+    !axisName? axisName = "x1": null;
+    const axis = axisData.labels[axisName];
 
-    if(range){
-    
-        const rangeStart = range[0];
-        const rangeEnd = range[1];
+    if(axis){
+        const range = axis.range;
 
-        const rangeDiff = (rangeEnd-rangeStart);
+        if(range){
+        
+            const rangeStart = range[0];
+            const rangeEnd = range[1];
 
-        const value = x;
+            const rangeDiff = (rangeEnd-rangeStart);
 
-        const perc = ((value - rangeStart)/rangeDiff);
-        const pos = (chartX+(perc*chartWidth));
-            
-        return pos;
+            const value = x;
+
+            const perc = ((value - rangeStart)/rangeDiff);
+            const pos = (chartX+(perc*chartWidth));
+                
+            return pos;
+        }
     }
     
     return x;
@@ -168,14 +178,15 @@ export function posOnGraphXAxis(dv, x){
 }
 
 
-export function getAxisPosition(dv, label, value){
+export function getAxisPosition(dv, label, value, valueAxisName, labelAxisName){
     return {
-        x: getAxisLabelPosition(dv, label),
-        y: getAxisValuePosition(dv, value)
+        x: getAxisLabelPosition(dv, label, labelAxisName),
+        y: getAxisValuePosition(dv, value, valueAxisName)
     };
 }
 
-export function getAxisLabelPosition(dv, label){
+export function getAxisLabelPosition(dv, label, axisName){
+
     const layout = dv.getLayout();
 
     const graphPosition = layout.graphPosition;
@@ -183,26 +194,31 @@ export function getAxisLabelPosition(dv, label){
     const graphWidth = graphPosition.width;
 
     const axisData = layout.axisData;
-    const labelIsAllNumbers = axisData.labelIsAllNumbers;
 
-    const axisLabels = axisData.labels;
+    !axisName? axisName = "x1": null;
+    const axis = axisData.labels[axisName];
 
-    if(!labelIsAllNumbers){
-        const step = (graphWidth/axisLabels.length);
-        const halfStep = (step/2);
-        const index = axisLabels.indexOf(label);
-        
-        if(index >= 0){
-            label = (graphX+((step*index)+halfStep));
+    if(axis){
+        const labelIsAllNumbers = axis.isAllNumbers;
+        const axisLabels = axis.values;
+
+        if(!labelIsAllNumbers){
+            const step = (graphWidth/axisLabels.length);
+            const halfStep = (step/2);
+            const index = axisLabels.indexOf(label);
+
+            if(index >= 0){
+                label = (graphX+((step*index)+halfStep));
+            }
+        }else {
+            label = posOnGraphXAxis(dv, label);
         }
-    }else {
-        label = posOnGraphXAxis(dv, label);
     }
 
     return label;
 }
 
-export function getAxisValuePosition(dv, value){
+export function getAxisValuePosition(dv, value, axisName){
     const layout = dv.getLayout();
 
     const graphPosition = layout.graphPosition;
@@ -210,20 +226,26 @@ export function getAxisValuePosition(dv, value){
     const graphHeight = graphPosition.height;
 
     const axisData = layout.axisData;
-    const valueIsAllNumbers = axisData.valueIsAllNumbers;
 
-    const axisValues = axisData.values;
+    !axisName? axisName = "y1": null;
+    const axis = axisData.values[axisName];
 
-    if(!valueIsAllNumbers){
-        const step = (graphHeight/axisValues.length);
-        const halfStep = (step/2);
-        const index = axisValues.indexOf(value);
-        
-        if(index >= 0){
-            value = ((graphY+graphHeight)-((step*index)+halfStep));
+    if(axis){
+        const valueIsAllNumbers = axis.isAllNumbers;
+
+        if(!valueIsAllNumbers){
+            const axisValues = axis.values;
+
+            const step = (graphHeight/axisValues.length);
+            const halfStep = (step/2);
+            const index = axisValues.indexOf(value);
+            
+            if(index >= 0){
+                value = ((graphY+graphHeight)-((step*index)+halfStep));
+            }
+        }else {
+            value = posOnGraphYAxis(dv, value, axisName);
         }
-    }else {
-        value = posOnGraphYAxis(dv, value);
     }
 
     return value;

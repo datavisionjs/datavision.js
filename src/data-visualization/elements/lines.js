@@ -7,14 +7,18 @@ let isLeftBoundDone = false;
 
 let lastGraphBoundPos = null; //stores position on graph
 
-const DrawOutOfBoundLines = (dv, position) => {
+const DrawOutOfBoundLines = (dv, position, axisName) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
     if(!layout.isBarChart){
-        const ranges = layout.ranges;
-        const xRange = ranges.labelRange;
+
+        const axisData = layout.axisData;
+        const axis = axisData.labels[axisName];
+
+        
+        const xRange = axis.range;
         const xRangeStart = xRange? xRange[0]: null;
         const xRangeEnd = xRange? xRange[1]: null;
 
@@ -78,7 +82,9 @@ const DrawOutOfBoundLines = (dv, position) => {
     }
 };
 
-const DrawLines = (dv, type, size, position) => {
+const DrawLines = (dv, dataset, type, size, position) => {
+
+    const axisName = dataset.xAxis? dataset.xAxis: "x1";
 
     const ctx = dv.getCtx();
 
@@ -87,7 +93,7 @@ const DrawLines = (dv, type, size, position) => {
     ctx.lineCap = "round";
 
     //draw lines coming from out of bounds points
-    DrawOutOfBoundLines(dv, position);
+    DrawOutOfBoundLines(dv, position, axisName);
 
     //draw lines and arc within graph bounds
     if(position){

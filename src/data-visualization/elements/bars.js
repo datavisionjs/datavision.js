@@ -51,8 +51,14 @@ const DrawBars = (dv, category, catKey, dataset) => {
         const values = category.values;
         const barColors = category.colors;
 
+
         const axisData = layout.axisData;
-        const valueIsAllNumbers = isHorizontal? axisData.labelIsAllNumbers: axisData.valueIsAllNumbers;
+
+        const yAxis = axisData.values[category.yAxis];
+        const xAxis = axisData.labels[category.xAxis];
+
+        const valueIsAllNumbers = yAxis.isAllNumbers;
+        const labelIsAllNumbers = xAxis.isAllNumbers;
 
 
 
@@ -61,8 +67,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
         const graphX = graphPosition.x, graphY = graphPosition.y;
         const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-        const ranges = layout.ranges;
-        let range = ranges.valueRange;
+        let range = isHorizontal? xAxis.range: yAxis.range;
 
         const rangeStart = range[0] < 0? 0: range[0];
         const rangeEnd = range[1];
@@ -83,21 +88,23 @@ const DrawBars = (dv, category, catKey, dataset) => {
         //const start = find0? find0: startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
         const start = startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
 
-        if(isHorizontal){ 
+        if(isHorizontal){
 
             const barHeight = barSize;
             let axisY = ((graphY+graphHeight)-((step*catPos)+(barHeight/2)));
 
             for(var i = 0; i < values.length; i++){
 
-                const valuesItem = values[i];
-                const colorsItem = barColors[i];
+                const itemSort = barItemSort(values[i], barColors[i], labelIsAllNumbers);
+                const valuesItem = itemSort.values;
+                const colorsItem = itemSort.colors;
 
                 let newStart = start;
                 let lastValue = 0;
+
                 for(let o = 0; o < valuesItem.length; o++){
                     const item = valuesItem[o];
-                    const value = valueIsAllNumbers? (item+lastValue): item;
+                    const value = labelIsAllNumbers? (item+lastValue): item;
                    
                     const x = value > rangeEnd? rangeEnd: value;
                 
@@ -110,7 +117,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
 
                     const end = Calc.getAxisLabelPosition(dv, x);
 
-                    if(end >= graphY){
+                    if(end >= graphX){
                         const barWidth = (end-newStart);
 
                         if(newStart && end){
@@ -119,18 +126,24 @@ const DrawBars = (dv, category, catKey, dataset) => {
                             
                             //draw bar
                             ctx.beginPath();
-                            ctx.rect(startPos, (axisY-barHeight), barWidth, barHeight);
+                            ctx.rect(newStart, (axisY-barHeight), barWidth, barHeight);
                             ctx.fill();
                         }
                     }
 
                     newStart = newStart < end? start: end;
 
-                    if(valueIsAllNumbers){
-                        const nextValue = valuesItem[o+1]
-                        nextValue? Calc.haveOppositeSigns(x, nextValue) ? newStart = start: null: null;
+                    if(labelIsAllNumbers){
+                        //const nextValue = valuesItem[o+1];
+                        //nextValue? Calc.haveOppositeSigns(x, nextValue) ? newStart = start: null: null;
                         
-                        lastValue += value;
+                        //lastValue += value;
+
+                        const nextValue = valuesItem[o+1]
+                        const isOpposite = nextValue? Calc.haveOppositeSigns(x, nextValue): false;
+                        
+                        isOpposite? newStart = start: newStart = end;
+                        isOpposite? lastValue = 0: lastValue += value;
                     }
                 }
 
@@ -182,13 +195,12 @@ const DrawBars = (dv, category, catKey, dataset) => {
                     //newStart = newStart < end? start: end;
 
                     if(valueIsAllNumbers){
-                        const nextValue = valuesItem[o+1]
+                        const nextValue = valuesItem[o+1];
                         const isOpposite = nextValue? Calc.haveOppositeSigns(y, nextValue): false;
                         
                         isOpposite? newStart = start: newStart = end;
                         isOpposite? lastValue = 0: lastValue += value;
 
-                        console.log(catKey, y, lastValue, nextValue, newStart, start);
                     }
 
                 }

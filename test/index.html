@@ -13,8 +13,14 @@
 
     <script>
 
-        const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
-        const yArray = [55, 49, 100, 24, 15, 45, -15, 50];
+        //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
+        //const yArray = [55, 49, 100, 24, 15, 45, -15, 50];
+
+        const xArray = [55, 49, 44, 24, 15];
+        const yArray = ["Italy ", "France ", "Spain ", "USA ", "Argentina "];
+
+        //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
+        //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
         var barColors = ["red", "green","teal","orange","brown", "pink", "lime", "purple"];
 
         const data = [
@@ -23,10 +29,20 @@
                 labels: xArray,
                 values: yArray,
                 type: 'bar',
-                direction: "hr",
+                direction: "",
                 hole: .9,
+                name: "EU Sales",
                 design: {
-                    color: barColors,
+                    size: 5,
+                }
+            },{
+                labels: xArray,
+                values: yArray,
+                type: 'line',
+                name: "JP Sales",
+                yAxis: "y1",
+                design: {
+                    color: "orange",
                     size: 5,
                 }
             }
@@ -34,8 +50,13 @@
         ];
 
         const layout = {
-            title: "Bubble chart Example",
-        };
+            yAxis: {title: "EU Sales"},
+            //y2Axis: {title: "JP Sales"},
+            xAxis: {title: "Countries"},
+            title: "Simple chart Example",
+            width: 1000,
+            height: 400
+        }
 
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);

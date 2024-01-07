@@ -108,14 +108,17 @@ const DrawElements = (dv, type, dataset) => {
 
         if(dataset){
 
-            const axisData = layout.axisData;
-            const isHorizontal = axisData.direction === "hr";
+            const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
+            const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
 
-            const color = dataset.design.color;
+            //const axisData = layout.axisData;
+            const isHorizontal = dataset.direction === "hr";
+
+            const designColor = dataset.design.color;
             const designSize = dataset.design.size;
 
-            ctx.fillStyle = color;
-            ctx.strokeStyle = color;
+            ctx.fillStyle = designColor;
+            ctx.strokeStyle = designColor;
 
             //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
             const labels = isHorizontal? dataset.values: dataset.labels;
@@ -128,19 +131,19 @@ const DrawElements = (dv, type, dataset) => {
                     let label = labels[i];
                     let value = values[i];
 
-
+                    const color = Array.isArray(designColor)? designColor[i]: designColor;
                     const size = Array.isArray(designSize)? designSize[i]: designSize;
                     
                     const positionType = i === 0? "start": i === (labels.length-1)? "end": "";
                     
                     if(value || value === 0){ //proceed if y is valid
 
-                        const position = Calc.getAxisPosition(dv, label, value);
+                        const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
 
                         if(type === "arcs"){
 
                         }else if(type === "lines"){
-                            DrawLines(dv, positionType, size, position);
+                            DrawLines(dv, dataset, positionType, size, position);
 
                         }else if(type === "points"){
 
@@ -149,6 +152,7 @@ const DrawElements = (dv, type, dataset) => {
                             const lineSize = designLine? designLine.size? designLine.size: 0: 0;
                             
                             //set line color and size
+                            ctx.fillStyle = color;
                             ctx.strokeStyle = lineColor;
                             ctx.lineWidth = lineSize;
                             

@@ -5,6 +5,112 @@ import customColors from '../helpers/colors.js';
 
 export function setGraphPosition(dv){
     const canvas = dv.getCanvas();
+    const canvasWidth = canvas.width, canvasHeight = canvas.height;
+
+    //layout 
+    const layout = dv.getLayout();
+
+    //styling 
+    const style = dv.getStyle();
+    const titleFontSize = style.title.fontSize;
+    const labelFontSize = style.label.fontSize;
+
+
+    //set title space from top;
+    const titleLines = dv.getLayout().titleLines;
+    let titleTop = 0;
+    titleLines.length > 0? titleTop = ((titleLines.length+1)*titleFontSize): null;
+    
+
+
+
+    const axisData = layout.axisData;
+    const labelObject = axisData.labels;
+    const valueObject = axisData.values;
+    const axisTitleSpace = (labelFontSize*2);
+
+    //set y axis space from left and right
+    let yAxisLeft = (canvasWidth*0.15), yAxisRight = (canvasWidth*0.15);
+
+    //y1
+    const y1 = valueObject.y1;
+    const y1MaxWidth = y1.maxWidth;
+
+    y1MaxWidth < yAxisLeft? yAxisLeft = (y1MaxWidth+axisTitleSpace): null;
+
+    const y1Title = layout.yAxis? layout.yAxis.title: null;
+    y1Title? yAxisLeft += axisTitleSpace: null;
+
+    //y2
+    const y2 = valueObject.y2;
+    const y2MaxWidth = y2.maxWidth;
+
+    y2MaxWidth < yAxisRight? y2MaxWidth === 0? yAxisRight = 0: yAxisRight = (y2MaxWidth+axisTitleSpace): null;
+
+    const y2Title = layout.y2Axis? layout.y2Axis.title: null;
+    y2Title && (y2MaxWidth > 0)? yAxisRight += (labelFontSize*2): null;
+
+
+
+    //dataset labels 
+    let datasetSpace = (canvasWidth*0.15);
+
+    const datasetNameData = layout.datasetNameData;
+    const isDatasetName = datasetNameData.isDatasetName;
+    const datasetMaxWidth = datasetNameData.maxNameWidth;
+
+    if(isDatasetName){
+        datasetMaxWidth < datasetSpace? datasetSpace = (datasetMaxWidth+axisTitleSpace): datasetSpace = (canvasWidth*0.2);
+    }else {
+        datasetSpace = 0;
+    }
+
+
+
+
+    //set x axis space from bottom
+    let xAxisBottom = ((axisTitleSpace)+labelFontSize);
+
+    const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
+
+    //x1 
+    const x1 = labelObject.x1;
+    const x1MaxWidth = x1.maxWidth;
+    const labelStep = (tempGraphWidth/x1.values.length);
+
+    if(x1MaxWidth > labelStep && x1MaxWidth > axisTitleSpace){
+        xAxisBottom += (x1MaxWidth*0.7);
+    }
+
+    const x1Title = layout.xAxis? layout.xAxis.title: null;
+    x1Title? xAxisBottom += axisTitleSpace: null;
+
+
+    const graphX = (yAxisLeft), graphY = (titleTop);
+    const graphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
+    const graphHeight = (canvasHeight-(titleTop+xAxisBottom));
+
+
+    const graphPosition = {
+        x: graphX,
+        y: graphY,
+        width: graphWidth,
+        height: graphHeight,
+        yAxisRight: yAxisRight
+    }
+
+
+    //set graphposition
+    dv.layout = {
+        ...layout, 
+        graphPosition: graphPosition
+    };
+    
+}
+
+/*
+export function setGraphPosition(dv){
+    const canvas = dv.getCanvas();
     const width = canvas.width, height = canvas.height;
 
     //define the graph dimensions
@@ -70,7 +176,6 @@ export function setGraphPosition(dv){
         datasetMaxNameWidth > widthSide? graphWidth -= (graphX+widthSide): graphWidth -= (graphX+datasetMaxNameWidth+(labelFontSize*2));
     }else {
         labelIsAllNumbers? graphWidth -= (graphX+(maxLabelWidth/2)): graphWidth -= (graphX);
-        
     }
 
     const labelStep = (graphWidth/labels.length); //set label step after calculating graphWidth
@@ -97,6 +202,8 @@ export function setGraphPosition(dv){
     };
 
 }
+
+*/
 
 
 function getTickData(range){ 
@@ -171,7 +278,6 @@ function getTickData(range){
 }
 
 
-
 export function setUpChart(dv){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
@@ -186,10 +292,6 @@ export function setUpChart(dv){
     //stores the number of bars for each category
     let maxBarPerCategory = 1;
 
-    //stores the width of the category with the highest text length
-    let axisMaxLabelWidth = 0;
-    let axisMaxValueWidth = 0;
-
     let pieMaxLabelWidth = 0;
 
     const axisData = [];
@@ -198,8 +300,18 @@ export function setUpChart(dv){
     let axisDataCount = 0;
 
     //all axischart labels and values
-    const axisLabels = [];
-    const axisValues = [];
+    const NewAxis = () => {
+        return {
+            values: [], 
+            range: null, 
+            maxWidth: 0, 
+            tickData: null, 
+            isAllNumbers: false
+        };
+    };
+
+    const axisLabels = {x1: NewAxis()};
+    const axisValues = { y1: NewAxis(), y2: NewAxis() };
 
     //all pie labels and values
     const pieLabels = [];
@@ -235,6 +347,14 @@ export function setUpChart(dv){
             const values = dataset.values;
             const dataType = dataset.type;
             const design = dataset.design;
+            const dataValueAxis = dataset.yAxis? dataset.yAxis: "y1";
+            const dataLabelAxis = dataset.xAxis? dataset.xAxis: "x1";
+
+            const yAxis = dataValueAxis === "y2"? axisValues.y2: axisValues.y1;
+            const xAxis = axisLabels[dataLabelAxis];
+
+            let maxLabelWidth = 0;
+            let maxValueWidth = 0;
 
             const newPieDataset = {...dataset};
             const newPieLabels = [];
@@ -260,17 +380,22 @@ export function setUpChart(dv){
                     const valueWidth = ctx.measureText(valueToMeasure).width;
     
                     if(dataType === "bar"){
+                        const isHorizontal = dataset.direction === "hr";
                         const customColor = customColors[axisDataCount].code;
 
-                        let labelValues = [[value]];
+                        const newValue = isHorizontal? label: value;
+                        const newLabel = isHorizontal? value: label;
+                        
+
+                        let labelValues = [[newValue]];
                                               //positive value count , negative value count
-                        let labelValuesCount = [[value >= 0? value: 0, value < 0? value: 0]];
+                        let labelValuesCount = [[newValue >= 0? newValue: 0, newValue < 0? newValue: 0]];
                         
                         let colorValues = [[design? Array.isArray(design.color)? j < design.color.length? design.color[j]: customColor : design.color: customColor]];
     
-                        if(barCategories.has(label)){
+                        if(barCategories.has(newLabel)){
 
-                            const lastData = barCategories.get(label);
+                            const lastData = barCategories.get(newLabel);
                             const lastDataValues = lastData.values;
                             const lastLabelValues = lastDataValues[lastDataValues.length-1];
 
@@ -280,21 +405,22 @@ export function setUpChart(dv){
                             const lastDataColors = lastData.colors;
                             const lastColorValues = lastDataColors[lastDataColors.length-1];
                             
-                            if(currentBarLabels.includes(label)){
+                            if(currentBarLabels.includes(newLabel)){
                                 lastLabelValues.push(...labelValues[0]);
                                 lastColorValues.push(...colorValues[0]);
 
-                                if(valueIsAllNumbers){
-                                    const lastValue = value >= 0? lastValuesCount[0]: lastValuesCount[1];
-                                    const sumValue = (lastValue+value);
+                                if(valueIsAllNumbers || (isHorizontal && labelIsAllNumbers)){
+                                    const lastValue = newValue >= 0? lastValuesCount[0]: lastValuesCount[1];
+                                    const sumValue = (lastValue+newValue);
 
-                                    console.log("lastie: ", lastValuesCount, value);
-                                    value >= 0? lastDataValuesCount[lastDataValuesCount.length-1][0] = sumValue: null;
-                                    value < 0? lastDataValuesCount[lastDataValuesCount.length-1][1] = sumValue: null;
+                                    newValue >= 0? lastDataValuesCount[lastDataValuesCount.length-1][0] = sumValue: null;
+                                    newValue < 0? lastDataValuesCount[lastDataValuesCount.length-1][1] = sumValue: null;
                                     
                                     //add to axisValue
-                                    if(axisValues.indexOf(sumValue) === -1){
-                                        axisValues.push(sumValue);
+                                    if(isHorizontal){
+                                        xAxis.values.indexOf(sumValue) === -1? xAxis.values.push(sumValue): null;
+                                    }else {
+                                        yAxis.values.indexOf(sumValue) === -1? yAxis.values.push(sumValue): null;
                                     }
                                 }
 
@@ -311,30 +437,38 @@ export function setUpChart(dv){
                         //set maxBarPerCategory if labelValues is more then the current value.
                         labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
     
-                        barCategories.set(label, {values: labelValues, valuesCount: labelValuesCount,  colors: colorValues});
+                        barCategories.set(newLabel, {
+                            values: labelValues, 
+                            valuesCount: labelValuesCount,  
+                            colors: colorValues,
+                            xAxis: dataLabelAxis,
+                            yAxis: dataValueAxis
+                        });
     
                         dataset.direction === "hr"? axisDirection = "hr": null;
                         hasBarDataset = true;
 
                         //push label to currentBarLabels 
-                        currentBarLabels.push(label);
+                        currentBarLabels.push(newLabel);
                     }
     
                    
-                    labelWidth > axisMaxLabelWidth? axisMaxLabelWidth = labelWidth: null;
-                    valueWidth > axisMaxValueWidth? axisMaxValueWidth = valueWidth: null;
+                    labelWidth > maxLabelWidth? maxLabelWidth = labelWidth: null;
+                    valueWidth > maxValueWidth? maxValueWidth = valueWidth: null;
                     
     
-                    //set axis labels and values 
-                    if(axisLabels.indexOf(label) === -1){
-                        axisLabels.push(label);
-                    }
-                    
-                    if(axisValues.indexOf(value) === -1){
-                        axisValues.push(value);
-                    }
-    
+                    xAxis.values.indexOf(label) === -1? xAxis.values.push(label): null;
+                    yAxis.values.indexOf(value) === -1? yAxis.values.push(value): null;
+
                 }
+
+                //set axisData max width 
+                xAxis.maxWidth = maxLabelWidth > xAxis.maxWidth? maxLabelWidth: xAxis.maxWidth;;
+                yAxis.maxWidth = maxValueWidth > yAxis.maxWidth? maxValueWidth: yAxis.maxWidth;
+
+                //set axis is numbers 
+                yAxis.isAllNumbers = valueIsAllNumbers;
+                xAxis.isAllNumbers = labelIsAllNumbers;
 
                 hasAxisData = true;
 
@@ -346,7 +480,7 @@ export function setUpChart(dv){
                     barDatasetNames.push(newDataName);
                 }else {
                     dataset.name = newDataName;
-                    dataset.design = setUpAxisChartDesign(design, axisDataCount);
+                    dataset.design = setUpAxisChartDesign(dataType, design, axisDataCount);
                     axisData.push(dataset);
                 }
 
@@ -424,62 +558,50 @@ export function setUpChart(dv){
 
     }
 
+    const setAxisProperties = (axisObject, type) => {
+        for(let key in axisObject){
+            const axis = axisObject[key];
+
+            const values = axis.values;
+            const axisMaxWidth = axis.maxWidth;
+
+            const isAllNumbers = Calc.isAllNumbers(values);
+
+            let range = Calc.rangeFromData(values);
+
+            if(type === "values"){
+                if(layout.yAxis){
+                    const layoutRange = layout.yAxis.range;
+                    layoutRange? range = layoutRange: [null, null];
+                }
+            }else {
+                if(layout.xAxis){
+                    const layoutRange = layout.xAxis.range;
+                    layoutRange? range = layoutRange: [null, null];
+                }
+            }
+
+            const tick = getTickData(range);
+            const tickRange = tick.range;
+            
+            const tickRangeStart = tickRange[0], tickRangeEnd = tickRange[1];
+
+            const tickRangeStartWidth = tickRangeStart? ctx.measureText(tickRangeStart).width: 0;
+            const tickRangeEndWidth = tickRangeEnd? ctx.measureText(tickRangeEnd).width: 0;
+
+            const maxWidth = Math.max(axisMaxWidth, Math.max(tickRangeStartWidth, tickRangeEndWidth));
+
+            axis.maxWidth = maxWidth;
+            axis.range = tick.range;
+            axis.tickData = tick;
+            axis.isAllNumbers = isAllNumbers;
+        }
+    };
+
     const newData = [...axisData, ...pieData];
 
-    const axisLabelIsAllNumbers = Calc.isAllNumbers(axisLabels);
-    const axisValueIsAllNumbers = Calc.isAllNumbers(axisValues);
-
-    const isHorizontal = axisDirection === "hr";
-
-    //set layout ranges 
-    let labelRange = Calc.rangeFromData(axisLabels);
-    let valueRange = Calc.rangeFromData(axisValues);
-
-    if(layout.xAxis){
-        const range = layout.xAxis.range;
-        range? labelRange = range: [null, null];
-    }
-
-    if(layout.yAxis){
-        const range = layout.yAxis.range;
-        range? valueRange = range: [null, null];
-    }
-
-    const labelTick = getTickData(labelRange);
-    const valueTick = getTickData(valueRange);
-
-    //set axis max label width with tick ranges 
-    const valueTickRange = valueTick.range;
-    const labelTickRange = labelTick.range;
-
-    const valueTickRangeStart = valueTickRange[0], valueTickRangeEnd = valueTickRange[1];
-    const labelTickRangeStart = labelTickRange[0], labelTickRangeEnd = labelTickRange[1];
-    
-    const valueTickRangeStartWidth = valueTickRangeStart? ctx.measureText(valueTickRangeStart).width: 0;
-    const valueTickRangeEndWidth = valueTickRangeEnd? ctx.measureText(valueTickRangeEnd).width: 0;
-
-    const labelTickRangeStartWidth = labelTickRangeStart? ctx.measureText(labelTickRangeStart).width: 0;
-    const labelTickRangeEndWidth = labelTickRangeEnd? ctx.measureText(labelTickRangeEnd).width: 0;
-    
-    //set axisMaxValueWidth
-    axisMaxValueWidth = Math.max(axisMaxValueWidth, Math.max(valueTickRangeStartWidth, valueTickRangeEndWidth));
-    
-    //set axisMaxLabelWidth
-    axisMaxLabelWidth = Math.max(axisMaxLabelWidth, Math.max(labelTickRangeStartWidth, labelTickRangeEndWidth));
-
-    //set labout tickData 
-    layout.tickData = {
-        label: isHorizontal? valueTick: labelTick,
-        value: isHorizontal? labelTick: valueTick,
-    };
-
-
-
-    layout.ranges = {
-        labelRange: labelTick.range,
-        valueRange: valueTick.range
-    };
-
+    setAxisProperties(axisValues, "values");
+    setAxisProperties(axisLabels);
 
     //
     layout.datasetNameData = {
@@ -490,12 +612,8 @@ export function setUpChart(dv){
 
     //set axis data 
     layout.axisData = {
-        labels: isHorizontal? axisValues: axisLabels,
-        values: isHorizontal? axisLabels: axisValues,
-        maxLabelWidth: isHorizontal? axisMaxValueWidth: axisMaxLabelWidth,
-        maxValueWidth: isHorizontal? axisMaxLabelWidth: axisMaxValueWidth,
-        labelIsAllNumbers: isHorizontal? axisValueIsAllNumbers: axisLabelIsAllNumbers,
-        valueIsAllNumbers: isHorizontal? axisLabelIsAllNumbers: axisValueIsAllNumbers,
+        labels: axisLabels,
+        values: axisValues,
         direction: axisDirection
     };
 
@@ -516,11 +634,14 @@ export function setUpChart(dv){
 
 
 //get non bar axis chart design
-function setUpAxisChartDesign(design, count){
+function setUpAxisChartDesign(dataType, design, count){
     const newDesign = design? design: {};
 
-    //set deign color
-    !newDesign.color? newDesign.color = customColors[count].code: null;
+    //set deign colors
+    const color = customColors[count].code;
+    !newDesign.color? newDesign.color = color: null;
+
+    dataType === "line"? Array.isArray(newDesign.color)? newDesign.color = color: null: null;
 
     //set design size 
     !newDesign.size? newDesign.size = 3: null;
