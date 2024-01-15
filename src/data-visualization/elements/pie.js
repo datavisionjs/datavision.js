@@ -25,11 +25,14 @@ const DrawPieSlice = (dv, ctx, startDegrees, endDegrees) => {
     ctx.beginPath();
     ctx.strokeStyle = "white";
     ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    
     //draw arc line
     ctx.arc(midPoint.x, midPoint.y, radius, startAngle, endAngle);
 
     ctx.moveTo(startPoint.x, startPoint.y);
-    ctx.lineTo(midPoint.x, midPoint.y);
+    ctx.lineTo((midPoint.x), (midPoint.y));
     ctx.lineTo(endPoint.x, endPoint.y);
 
     ctx.stroke();

@@ -44,6 +44,10 @@ export function haveOppositeSigns(num1, num2) {
     return (num1 >= 0 && num2 < 0) || (num1 < 0 && num2 >= 0);
 }
 
+export function toFixedIfNeeded(number){
+    return Number.isInteger(number)? number: number.toFixed(1);
+}
+
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
     // Convert degrees to radians
     const radians = (Math.PI / 180) * degrees;
@@ -64,7 +68,7 @@ export function hasValidElements(arr) {
 
 
 export function getTicksInterval(intervalSize, isReverse){
-    const niceNumbers = [1, 2, 5, 10];
+    const niceNumbers = [1, 2, 4, 5, 10];
 
     // Round the interval size to a nice number (1, 2, 5, or 10)
     const magnitude = Math.pow(10, Math.floor(Math.log10(intervalSize)));
@@ -232,13 +236,15 @@ export function getAxisValuePosition(dv, value, axisName){
 
     if(axis){
         const valueIsAllNumbers = axis.isAllNumbers;
+        const axisValues = axis.values;
 
         if(!valueIsAllNumbers){
-            const axisValues = axis.values;
 
             const step = (graphHeight/axisValues.length);
             const halfStep = (step/2);
             const index = axisValues.indexOf(value);
+            
+            console.log(value+ ": ", typeof(value), valueIsAllNumbers, axisName, axisValues, index);
             
             if(index >= 0){
                 value = ((graphY+graphHeight)-((step*index)+halfStep));

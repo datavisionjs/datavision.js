@@ -57,7 +57,8 @@ function drawLabels(dv, position){
         }
     }
 
-    if(y2Axis && (yAxisRight > 0)){
+    if(y2Axis){
+
 
         let title = y2Axis.title;
 
@@ -128,8 +129,6 @@ function drawYAxis(dv, position){
         const axis = axisValues[key];
         const values = axis.values;
 
-        console.log(key + ': ', axis.isAllNumbers, values, axis.tickData, axis.range);
-
         if(axis.isAllNumbers){
             const tickData = axis.tickData;
 
@@ -164,7 +163,7 @@ function drawYAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    value = ((rangeStart)+(step*i));
+                    value = Calc.toFixedIfNeeded((rangeStart)+(step*i));
 
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
@@ -176,11 +175,11 @@ function drawYAxis(dv, position){
 
                     //draw lines 
                     ctx.beginPath();
-                    ctx.strokeStyle = "black";
+                    ctx.strokeStyle = value === 0? "black":"#b5b5b5";
                     if("y2" === key){
                         ctx.moveTo((graphX+graphWidth), axisY);
                         ctx.lineTo(((graphX+graphWidth)+(fontSize/2)), (axisY));
-                    }else{
+                    }else {
                         ctx.moveTo((graphX+graphWidth), axisY);
                         ctx.lineTo((graphX-(fontSize/2)), (axisY));
                     }
@@ -277,7 +276,7 @@ function drawXAxis(dv, position){
 
            // let range = axis.range? axis.range: dataRange;
 
-            let range = tickData.range;
+            let range = axis.range;
 
             if(range){
 
@@ -306,8 +305,9 @@ function drawXAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    label = ((rangeStart)+(step*i));
+                    label = Calc.toFixedIfNeeded((rangeStart)+(step*i));
                     axisX = (graphX+(pixelStep*i));
+
 
                     //set text width
                     const textWidth = ctx.measureText(label).width;
@@ -317,6 +317,8 @@ function drawXAxis(dv, position){
 
                     //draw lines 
                     ctx.beginPath();
+                    ctx.strokeStyle = label === 0? "black":"#b5b5b5";
+                    
                     ctx.moveTo(axisX, graphY);
                     ctx.lineTo(axisX, ((graphY+graphHeight)+(fontSize/2)));
                     ctx.stroke();

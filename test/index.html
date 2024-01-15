@@ -16,47 +16,25 @@
         //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [55, 49, 100, 24, 15, 45, -15, 50];
 
-        const xArray = [55, 49, 44, 24, 15];
-        const yArray = ["Italy ", "France ", "Spain ", "USA ", "Argentina "];
+        //const xArray = [55, 49, 44, 24, 15];
+        //const yArray = ["Italy ", "France ", "Spain ", "USA ", "Argentina "];
 
         //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
         //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
-        var barColors = ["red", "green","teal","orange","brown", "pink", "lime", "purple"];
+        let exp = "Math.cos(x)";
 
-        const data = [
-
-           {
-                labels: xArray,
-                values: yArray,
-                type: 'bar',
-                direction: "",
-                hole: .9,
-                name: "EU Sales",
-                design: {
-                    size: 5,
-                }
-            },{
-                labels: xArray,
-                values: yArray,
-                type: 'line',
-                name: "JP Sales",
-                yAxis: "y1",
-                design: {
-                    color: "orange",
-                    size: 5,
-                }
-            }
-            
-        ];
-
-        const layout = {
-            yAxis: {title: "EU Sales"},
-            //y2Axis: {title: "JP Sales"},
-            xAxis: {title: "Countries"},
-            title: "Simple chart Example",
-            width: 1000,
-            height: 400
+        // Generate values
+        const xValues = [];
+        const yValues = [];
+        for (let x = 0; x <= 10; x += 0.2) {
+        yValues.push(eval(exp));
+        xValues.push(x);
         }
+
+        // Display using Plotly
+        const data = [{labels:xValues, values:yValues, type:"scatter"}];
+        const layout = {title: "y = " + exp};
+
 
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);

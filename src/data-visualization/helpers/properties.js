@@ -4,6 +4,7 @@ import * as Global from './global.js';
 import customColors from '../helpers/colors.js';
 
 export function setGraphPosition(dv){
+    const ctx = dv.getCtx();
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
@@ -32,6 +33,7 @@ export function setGraphPosition(dv){
     //set y axis space from left and right
     let yAxisLeft = (canvasWidth*0.15), yAxisRight = (canvasWidth*0.15);
 
+
     //y1
     const y1 = valueObject.y1;
     const y1MaxWidth = y1.maxWidth;
@@ -40,6 +42,7 @@ export function setGraphPosition(dv){
 
     const y1Title = layout.yAxis? layout.yAxis.title: null;
     y1Title? yAxisLeft += axisTitleSpace: null;
+    
 
     //y2
     const y2 = valueObject.y2;
@@ -70,6 +73,7 @@ export function setGraphPosition(dv){
 
     //set x axis space from bottom
     let xAxisBottom = ((axisTitleSpace)+labelFontSize);
+    let xAxisRight = 0;
 
     const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
 
@@ -78,6 +82,9 @@ export function setGraphPosition(dv){
     const x1MaxWidth = x1.maxWidth;
     const labelStep = (tempGraphWidth/x1.values.length);
 
+    //give space to the right of the x axis using x1MaxWidth
+    xAxisRight = x1.isAllNumbers? x1MaxWidth: 0;
+   
     if(x1MaxWidth > labelStep && x1MaxWidth > axisTitleSpace){
         xAxisBottom += (x1MaxWidth*0.7);
     }
@@ -87,7 +94,7 @@ export function setGraphPosition(dv){
 
 
     const graphX = (yAxisLeft), graphY = (titleTop);
-    const graphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
+    const graphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace+xAxisRight));
     const graphHeight = (canvasHeight-(titleTop+xAxisBottom));
 
 
@@ -107,103 +114,6 @@ export function setGraphPosition(dv){
     };
     
 }
-
-/*
-export function setGraphPosition(dv){
-    const canvas = dv.getCanvas();
-    const width = canvas.width, height = canvas.height;
-
-    //define the graph dimensions
-    let graphWidth = width;
-    let graphHeight = height;
-
-    const style = dv.getStyle();
-    const titleLines = dv.getLayout().titleLines;
-    const titleFontSize = style.title.fontSize;
-
-    const labelFontSize = style.label.fontSize;
-
-    //layout 
-    const layout = dv.getLayout();
-    const xLabel = layout.xAxis? layout.xAxis.title: null;
-    const yLabel = layout.yAxis? layout.yAxis.title: null;
-
-    const labelSpace = (labelFontSize*4);
-
-    const axisData = layout.axisData;
-
-    const labels = axisData.labels;
-
-    const labelIsAllNumbers = axisData.labelIsAllNumbers;
-
-    const maxLabelWidth = axisData.maxLabelWidth;
-    const maxValueWidth = axisData.maxValueWidth;
-
-    //calculates horizontal position of the graph area
-    let graphX = 0;
-    //calculates vertical position of the graph area
-    let graphY = (titleFontSize*2);
-
-    if(titleLines.length > 1){
-        graphY = ((titleFontSize*titleLines.length)+(titleFontSize/2));
-    }
-
-    //x and y side title labels
-    if(yLabel){
-        if(yLabel.length > 0){
-            graphX += (labelSpace/2);
-        }
-    }
-
-    if(xLabel){
-        if(xLabel.length > 0){
-            graphHeight -= ((graphY)+(labelSpace/2));
-        }
-    }
-
-    //values (y-axis)
-    const widthSide = (width*2.0);
-    if(maxValueWidth > 0){
-        maxValueWidth > widthSide? graphX += widthSide: graphX += (maxValueWidth+labelFontSize);
-    }
-
-    //datasetlabels 
-    const datasetNameData = layout.datasetNameData;
-    const isDatasetName = datasetNameData.isDatasetName;
-    const datasetMaxNameWidth = datasetNameData.maxNameWidth;
-
-    if(isDatasetName){
-        datasetMaxNameWidth > widthSide? graphWidth -= (graphX+widthSide): graphWidth -= (graphX+datasetMaxNameWidth+(labelFontSize*2));
-    }else {
-        labelIsAllNumbers? graphWidth -= (graphX+(maxLabelWidth/2)): graphWidth -= (graphX);
-    }
-
-    const labelStep = (graphWidth/labels.length); //set label step after calculating graphWidth
-    
-    if(maxLabelWidth > labelStep && maxLabelWidth > (labelFontSize*2)){
-        graphHeight -= (graphY)+(maxLabelWidth*0.7)+labelFontSize;
-    }else {
-        graphHeight -= ((graphY)+(labelFontSize*2));
-    }
-    
-    
-    const graphPosition = {
-        x: graphX,
-        y: graphY,
-        width: graphWidth,
-        height: graphHeight,
-    }
-
-
-    //set graphposition
-    dv.layout = {
-        ...layout, 
-        graphPosition: graphPosition
-    };
-
-}
-
-*/
 
 
 function getTickData(range){ 
@@ -254,15 +164,19 @@ function getTickData(range){
 
                 const rangeDiff = rangeEnd - rangeStart;
 
-                const newTickCount = rangeDiff < 1000? desiredTickCount: Math.round(desiredTickCount/2);
-
                 // Calculate the interval size based on the desired number of ticks
-                const intervalSize = rangeDiff / Math.max(newTickCount - 1, 1);
+                const intervalSize = rangeDiff / Math.max(desiredTickCount - 1, 1);
 
                 interval = Calc.getTicksInterval(intervalSize);
+                
+                const belowIntCount = Math.floor((min-rangeStart)/interval);
+
+                rangeStart += (rangeStart+interval) < min? (belowIntCount*interval): 0;
+
+                const newRangeDiff = (rangeEnd-rangeStart);
 
                 // Calculate the number of ticks
-                tickCount = Math.ceil(rangeDiff / interval);
+                tickCount = Math.ceil(newRangeDiff / interval);
 
                 rangeEnd = rangeStart + (interval*(tickCount));
             }
@@ -369,6 +283,7 @@ export function setUpChart(dv){
 
                 const currentBarLabels = [];
                 for(let j = 0; j < labels.length; j++){
+                    
                     const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
                     const value = valueIsAllNumbers? Math.round(values[j]): values[j];
     
@@ -463,7 +378,7 @@ export function setUpChart(dv){
                 }
 
                 //set axisData max width 
-                xAxis.maxWidth = maxLabelWidth > xAxis.maxWidth? maxLabelWidth: xAxis.maxWidth;;
+                xAxis.maxWidth = maxLabelWidth > xAxis.maxWidth? maxLabelWidth: xAxis.maxWidth;
                 yAxis.maxWidth = maxValueWidth > yAxis.maxWidth? maxValueWidth: yAxis.maxWidth;
 
                 //set axis is numbers 
@@ -565,14 +480,23 @@ export function setUpChart(dv){
             const values = axis.values;
             const axisMaxWidth = axis.maxWidth;
 
+            key === "y2"? console.log(key, axisMaxWidth): null;
+
             const isAllNumbers = Calc.isAllNumbers(values);
 
             let range = Calc.rangeFromData(values);
 
             if(type === "values"){
-                if(layout.yAxis){
-                    const layoutRange = layout.yAxis.range;
-                    layoutRange? range = layoutRange: [null, null];
+                if(key === "y2"){
+                    if(layout.y2Axis){
+                        const layoutRange = layout.y2Axis.range;
+                        layoutRange? range = layoutRange: [null, null];
+                    }
+                }else {
+                    if(layout.yAxis){
+                        const layoutRange = layout.yAxis.range;
+                        layoutRange? range = layoutRange: [null, null];
+                    }
                 }
             }else {
                 if(layout.xAxis){
@@ -584,12 +508,15 @@ export function setUpChart(dv){
             const tick = getTickData(range);
             const tickRange = tick.range;
             
-            const tickRangeStart = tickRange[0], tickRangeEnd = tickRange[1];
+            const tickRangeStart = Calc.toFixedIfNeeded(tickRange[0]), tickRangeEnd = Calc.toFixedIfNeeded(tickRange[1]);
 
-            const tickRangeStartWidth = tickRangeStart? ctx.measureText(tickRangeStart).width: 0;
-            const tickRangeEndWidth = tickRangeEnd? ctx.measureText(tickRangeEnd).width: 0;
+            const tickRangeStartWidth = tickRangeStart && !isNaN(tickRangeStart)? ctx.measureText(tickRangeStart).width: 0;
+            const tickRangeEndWidth = tickRangeEnd && !isNaN(tickRangeStart)? ctx.measureText(tickRangeEnd).width: 0;
 
             const maxWidth = Math.max(axisMaxWidth, Math.max(tickRangeStartWidth, tickRangeEndWidth));
+
+            key === "y2"? console.log(key, maxWidth, range, tickRange): null;
+            
 
             axis.maxWidth = maxWidth;
             axis.range = tick.range;

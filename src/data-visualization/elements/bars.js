@@ -91,7 +91,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
         if(isHorizontal){
 
             const barHeight = barSize;
-            let axisY = ((graphY+graphHeight)-((step*catPos)+(barHeight/2)));
+            let axisY = (Calc.getAxisValuePosition(dv, catKey)+(barHeight/2));
 
             for(var i = 0; i < values.length; i++){
 
@@ -154,7 +154,8 @@ const DrawBars = (dv, category, catKey, dataset) => {
 
             const barWidth = barSize;
 
-            let axisX = (graphX+((step*catPos)+(barWidth/2)));
+            let axisX = (Calc.getAxisLabelPosition(dv, catKey)-(barWidth/2));
+            //let axisX = (graphX+((step*catPos)+(barWidth/2)));
 
             for(var i = 0; i < values.length; i++){
 
@@ -177,6 +178,9 @@ const DrawBars = (dv, category, catKey, dataset) => {
                     const barColor = colorsItem? colorsItem[o]? colorsItem[o]: defaultColor: defaultColor;
 
                     const end = Calc.getAxisValuePosition(dv, y);
+
+                    console.log("parts: ", y, catKey);
+
 
                     const barHeight = (newStart-end);
 
