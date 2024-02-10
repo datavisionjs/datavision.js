@@ -55,10 +55,7 @@ const DrawDatasetNames = (dv) => {
                 if(axisChartTypes.includes(dataType)){
                     if(dataType === "bar"){
                         labels = dataset.names;
-                        const categories = dataset.categories;
-                        const firstCat = Array.from(categories.values())[0];
-
-                        colors = firstCat.colors;
+                        colors = dataset.colors;
 
                     }else {
                         labels = [dataset.name];
@@ -92,7 +89,7 @@ const DrawDatasetNames = (dv) => {
                         }
                         
 
-                        const pieColor = colors? dataType === "bar"? colors[i][0]: colors[i]: null;
+                        const pieColor = colors? dataType === "bar"? colors[i]? colors[i][0]: null: colors[i]: null;
 
                         const fillColor = pieColor? pieColor: defaultColor;
                         fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists

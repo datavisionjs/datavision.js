@@ -32,7 +32,20 @@ export function findMinAndMax(arr) {
     }
 }
 
+//find sum of an array of numbers
+export function sum(arr) {
+    return arr.reduce((sum, current) => sum + current, 0);
+}
+
+//find the avarage of an array of numbers
+export function avg(arr) {
+    return arr.reduce((sum, current) => sum + current, 0) / arr.length;
+}
+
 export function isAllNumbers(arr) {
+    if(!arr){
+        return null;
+    }
     return arr.every(element => typeof element === 'number');
 }
 
@@ -243,8 +256,6 @@ export function getAxisValuePosition(dv, value, axisName){
             const step = (graphHeight/axisValues.length);
             const halfStep = (step/2);
             const index = axisValues.indexOf(value);
-            
-            console.log(value+ ": ", typeof(value), valueIsAllNumbers, axisName, axisValues, index);
             
             if(index >= 0){
                 value = ((graphY+graphHeight)-((step*index)+halfStep));

@@ -9,11 +9,14 @@ import DrawDatasetNames from './dataset-names.js';
 
 const plotArea = (dv) => {
     //set chart properties
+    
     Prop.setUpChart(dv);
     Prop.setGraphPosition(dv);
+    
 
     const layout = dv.getLayout();
 
+    
     //draw title
     DrawTitleLabel(dv);
 

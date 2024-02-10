@@ -15,7 +15,6 @@ const DrawElements = (dv, type, dataset) => {
 
     const colorIndex = (layout.customColorsIndex);
 
-
     if(type === "bars"){
 
         const categories = dataset.categories;
@@ -23,12 +22,44 @@ const DrawElements = (dv, type, dataset) => {
         const maxBarPerCategory = dataset.maxBarPerCategory;
         const catKeys = Array.from(categories.keys());
 
+        const isHorizontal = dataset.direction === "hr";
+
+        const graphPosition = layout.graphPosition;
+        const graphLength = isHorizontal? graphPosition.height: graphPosition.width;
+
+        const catSize = dataset.categories.size;
+
+        const step = (graphLength/catSize);
+        let barSize = (step/(maxBarPerCategory+1));
+
+        if(dataset.labelIsAllNumbers){
+            const axisData = layout.axisData;
+
+            const axis = isHorizontal? axisData.values["y1"]: axisData.labels["x1"];
+            const range = axis.range;
+
+            const rangeStart = range[0], rangeEnd = range[1];
+            const rangeLength = (rangeEnd-rangeStart);
+            
+            const labelDiff = [];
+            for(let i = 0; i < catKeys.length; i++){
+                const key = parseInt(catKeys[i]);
+                const nextKey = parseInt(catKeys[i+1]);
+
+                nextKey? labelDiff.push(Math.abs(nextKey-key)): null;
+            }
+
+            const minDiff = Math.min(...labelDiff);
+
+            minDiff? barSize = (minDiff/rangeLength)*graphLength: null;
+
+        }
 
         for(var i = 0; i < catKeys.length; i++){
             const catKey = catKeys[i];
             const category = categories.get(catKey);
 
-            DrawBars(dv, category, catKey, dataset);
+            DrawBars(dv, category, catKey, dataset, barSize);
         }
 
         if(maxBarPerCategory){
@@ -51,7 +82,7 @@ const DrawElements = (dv, type, dataset) => {
         const radius = (Math.min(graphWidth, graphHeight)/2);
         
         //const labels = dataset.labels;
-        const values = dataset.values;
+        const values = dataset.values? dataset.values: [];
         const colors = dataset.colors;
 
         const totalValues = dataset.totalValues;
@@ -122,8 +153,8 @@ const DrawElements = (dv, type, dataset) => {
 
             //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
             const labels = isHorizontal? dataset.values: dataset.labels;
-            const values = isHorizontal? dataset.labels: dataset.values;
-
+            const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
+            
             if(labels){
                 
                 for(var i = 0; i < labels.length; i++){
@@ -144,7 +175,6 @@ const DrawElements = (dv, type, dataset) => {
 
                         }else if(type === "lines"){
                             DrawLines(dv, dataset, positionType, size, position);
-
                         }else if(type === "points"){
 
                             const designLine = dataset.design.line;
@@ -168,6 +198,7 @@ const DrawElements = (dv, type, dataset) => {
                         ctx.closePath();
                     }
                 }
+
             }
 
         }

@@ -94,6 +94,7 @@ const DrawLines = (dv, dataset, type, size, position) => {
 
     //draw lines coming from out of bounds points
     DrawOutOfBoundLines(dv, position, axisName);
+    
 
     //draw lines and arc within graph bounds
     if(position){

@@ -39,12 +39,12 @@ function barItemSort(valuesItem, colorsItem, isSort) {
 
 //draw the bars
 
-const DrawBars = (dv, category, catKey, dataset) => {
+const DrawBars = (dv, category, catKey, dataset, barSize) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
     
-
+    
     if(category && dataset){
         const isHorizontal = dataset.direction === "hr";
 
@@ -65,29 +65,21 @@ const DrawBars = (dv, category, catKey, dataset) => {
         //stores the position and dimensions of the graph area
         const graphPosition = layout.graphPosition;
         const graphX = graphPosition.x, graphY = graphPosition.y;
-        const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+        const graphHeight = graphPosition.height;
 
         let range = isHorizontal? xAxis.range: yAxis.range;
 
         const rangeStart = range[0] < 0? 0: range[0];
         const rangeEnd = range[1];
+
         
-
-        const maxBarPerCategory = dataset.maxBarPerCategory;
-
-        const categories = dataset.categories;
-        const catKeys = Array.from(categories.keys());
-
-        const catPos = catKeys.indexOf(catKey);
-        const step = isHorizontal? (graphHeight/catKeys.length): (graphWidth/catKeys.length);
-        const barSize = (step/(maxBarPerCategory+1));
-
         //find the starting position of the bar on the y-axis
         //const find0 = Calc.posOnGraphYAxis(dv, 0);
         const startPos = range? isHorizontal? Calc.getAxisLabelPosition(dv, rangeStart): Calc.getAxisValuePosition(dv, rangeStart): null;
         //const start = find0? find0: startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
         const start = startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
 
+        
         if(isHorizontal){
 
             const barHeight = barSize;
@@ -143,7 +135,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
                         const isOpposite = nextValue? Calc.haveOppositeSigns(x, nextValue): false;
                         
                         isOpposite? newStart = start: newStart = end;
-                        isOpposite? lastValue = 0: lastValue += value;
+                        isOpposite? lastValue = 0: lastValue += item;
                     }
                 }
 
@@ -179,8 +171,6 @@ const DrawBars = (dv, category, catKey, dataset) => {
 
                     const end = Calc.getAxisValuePosition(dv, y);
 
-                    console.log("parts: ", y, catKey);
-
 
                     const barHeight = (newStart-end);
 
@@ -203,7 +193,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
                         const isOpposite = nextValue? Calc.haveOppositeSigns(y, nextValue): false;
                         
                         isOpposite? newStart = start: newStart = end;
-                        isOpposite? lastValue = 0: lastValue += value;
+                        isOpposite? lastValue = 0: lastValue += item;
 
                     }
 
@@ -212,6 +202,7 @@ const DrawBars = (dv, category, catKey, dataset) => {
                 axisX += (barWidth);
 
             }
+            
         }
 
         

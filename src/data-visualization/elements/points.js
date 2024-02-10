@@ -5,6 +5,7 @@ const DrawPoints = (dv, size, position) => {
 
     const ctx = dv.getCtx();
 
+    
     if(position){
         ctx.beginPath();
 
@@ -12,7 +13,7 @@ const DrawPoints = (dv, size, position) => {
         ctx.stroke();
         ctx.fill();
         ctx.closePath();
-    } 
+    }
 }
 
 export default DrawPoints

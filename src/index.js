@@ -29,7 +29,7 @@ function DataVision(targetId) {
     //data 
     this.setData = function (data){
         //set data to a new data
-        this.data = [...data];
+        this.data = data;
     };
     this.getData = function (){
         return this.data;
