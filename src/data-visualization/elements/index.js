@@ -82,10 +82,20 @@ const DrawElements = (dv, type, dataset) => {
         const radius = (Math.min(graphWidth, graphHeight)/2);
         
         //const labels = dataset.labels;
-        const values = dataset.values? dataset.values: [];
+        const dataValues = dataset.values? dataset.values: [];
         const colors = dataset.colors;
 
-        const totalValues = dataset.totalValues;
+        const operation = dataset.operation;
+
+        let totalValues = 0;
+        const values = [];
+
+        dataValues.forEach(bucket => {
+            console.log("Bucket: ", bucket);
+            const value = Calc.computeOperation(operation, bucket);
+            values.push(value);
+            totalValues+= value;
+        });
 
         if(values){
 

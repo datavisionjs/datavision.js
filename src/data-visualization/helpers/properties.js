@@ -289,6 +289,7 @@ export function setUpChart(dv){
             const values = dataset.values? dataset.values: [];
             const dataType = dataset.type;
             const design = dataset.design;
+            const operation = dataset.operation;
 
             //fill empty data
             if(labels.length === 0){
@@ -332,11 +333,11 @@ export function setUpChart(dv){
 
                 
                     //set maxTextlength
-                    let labelWidth = label.length > lastMaxLabel.length? ctx.measureText(label).width: null;
+                    let labelWidth = label.length > lastMaxLabel.length? ctx.measureText(Calc.toFixedIfNeeded(label)).width: null;
 
                     //If there's a value between 0 and -10 set the value to -10 and for measurement.
                     const valueToMeasure = valueIsAllNumbers? value < 0 && value > 10? -10: value: value;
-                    let valueWidth = value.length > lastMaxValue.length? ctx.measureText(valueToMeasure).width: 0;
+                    let valueWidth = value.length > lastMaxValue.length? ctx.measureText(Calc.toFixedIfNeeded(valueToMeasure)).width: 0;
                     
                     
                     if(dataType === "bar"){
@@ -417,7 +418,8 @@ export function setUpChart(dv){
                                 valuesCount: labelValuesCount,  
                                 colors: colorValues,
                                 xAxis: dataLabelAxis,
-                                yAxis: dataValueAxis
+                                yAxis: dataValueAxis,
+                                operation: operation
                             });
         
                             dataset.direction === "hr"? axisDirection = "hr": null;
@@ -437,9 +439,9 @@ export function setUpChart(dv){
                                 
                                 bucket.push(value);
 
-                                const newValue = Calc.sum(bucket);
+                                const newValue = Calc.computeOperation(operation, bucket);
 
-                                valueWidth = ctx.measureText(newValue).width;
+                                valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
 
                                 newValues[index] = newValue;
                                 yAxis.values.push(newValue);
@@ -453,9 +455,9 @@ export function setUpChart(dv){
                             if(bucket && label){
                                 bucket.push(label);
 
-                                const newLabel = Calc.sum(bucket);
+                                const newLabel = Calc.computeOperation(operation, bucket);
 
-                                labelWidth = ctx.measureText(newLabel).width;
+                                labelWidth = ctx.measureText(Calc.toFixedIfNeeded(newLabel)).width;
 
                                 newLabels[index] = newLabel;
                                 xAxis.values.push(newLabel);
@@ -527,10 +529,11 @@ export function setUpChart(dv){
                     const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
                     const value = valueIsAllNumbers? Math.round(values[j]): values[j];
                     
-                    if(value >= 0){
+                    if(value >= 0 && label){
                         //set maxTextlength
                         const labelWidth = ctx.measureText(label).width;
 
+                        /*
                         //set all pie data into universal pie labels and values 
                         if(pieLabels.includes(label)){
                             const index = pieLabels.indexOf(label);
@@ -540,20 +543,17 @@ export function setUpChart(dv){
                         }else {
                             pieLabels.push(label);
                             pieValues.push(value);
-                        }
+                        }*/
 
                         //set new pie dataset labels and values 
                         if(newPieLabels.includes(label)){
                             const index = newPieLabels.indexOf(label);
-                            const currentValue = newPieValues[index];
 
-                            newPieValues[index] = (currentValue+value);
+                            newPieValues[index].push(value);
                         }else {
                             newPieLabels.push(label);
-                            newPieValues.push(value);
+                            newPieValues.push([value]);
                         }
-
-                        pieTotalValues += value;
 
                         //set max width of axis labels and values for pie charts
                         labelWidth > pieMaxLabelWidth? pieMaxLabelWidth = labelWidth: null;
@@ -566,7 +566,6 @@ export function setUpChart(dv){
                 
                 newPieDataset.labels = newPieLabels;
                 newPieDataset.values = newPieValues;
-                newPieDataset.totalValues = pieTotalValues;
                 newPieDataset.type = "pie";
 
                 pieData.push(newPieDataset);
@@ -667,11 +666,12 @@ export function setUpChart(dv){
     };
 
     //set pie data
+    /*
     layout.pieData = {
         labels: pieLabels,
         values: pieValues,
         maxLabelWidth: pieMaxLabelWidth,
-    };
+    };*/
     
     //set whether for not a particular chart type exists.
     layout.hasAxisData = hasAxisData;

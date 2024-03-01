@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 import customColors from '../helpers/colors.js';
 
-function barItemSort(valuesItem, colorsItem, isSort) {
+function barItemSort(valuesItem, colorsItem, isSort, operation) {
     if (!isSort) {
         return {
             values: valuesItem,
@@ -27,7 +27,7 @@ function barItemSort(valuesItem, colorsItem, isSort) {
         }
     }
 
-    const sortedValues = [...positive, ...negative];
+    const sortedValues = [Calc.computeOperation(operation, positive), Calc.computeOperation(operation, negative)];
     const sortedColors = [...positiveColors, ...negativeColors];
 
     return {
@@ -43,6 +43,7 @@ const DrawBars = (dv, category, catKey, dataset, barSize) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
+    const operation = category.operation;
     
     
     if(category && dataset){
@@ -87,7 +88,7 @@ const DrawBars = (dv, category, catKey, dataset, barSize) => {
 
             for(var i = 0; i < values.length; i++){
 
-                const itemSort = barItemSort(values[i], barColors[i], labelIsAllNumbers);
+                const itemSort = barItemSort(values[i], barColors[i], labelIsAllNumbers, operation);
                 const valuesItem = itemSort.values;
                 const colorsItem = itemSort.colors;
 
@@ -151,7 +152,7 @@ const DrawBars = (dv, category, catKey, dataset, barSize) => {
 
             for(var i = 0; i < values.length; i++){
 
-                const itemSort = barItemSort(values[i], barColors[i], valueIsAllNumbers);
+                const itemSort = barItemSort(values[i], barColors[i], valueIsAllNumbers, operation);
                 
                 const valuesItem = itemSort.values;
                 const colorsItem = itemSort.colors;
