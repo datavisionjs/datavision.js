@@ -166,6 +166,8 @@ const DrawElements = (dv, type, dataset) => {
             const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
             
             if(labels){
+
+                console.log("lab: ", labels, "vals: ", values);
                 
                 for(var i = 0; i < labels.length; i++){
 

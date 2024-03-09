@@ -13,14 +13,17 @@
 
     <script>
 
-        //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
-        //const yArray = [55, 49, 100, 24, 15, 45, -15, 50];
+        const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
+        const yArray = [55, 49, 100, 24, 15, 45, -15, 50];
 
-        const xArray = [55, -49, 44, 20, 15, 20, 10, 40];
-        const yArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
+        //const xArray = [55, -49, 44, 20, 15, 20, 10, 40];
+        //const yArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
 
-        //const xArray = [50,60,70,80,90,100,110,120,130,140,70];
+        //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
         //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+
+        //console.log("x: ", xValues);
+        //console.log("y: ", yValues);
         
         //const xArray = ["Italy", "France"]
         //const yArray = [50000, 5000, 70000, 69000];
@@ -28,16 +31,21 @@
         // Define Data
         const data = [
             
-            {values: xArray, labels: yArray, type: "bar",
+            {values: yArray, labels: xArray, type: "bar",
                 operation: "sum",
                 design: {
                     color: "green"
+                }
+            },{values: yArray, labels: xArray, type: "bar",
+                operation: "avg",
+                design: {
+                    color: "blue"
                 }
             }
         ];
 
         //Define Layout
-        const layout = {title: "[y=]"};
+        const layout = {title: "Testing"};
 
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
@@ -45,6 +53,13 @@
         window.addEventListener('resize', function () {
             chart.plot(data, layout);
         });
+
+        function generateData(value, i1, i2, step = 1) {
+            for (let x = i1; x <= i2; x += step) {
+                yValues.push(eval(value));
+                xValues.push(x);
+            }
+        }
 
         
     </script>

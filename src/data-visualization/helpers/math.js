@@ -45,6 +45,10 @@ export function avg(arr) {
 export function computeOperation(operation, arr){
     if(operation === "avg"){
         return avg(arr);
+    }else if(operation === "min"){
+        return Math.min(...arr);
+    }else if(operation === "max"){
+        return Math.max(...arr);
     }else {
         return sum(arr); //sum is the default
     }
@@ -66,7 +70,7 @@ export function haveOppositeSigns(num1, num2) {
 }
 
 export function toFixedIfNeeded(number){
-    return parseInt(number)? Number.isInteger(number)? number: number.toFixed(1): number;
+    return !isNaN(number)? Number.isInteger(number)? number: number.toFixed(1): number;
 }
 
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){

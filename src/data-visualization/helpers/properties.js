@@ -329,7 +329,7 @@ export function setUpChart(dv){
                 for(let j = 0; j < loopEnd; j++){
                     
                     const label = labels[j];
-                    const value = valueIsAllNumbers? Math.round(values[j]): values[j]? values[j]: "";
+                    const value = valueIsAllNumbers? Number(values[j]): values[j]? values[j]: "";
 
                 
                     //set maxTextlength
@@ -435,18 +435,9 @@ export function setUpChart(dv){
                             const index = newLabels.indexOf(label);
                             const bucket = axisBucket[index];
 
-                            if(bucket && value){
-                                
+                            if(bucket && value){ 
                                 bucket.push(value);
-
-                                const newValue = Calc.computeOperation(operation, bucket);
-
-                                valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
-
-                                newValues[index] = newValue;
-                                yAxis.values.push(newValue);
                             }
-                            
                         }else if(newValues.includes(value) && !valueIsAllNumbers && labelIsAllNumbers){
                             const index = newValues.indexOf(value);
                             const bucket = axisBucket[index];
@@ -454,13 +445,6 @@ export function setUpChart(dv){
 
                             if(bucket && label){
                                 bucket.push(label);
-
-                                const newLabel = Calc.computeOperation(operation, bucket);
-
-                                labelWidth = ctx.measureText(Calc.toFixedIfNeeded(newLabel)).width;
-
-                                newLabels[index] = newLabel;
-                                xAxis.values.push(newLabel);
                             }
                         }else {
                             newLabels.push(label);
@@ -473,6 +457,31 @@ export function setUpChart(dv){
                                 labelIsAllNumbers? axisBucket.push([label]): null;
                             }
                         }
+
+                        if(j === (loopEnd-1)){ //at the end of the j loop 
+                            for(let k = 0; k < axisBucket.length; k++){
+                                const bucket = axisBucket[k];
+
+                                const newValue = Calc.computeOperation(operation, bucket);
+                                if(newValue){
+
+                                    if(valueIsAllNumbers){
+                                        valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
+
+                                        newValues[k] = newValue;
+                                        yAxis.values.push(newValue);
+                                    }else {
+                                        labelWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
+
+                                        newLabels[k] = newValue;
+                                        xAxis.values.push(newValue);
+                                    }
+                                }
+                                
+                            }
+                        }
+
+                        console.log("ending: ", yAxis.values);
                     }
     
                     if(labelWidth > maxLabelWidth){
@@ -486,8 +495,11 @@ export function setUpChart(dv){
                     }
                     
 
-                    (!labelIsAllNumbers? label.length > 0:true)? xAxis.values.push(label): null;
-                    (!valueIsAllNumbers? value.length > 0:true)? yAxis.values.push(value): null;
+                    //(!labelIsAllNumbers? label.length > 0:true)? xAxis.values.push(label): null;
+                    //(!valueIsAllNumbers? value.length > 0:true)? yAxis.values.push(value): null;
+
+                    (!labelIsAllNumbers)? xAxis.values.push(label): null;
+                    (!valueIsAllNumbers)? yAxis.values.push(value): null;
 
                 }
                 

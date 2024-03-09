@@ -165,6 +165,8 @@ function drawYAxis(dv, position){
 
                     value = Calc.toFixedIfNeeded((rangeStart)+(step*i));
 
+                    console.log("myVal: ", value);
+
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
                     //set text width
@@ -200,6 +202,8 @@ function drawYAxis(dv, position){
             step < 1? step = 1: null;
     
             let iterator = 1;
+
+            console.log("wowow: ");
     
             //set iterator to 2 if the highest label length is 2 times the size of the step
             fontSize > step? iterator += Math.round(fontSize/step): null;

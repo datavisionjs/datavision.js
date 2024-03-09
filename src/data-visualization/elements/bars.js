@@ -9,6 +9,7 @@ function barItemSort(valuesItem, colorsItem, isSort, operation) {
         };
     }
 
+    /*
     const positive = [];
     const positiveColors = [];
     const negative = [];
@@ -27,12 +28,25 @@ function barItemSort(valuesItem, colorsItem, isSort, operation) {
         }
     }
 
-    const sortedValues = [Calc.computeOperation(operation, positive), Calc.computeOperation(operation, negative)];
-    const sortedColors = [...positiveColors, ...negativeColors];
+    const positiveVal = Calc.computeOperation(operation, positive);
+    const negativeVal = Calc.computeOperation(operation, negative);
 
+    const sortedValues = [positiveVal? positiveVal: 0, negativeVal? negativeVal: 0];
+    
+    const sortedColors = [...positiveColors, ...negativeColors];
+    
     return {
         values: sortedValues,
         colors: sortedColors
+    };
+    
+    */
+
+    const computeVal = Calc.computeOperation(operation, valuesItem);
+
+    return {
+        values: computeVal? [computeVal]: [0],
+        colors: colorsItem
     };
 }
 
@@ -60,8 +74,6 @@ const DrawBars = (dv, category, catKey, dataset, barSize) => {
 
         const valueIsAllNumbers = yAxis.isAllNumbers;
         const labelIsAllNumbers = xAxis.isAllNumbers;
-
-
 
         //stores the position and dimensions of the graph area
         const graphPosition = layout.graphPosition;
