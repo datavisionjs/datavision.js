@@ -54,11 +54,24 @@ export function computeOperation(operation, arr){
     }
 }
 
+//Function that returns true if an array contains all numbers.
 export function isAllNumbers(arr) {
     if(!arr){
         return null;
     }
     return arr.every(element => typeof element === 'number');
+}
+
+//Function to get the next key given a key in a Map
+export function getMapNextKey(map, currentKey){
+    let keysArray = Array.from(map.keys());
+    let currentIndex = keysArray.indexOf(currentKey);
+
+    if(currentIndex === -1 || currentIndex === keysArray.length -1){
+        return null;
+    }
+
+    return keysArray[currentIndex + 1];
 }
 
 export function hasDecimal(number){
@@ -70,7 +83,21 @@ export function haveOppositeSigns(num1, num2) {
 }
 
 export function toFixedIfNeeded(number){
-    return !isNaN(number)? Number.isInteger(number)? number: number.toFixed(1): number;
+    if(Number(number)){
+        if(Number.isInteger(number)){
+            return number;
+        }else {
+
+            const numberStr = number.toString();
+            const splitNumberStr = numberStr.split(".");
+            const nonZeroIndex = splitNumberStr[1].search(/[^0]/);
+
+            return number.toFixed((nonZeroIndex+1));
+
+        }
+    }else {
+        return number;
+    }
 }
 
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){

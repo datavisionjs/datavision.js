@@ -86,7 +86,7 @@ export function splitTitleText(dv, text) {
 //shorten text 
 export function shortenText(text, maxLength){
     if (text.length > maxLength) {
-        return text.substr(0, maxLength) + '...';
+        return text.substr(0, maxLength) + '..';
     }
     return text;
 }

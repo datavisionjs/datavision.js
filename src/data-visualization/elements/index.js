@@ -13,57 +13,58 @@ const DrawElements = (dv, type, dataset) => {
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const colorIndex = (layout.customColorsIndex);
+    //const colorIndex = (layout.customColorsIndex);
 
     if(type === "bars"){
 
-        const categories = dataset.categories;
+        const axisData = layout.axisData;
 
-        const maxBarPerCategory = dataset.maxBarPerCategory;
-        const catKeys = Array.from(categories.keys());
+        const barDataset = dataset.dataset;
 
         const isHorizontal = dataset.direction === "hr";
+
+        const maxBarPerLabel = barDataset.length;
 
         const graphPosition = layout.graphPosition;
         const graphLength = isHorizontal? graphPosition.height: graphPosition.width;
 
-        const catSize = dataset.categories.size;
+        for(let i = 0; i < barDataset.length; i++){
 
-        const step = (graphLength/catSize);
-        let barSize = (step/(maxBarPerCategory+1));
+            const barData = barDataset[i];
+            //set barData direction 
+            barData.direction = dataset.direction;
 
-        if(dataset.labelIsAllNumbers){
-            const axisData = layout.axisData;
+            const yAxis = axisData.values[barData.yAxis];
+            const xAxis = axisData.labels[barData.xAxis];
 
-            const axis = isHorizontal? axisData.values["y1"]: axisData.labels["x1"];
-            const range = axis.range;
+            const labelCount = xAxis.values.length;
 
-            const rangeStart = range[0], rangeEnd = range[1];
-            const rangeLength = (rangeEnd-rangeStart);
-            
-            const labelDiff = [];
-            for(let i = 0; i < catKeys.length; i++){
-                const key = parseInt(catKeys[i]);
-                const nextKey = parseInt(catKeys[i+1]);
+            const step = (graphLength/labelCount);
+            let barSize = (step/(maxBarPerLabel+1));
 
-                nextKey? labelDiff.push(Math.abs(nextKey-key)): null;
+            //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
+            const baseAxis = isHorizontal? yAxis: xAxis;
+            if(baseAxis.isAllNumbers){
+                const range = baseAxis.range;
+                const rangeStart = range[0], rangeEnd = range[1];
+                const rangeLength = (rangeEnd-rangeStart);
+
+                const newBarSize = dataset.barSize;
+
+                newBarSize? barSize = (newBarSize/rangeLength)*graphLength: null;
             }
 
-            const minDiff = Math.min(...labelDiff);
+            const designColor = barData.design.color;
 
-            minDiff? barSize = (minDiff/rangeLength)*graphLength: null;
+            ctx.fillStyle = designColor;
 
-        }
-
-        for(var i = 0; i < catKeys.length; i++){
-            const catKey = catKeys[i];
-            const category = categories.get(catKey);
-
-            DrawBars(dv, category, catKey, dataset, barSize);
-        }
-
-        if(maxBarPerCategory){
-            layout.customColorsIndex = (colorIndex+maxBarPerCategory);
+            let index = 0;
+            barData.values.forEach((value, key) => {
+                Array.isArray(value)? value = value[0]: null;
+                Array.isArray(designColor)? ctx.fillStyle = designColor[(index>=designColor.length? 0: index)]: null;
+                DrawBars(dv, barData, i, key, value, barSize, maxBarPerLabel);
+                index++;
+            });
         }
         
 
@@ -91,7 +92,6 @@ const DrawElements = (dv, type, dataset) => {
         const values = [];
 
         dataValues.forEach(bucket => {
-            console.log("Bucket: ", bucket);
             const value = Calc.computeOperation(operation, bucket);
             values.push(value);
             totalValues+= value;
@@ -166,8 +166,6 @@ const DrawElements = (dv, type, dataset) => {
             const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
             
             if(labels){
-
-                console.log("lab: ", labels, "vals: ", values);
                 
                 for(var i = 0; i < labels.length; i++){
 

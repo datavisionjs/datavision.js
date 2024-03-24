@@ -20,7 +20,7 @@ const DrawTitleLabel = (dv) => {
     if(titleLines){
 
         const fontSize = titleStyle.fontSize;
-        ctx.font = "bold " + fontSize+"px "+titleStyle.fontFamily;
+        ctx.font = fontSize+"px "+titleStyle.fontFamily;
 
         let x = (canvasWidth/2);
         let y = ((graphY/2)+(fontSize/2));

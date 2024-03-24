@@ -1,6 +1,8 @@
 //Contains functions for rendering and formatting axis, ticks, and labels.
 
+import * as Global from '../helpers/global.js';
 import * as Calc from '../helpers/math.js'
+
 
 
 function drawLabels(dv, position){
@@ -165,8 +167,6 @@ function drawYAxis(dv, position){
 
                     value = Calc.toFixedIfNeeded((rangeStart)+(step*i));
 
-                    console.log("myVal: ", value);
-
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
                     //set text width
@@ -203,8 +203,6 @@ function drawYAxis(dv, position){
     
             let iterator = 1;
 
-            console.log("wowow: ");
-    
             //set iterator to 2 if the highest label length is 2 times the size of the step
             fontSize > step? iterator += Math.round(fontSize/step): null;
             
@@ -239,6 +237,9 @@ function drawXAxis(dv, position){
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
+
+    const canvas = dv.getCanvas();
+    const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
     const labelStyle = dv.getStyle().label;
 
@@ -344,14 +345,12 @@ function drawXAxis(dv, position){
             let iterator = 1;
 
             //set iterator to 2 if the highest label length is 2 times the size of the step
-            (maxLabelWidth/2) > step? iterator += Math.round((maxLabelWidth/2)/step): null;
+            //(maxLabelWidth/2) > step? iterator += Math.round((maxLabelWidth/2)/step): null;
             
             for(var i = 0; i < values.length; i += iterator){
 
                 axisX = (graphX+((step/2)+(step*i)));
-
-                const label = values[i];
-
+                
                 //set text width
                 //const textWidth = ctx.measureText(label).width;
 
@@ -363,14 +362,22 @@ function drawXAxis(dv, position){
                 ctx.textAlign = "center";
                 //ctx.textBaseline = "middle";
 
+                let label = values[i];
+
                 let angle = 0;
 
-                if(maxLabelWidth > step){
-                    angle = -40
+                const labelWidth = ctx.measureText(label).width;
+                const labelCharSize = (labelWidth/label.length);
+
+                if((step/fontSize) < 4){
+                    label = Global.shortenText(label, ((canvasHeight-(graphY+graphHeight))/labelCharSize));
+                    angle = -90
                     textPosX = axisX;
 
                     ctx.textAlign = "end";
                     ctx.textBaseline = "middle";
+                }else if(maxLabelWidth > step) {
+                    label = Global.shortenText(label, (step/labelCharSize));
                 }
 
                 let angleInRadians = (angle * (Math.PI/180));
@@ -407,9 +414,14 @@ const DrawAxis = (dv) => {
     const graphPosition = layout.graphPosition;
 
     //draw a rectangle representing the graph area
+    
     ctx.beginPath();
+    ctx.strokeStyle = "#b5b5b5";
+    ctx.lineWidth = "0.1";
     ctx.rect((graphPosition.x+1), graphPosition.y, (graphPosition.width-2), graphPosition.height);
     ctx.stroke();
+    ctx.lineWidth = "1";
+    
 
     //Draw Y-axis, X-axis around the graph area
     drawXAxis(dv, graphPosition);
