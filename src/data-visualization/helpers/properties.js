@@ -120,68 +120,45 @@ export function setGraphPosition(dv){
 function getTickData(range){ 
     if(!range) return {count: 0, range: range};
 
-    let desiredTickCount = 10;
-
     const min = range[0], max = range[1];
+
+    let desiredTickCount = 5;
 
     let rangeStart = min, rangeEnd = max;
     let tickCount = desiredTickCount;
     let interval = 0;
     
-    if(!isNaN(min) && !isNaN(max)){
-        if(min <= 0 && max >= 0){
-            desiredTickCount = Math.round(desiredTickCount/2);
-            const rangeDiff = max - 0;
-
-            // Calculate the interval size based on the desired number of ticks
-            const intervalSize = rangeDiff / Math.max(desiredTickCount - 1, 1);
-
-            interval = Calc.getTicksInterval(intervalSize);
-
-            const topTickCount = Math.ceil(rangeDiff / interval);
-            const bottomTickCount = Math.ceil(Math.abs(min)/interval);
-
-            tickCount = (topTickCount+bottomTickCount);
-            rangeStart = -(bottomTickCount*interval);
-            rangeEnd = (interval*(topTickCount));
+    if(!isNaN(rangeStart) && !isNaN(rangeEnd)){
+        let intervalSize = 0;
+        
+        if(rangeStart <= 0 && rangeEnd >= 0){
+            intervalSize = (Math.max(Math.abs(min) + Math.abs(max)) / Math.max(desiredTickCount - 1, 1));
         }else {
 
-            if(min <= 0){
-                const rangeDiff = max - min;
-
-                // Calculate the interval size based on the desired number of ticks
-                const intervalSize = rangeDiff / Math.max(desiredTickCount - 1, 1);
-
-                interval = Calc.getTicksInterval(intervalSize);
-
-                rangeEnd = -(Calc.getTicksInterval(Math.abs(rangeEnd), true));
-
-                tickCount = Math.ceil(Math.abs(rangeEnd-min)/interval);
-
-                rangeStart = -((Math.abs(rangeEnd))+(interval*(tickCount)));
+            if(rangeStart <= 0){
+                intervalSize = Math.abs(rangeStart / Math.max(desiredTickCount - 1, 1));
             
-            }else if(min > 0){
-                rangeStart = Calc.getTicksInterval(rangeStart, true);
-
-                const rangeDiff = rangeEnd - rangeStart;
+            }else if(rangeStart > 0){
 
                 // Calculate the interval size based on the desired number of ticks
-                const intervalSize = rangeDiff / Math.max(desiredTickCount - 1, 1);
-
-                interval = Calc.getTicksInterval(intervalSize);
-                
-                const belowIntCount = Math.floor((min-rangeStart)/interval);
-
-                rangeStart += (rangeStart+interval) < min? (belowIntCount*interval): 0;
-
-                const newRangeDiff = (rangeEnd-rangeStart);
-
-                // Calculate the number of ticks
-                tickCount = Math.ceil(newRangeDiff / interval);
-
-                rangeEnd = rangeStart + (interval*(tickCount));
+                intervalSize = rangeEnd / Math.max(desiredTickCount - 1, 1);
             }
 
+        }
+
+        interval = Calc.getTicksInterval(intervalSize);
+
+        const newRange = Calc.zeroBasedRangeAdjust([rangeStart, rangeEnd], interval);
+        rangeStart = newRange[0];
+        rangeEnd = newRange[1];
+
+        const newRangeDiff = (rangeEnd-rangeStart);
+        // Calculate the number of ticks
+        tickCount = Math.round(newRangeDiff / interval);
+
+        if(tickCount <= 1){
+            rangeStart = 0;
+            tickCount = Math.round(rangeEnd / interval);
         }
     }
 
@@ -318,7 +295,6 @@ export function setUpChart(dv){
             const newPieDataset = {...dataset};
             const newPieLabels = [];
             const newPieValues = [];
-            let pieTotalValues = 0;
 
             const labelIsAllNumbers = Calc.isAllNumbers(labels);
             const valueIsAllNumbers = Calc.isAllNumbers(values);
@@ -375,9 +351,8 @@ export function setUpChart(dv){
                             labelValues.push(newValue);
                         }
                         
-                        if(!newLabelIsAllNumbers? newLabel.length > 0:true){
+                        if(!newLabelIsAllNumbers? newLabel.toString().length > 0:true){
 
-                            //newLabel === ""? console.log("cheeks: ", labelIsAllNumbers): null;
                             //set maxBarPerCategory if labelValues is more then the current value.
                             labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
                             
@@ -436,15 +411,14 @@ export function setUpChart(dv){
                             const index = newLabels.indexOf(label);
                             const bucket = axisBucket[index];
 
-                            if(bucket && value){ 
+                            if(bucket && !isNaN(value)){ 
                                 bucket.push(value);
                             }
                         }else if(newValues.includes(value) && !valueIsAllNumbers && labelIsAllNumbers){
                             const index = newValues.indexOf(value);
                             const bucket = axisBucket[index];
 
-
-                            if(bucket && label){
+                            if(bucket && !isNaN(label)){
                                 bucket.push(label);
                             }
                         }else {
@@ -464,7 +438,9 @@ export function setUpChart(dv){
                                 const bucket = axisBucket[k];
 
                                 const newValue = Calc.computeOperation(operation, bucket);
-                                if(newValue){
+
+                                //newLabels[k] === "SCD"? console.log("nice: ", newValue, bucket): null;
+                                if(!isNaN(newValue)){
 
                                     if(valueIsAllNumbers){
                                         valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;

@@ -13,10 +13,10 @@
 
     <script>
 
-        const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
+        //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [55, 49, 100, 24, 15, 45, -15, 50];
 
-        const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
+        //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
         //const xArray = [55, -49, 44, 20, 15, 20, 10, 40];
         //const yArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
@@ -30,12 +30,16 @@
         //const xArray = ["Italy", "France"]
         //const yArray = [50000, 5000, 70000, 69000];
 
+        const xArray = [2600, 2600,"2600","2600","2600"];
+        const yArray = [0.3, 0.2, 0.44, 0.3, 0.15];
+
+        console.log(Math.min(...yArray));
+
         // Define Data
         const data = [
-            
-            {values: yArray, labels: xArray, type: "scatter",
+            {values: yArray, labels: xArray, type: "line",
                 name: "Minimum",
-                operation: "avg",
+                operation: "min",
             }
         ];  
 

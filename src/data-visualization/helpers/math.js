@@ -49,6 +49,8 @@ export function computeOperation(operation, arr){
         return Math.min(...arr);
     }else if(operation === "max"){
         return Math.max(...arr);
+    }else if(operation === "count"){
+        return arr.length;
     }else {
         return sum(arr); //sum is the default
     }
@@ -84,13 +86,13 @@ export function haveOppositeSigns(num1, num2) {
 
 export function toFixedIfNeeded(number){
     if(Number(number)){
-        if(Number.isInteger(number)){
+        if(Number.isInteger(Number(number))){
             return number;
         }else {
 
             const numberStr = number.toString();
             const splitNumberStr = numberStr.split(".");
-            const nonZeroIndex = splitNumberStr[1].search(/[^0]/);
+            const nonZeroIndex = splitNumberStr[1].search(/[^0]/) || 1;
 
             return number.toFixed((nonZeroIndex+1));
 
@@ -143,6 +145,16 @@ export function rangeFromData(arr){
         }
     }
     return [null, null];
+}
+
+
+export function zeroBasedRangeAdjust(range, interval){
+    let rangeStart = range[0], rangeEnd = range[1];
+
+    rangeStart = interval * Math.floor(rangeStart / interval);
+    rangeEnd = interval * Math.ceil(rangeEnd / interval);
+
+    return [rangeStart, rangeEnd];
 }
 
 
