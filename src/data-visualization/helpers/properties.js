@@ -224,10 +224,6 @@ export function setUpChart(dv){
     const axisLabels = {x1: new NewAxis()};
     const axisValues = { y1: new NewAxis(), y2: new NewAxis() };
 
-    //all pie labels and values
-    const pieLabels = [];
-    const pieValues = [];
-
 
     const axisChartTypes = ["line", "scatter", "bar"];
     let hasAxisData = false;
@@ -246,7 +242,8 @@ export function setUpChart(dv){
         const tempDataLength = tempData.length;
         const prevDataset = {labels: [], values: []};
 
-        const barDataset = {type: "bar", dataset: []};
+        const barDataset = {type: "bar", dataset: [], attributeIsSet: false};
+        const barStackTrackValues = new Map(); //track and add values of stacked bars for range
         const barDatasetNames = [];
         const barDatasetColors = [];
         let hasBarDataset = false;
@@ -321,15 +318,23 @@ export function setUpChart(dv){
                     
                     if(dataType === "bar"){
                         
-                        //set all bar dataset to hr if one is.
-                        if(barDataset.direction !== "hr" && !barDataset.dataset.length){
+                        //loop to assign direction and mode to barDataset if a bar dataset includes it.
+                        if(!barDataset.attributeIsSet){
                             for(let k = 0; k < tempData.length; k++) {
-                                if(tempData[k].direction === "hr"){
-                                    barDataset.direction = "hr";
-                                    break;
+                                const data = tempData[k];
+
+                                if(data.type === "bar"){
+                                    if(data.direction === "hr"){
+                                        barDataset.direction = "hr";
+                                    }
+                                    if(data.mode === "stack"){
+                                        barDataset.mode = "stack";
+                                    }
                                 }
                             }
+                            barDataset.attributeIsSet = true;
                         }
+                        
                         
                         
                         const isHorizontal = barDataset.direction === "hr";
@@ -396,6 +401,18 @@ export function setUpChart(dv){
                                     valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
 
                                     barData.values.set(key, newValue);
+
+                                    //add stack value to properly show axis range
+                                    if(barDataset.mode === "stack"){
+                                        const lastStack = barStackTrackValues.has(key)? barStackTrackValues.get(key): [0, 0];
+                                        const lastValue = newValue >= 0? (lastStack[0]): (lastStack[1]);
+
+                                        newValue = (lastValue+newValue);
+
+                                        const currentStack = newValue >= 0? [newValue, lastStack[1]]: [lastStack[0], newValue];
+                                        barStackTrackValues.set(key, currentStack);
+                                    }
+                                    
                                     isHorizontal? xAxis.values.push(newValue):yAxis.values.push(newValue);
 
                                 });

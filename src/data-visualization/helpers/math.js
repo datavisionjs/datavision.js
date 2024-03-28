@@ -32,6 +32,40 @@ export function findMinAndMax(arr) {
     }
 }
 
+export function getClosestToZero(arr){
+
+    if(arr.length === 0){
+        return undefined;
+    }
+
+    let closestValue = arr[0];
+    let closestDifference = Math.abs(closestValue);
+
+    for(let i = 0; i < arr.length; i++){
+        const currentDifference = Math.abs(arr[i]);
+
+        if(currentDifference < closestDifference){
+            closestValue = arr[i];
+            closestDifference = currentDifference;
+        }
+    }
+
+    return closestValue;
+}
+
+export function getNumberInRange(number, range){
+    const rangeMin = Math.min(...range);
+    const rangeMax = Math.max(...range);
+
+    if(number < rangeMin){
+        return rangeMin;
+    }else if(number > rangeMax){
+        return rangeMax;
+    }else {
+        return number;
+    }
+}
+
 //find sum of an array of numbers
 export function sum(arr) {
     return arr.reduce((sum, current) => sum + current, 0);
@@ -196,7 +230,7 @@ export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
             const rangeDiff = (rangeEnd-rangeStart);
 
 
-            const value = y;
+            const value = getNumberInRange(y, range);
 
             const perc = ((value - rangeStart)/rangeDiff);
             const pos = ((chartY+chartHeight)-(perc*chartHeight));
@@ -232,7 +266,7 @@ export function posOnGraphXAxis(dv, x, axisName){
 
             const rangeDiff = (rangeEnd-rangeStart);
 
-            const value = x;
+            const value = getNumberInRange(x, range);
 
             const perc = ((value - rangeStart)/rangeDiff);
             const pos = (chartX+(perc*chartWidth));

@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 //import elements
-import DrawBars from './bars.js';
+import * as Bars from './bars.js';
 import DrawLines from './lines.js';
 import DrawPoints from "./points";
 import DrawPieSlice from './pie.js';
@@ -22,12 +22,15 @@ const DrawElements = (dv, type, dataset) => {
         const barDataset = dataset.dataset;
 
         const isHorizontal = dataset.direction === "hr";
+        const mode = dataset.mode;
 
         const maxBarPerLabel = barDataset.length;
 
         const graphPosition = layout.graphPosition;
         const graphLength = isHorizontal? graphPosition.height: graphPosition.width;
 
+        const stackLastValues = new Map();
+        
         for(let i = 0; i < barDataset.length; i++){
 
             const barData = barDataset[i];
@@ -44,9 +47,11 @@ const DrawElements = (dv, type, dataset) => {
 
             //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
             const baseAxis = isHorizontal? yAxis: xAxis;
+            
             if(baseAxis.isAllNumbers){
                 const range = baseAxis.range;
                 const rangeStart = range[0], rangeEnd = range[1];
+
                 const rangeLength = (rangeEnd-rangeStart);
 
                 const newBarSize = dataset.barSize;
@@ -59,10 +64,30 @@ const DrawElements = (dv, type, dataset) => {
             ctx.fillStyle = designColor;
 
             let index = 0;
+
+            const range = isHorizontal? xAxis.range: yAxis.range;
+            const rangeStart = Calc.getNumberInRange(0, range);
+
             barData.values.forEach((value, key) => {
                 Array.isArray(value)? value = value[0]: null;
                 Array.isArray(designColor)? ctx.fillStyle = designColor[(index>=designColor.length? 0: index)]: null;
-                DrawBars(dv, barData, i, key, value, barSize, maxBarPerLabel);
+                
+                if(mode === "stack"){
+                    barSize = (step*0.9);
+
+                    const lastStack = stackLastValues.has(key)? stackLastValues.get(key): [rangeStart, rangeStart];
+                    const lastValue = value >= 0? (lastStack[0]): (lastStack[1]);
+                    
+                    const currentValue = i === 0? value: (lastValue+value);
+
+                    const currentStack = value >= 0? [currentValue, lastStack[1]]: [lastStack[0], currentValue];
+                    stackLastValues.set(key, currentStack);
+
+                    Bars.Stack(dv, barData, barSize, key, lastValue, currentValue);
+                }else {
+                    Bars.Group(dv, barData, i, key, value, barSize, maxBarPerLabel);
+                }
+
                 index++;
             });
         }
