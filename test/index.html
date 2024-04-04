@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing DataVision</title>
+</head>
+<body>
+    
+    <script src="../dist/datavision.min.js"></script>
+
+    <div id="my-chart" style="width:100%;max-width:800px"></div>
+
+    <script>
+
+        const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
+        const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
+
+        //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
+
+        //const xArray = [55, -49, 44, 20, 15, 20, 10, 40];
+        //const yArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
+
+        //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
+        //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+
+        //console.log("x: ", xValues);
+        //console.log("y: ", yValues);
+        
+        //const xArray = ["Italy", "France"]
+        //const yArray = [50000, 5000, 70000, 69000];
+
+        //const xArray = [2600, 2600,"2600","2600","2623"];
+        //const yArray = [-0.3, -0.2, -0.44, -0.3, -0.15];
+
+        console.log(Math.min(...yArray));
+
+        // Define Data
+        const data = [
+            {values: yArray, labels: xArray, type: "bar",
+                name: "Minimum",
+                operation: "max",
+                direction: "h",
+                mode: "stack",
+            },{values: yArray, labels: xArray, type: "bar",
+                name: "Minimum",
+                operation: "min",
+            }
+        ];  
+
+        //Define Layout
+        const layout = {title: "Testing"};
+
+        const chart = new DataVision("my-chart");
+        chart.plot(data, layout);
+
+        window.addEventListener('resize', function () {
+            chart.plot(data, layout);
+        });
+
+        function generateData(value, i1, i2, step = 1) {
+            for (let x = i1; x <= i2; x += step) {
+                yValues.push(eval(value));
+                xValues.push(x);
+            }
+        }
+
+        
+    </script>
+</body>
+</html>
