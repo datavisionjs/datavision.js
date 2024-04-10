@@ -31,7 +31,8 @@ export function setGraphPosition(dv){
     const axisTitleSpace = (labelFontSize*2);
 
     //set y axis space from left and right
-    let yAxisLeft = (canvasWidth*0.15), yAxisRight = (canvasWidth*0.15);
+    const yMaxLabelWidth = (canvasWidth*0.15);
+    let yAxisLeft = yMaxLabelWidth, yAxisRight = yMaxLabelWidth;
 
 
     //y1
@@ -68,9 +69,6 @@ export function setGraphPosition(dv){
         datasetSpace = 0;
     }
 
-
-
-
     //set x axis space from bottom
     let xAxisBottom = ((axisTitleSpace)+labelFontSize);
     let xAxisRight = 0;
@@ -104,7 +102,8 @@ export function setGraphPosition(dv){
         y: graphY,
         width: graphWidth,
         height: graphHeight,
-        yAxisRight: yAxisRight
+        yAxisRight: yAxisRight,
+        yMaxLabelWidth: yMaxLabelWidth
     }
 
 

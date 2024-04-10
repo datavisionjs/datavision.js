@@ -12,6 +12,29 @@ export function linearInterpolation(x, x1, y1, x2, y2) {
     return y;
 }
 
+//find the distance between two points 
+export function distance(point1, point2) {
+    const deltaX = point2.x - point1.x;
+    const deltaY = point2.y - point1.y;
+
+    // Using Math.hypot() to compute the square root of the sum of squares of its arguments
+    return Math.hypot(deltaX, deltaY);
+}
+
+export function angleBetweenPoints(center, point) {
+    // Compute the angle (in radians) between the positive x-axis and the line segment
+    var angleRad = Math.atan2(point.y - center.y, point.x - center.x);
+
+    // Convert radians to degrees
+    var angleDeg = angleRad * (180 / Math.PI);
+
+    // Ensure the angle is between 0 and 360 degrees
+    angleDeg = (angleDeg + 360) % 360;
+
+    return angleDeg;
+}
+
+
 //find minimum numbers 
 export function findMinAndMax(arr) {
     if(arr){

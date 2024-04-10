@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPieSlice = (dv, ctx, startDegrees, endDegrees) => {
+const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, value) => {
     
     const layout = dv.getLayout();
 
@@ -38,6 +38,10 @@ const DrawPieSlice = (dv, ctx, startDegrees, endDegrees) => {
     ctx.stroke();
     ctx.fill();
     ctx.closePath();
+
+    //set tooltip
+    dv.setToolTipData({type: "pie",  radius: radius, startDegrees: startDegrees, endDegrees: endDegrees, midPoint: midPoint, holeRadius: holeRadius, label: label, value: value});
+
 }
 
 export default DrawPieSlice;

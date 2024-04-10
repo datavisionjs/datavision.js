@@ -1,3 +1,4 @@
+import * as Calc from './math.js';
 
 //adds event listeners
 export function on(element, event, handler, eventAlt) {
@@ -86,7 +87,7 @@ export function splitTitleText(dv, text) {
 //shorten text 
 export function shortenText(text, maxLength){
     if (text.length > maxLength) {
-        return text.substr(0, maxLength) + '..';
+        return text.substr(0, maxLength > 3? (maxLength-2): maxLength) + '..';
     }
     return text;
 }
@@ -130,4 +131,76 @@ export function getXSpace(dv, graphWidth){
 
     return (space+widerTextSize);
     
+}
+
+//checks if a degree is between two degrees
+function isDegreeBetween(degree, minDegree, maxDegree) {
+    // Normalize degree, minDegree, and maxDegree to be between 0 and 360
+    degree = (degree + 360) % 360;
+    minDegree = (minDegree + 360) % 360;
+    maxDegree = (maxDegree + 360) % 360;
+
+    // Check if minDegree <= degree <= maxDegree
+    if (minDegree <= maxDegree) {
+        return degree >= minDegree && degree <= maxDegree;
+    } else {
+        // Wrap around case where minDegree > maxDegree
+        return degree >= minDegree || degree <= maxDegree;
+    }
+}
+
+
+//crashing 
+export function crashWithRect(rect, target){
+    const targetX = target.width >= 0? target.x: (target.x+target.width);
+    const targetY = target.height >= 0? target.y: (target.y+target.height);
+
+    const targetWidth = Math.abs(target.width);
+    const targetHeight = Math.abs(target.height);
+
+    // Check if the rectangles collide
+    if (rect.x < targetX + targetWidth &&
+        rect.x + rect.width > targetX &&
+        rect.y < targetY + targetHeight &&
+        rect.y + rect.height > targetY) {
+        // Collision detected
+        return true;
+    } else {
+        // No collision detected
+        return false;
+    }
+}
+
+export function crashWithCircle(rect, target){
+    const radius = target.radius;
+    const midPoint = target.midPoint;
+
+    if(Calc.distance(rect, midPoint) <= radius){
+        return true;
+    }else {
+        return false;
+    }
+}
+
+
+export function crashWithAngle(rect, target){
+    const holeTarget = {radius: target.holeRadius, midPoint: target.midPoint};
+
+    if(crashWithCircle(rect, target) && !crashWithCircle(rect, holeTarget)){
+        
+        const startDeg = target.startDegrees > 0? target.startDegrees: (target.startDegrees+360);
+        const midPoint = target.midPoint;
+        const endDeg = target.endDegrees > 0? target.endDegrees: (target.endDegrees+360);;
+
+        const rectDeg = Calc.angleBetweenPoints(midPoint, rect);
+
+        if(isDegreeBetween(rectDeg, startDeg, endDeg)){
+            return true;
+        }else {
+            return false;
+        }
+        
+    }else {
+        return false;
+    }
 }

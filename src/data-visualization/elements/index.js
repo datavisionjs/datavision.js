@@ -43,7 +43,7 @@ const DrawElements = (dv, type, dataset) => {
             const labelCount = xAxis.values.length;
 
             const step = (graphLength/labelCount);
-            let barSize = (step/(maxBarPerLabel+1));
+            let barSize = mode === "stack"? (step*0.7): (step/(maxBarPerLabel+1));
 
             //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
             const baseAxis = isHorizontal? yAxis: xAxis;
@@ -73,17 +73,17 @@ const DrawElements = (dv, type, dataset) => {
                 Array.isArray(designColor)? ctx.fillStyle = designColor[(index>=designColor.length? 0: index)]: null;
                 
                 if(mode === "stack"){
-                    barSize = (step*0.9);
 
                     const lastStack = stackLastValues.has(key)? stackLastValues.get(key): [rangeStart, rangeStart];
                     const lastValue = value >= 0? (lastStack[0]): (lastStack[1]);
                     
-                    const currentValue = i === 0? value: (lastValue+value);
+                    const currentValue = value;
+                    value = i === 0? value: (lastValue+value);
 
-                    const currentStack = value >= 0? [currentValue, lastStack[1]]: [lastStack[0], currentValue];
+                    const currentStack = value >= 0? [value, lastStack[1]]: [lastStack[0], currentValue];
                     stackLastValues.set(key, currentStack);
 
-                    Bars.Stack(dv, barData, barSize, key, lastValue, currentValue);
+                    Bars.Stack(dv, barData, barSize, key, lastValue, value, currentValue);
                 }else {
                     Bars.Group(dv, barData, i, key, value, barSize, maxBarPerLabel);
                 }
@@ -122,6 +122,9 @@ const DrawElements = (dv, type, dataset) => {
             totalValues+= value;
         });
 
+        const hole = dataset.hole? dataset.hole: 0;
+        const holeRadius = (hole*radius);
+
         if(values){
 
             let degrees = -90;
@@ -139,6 +142,7 @@ const DrawElements = (dv, type, dataset) => {
                 fillColor? tempCtx.fillStyle = fillColor: null;//set bar color if exists
 
                 const value = values[i];
+                const label= dataset.labels[i];
 
                 if(!isNaN(value)){
 
@@ -147,7 +151,7 @@ const DrawElements = (dv, type, dataset) => {
 
                     const endDegrees = degrees;
 
-                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees);
+                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value);
 
                     startDegrees = endDegrees;
                 }
@@ -157,9 +161,6 @@ const DrawElements = (dv, type, dataset) => {
 
         //draw hole in pie to create a daughnut chart
         const halfWidth = graphWidth/2, halfHeight = graphHeight/2;
-
-        const hole = dataset.hole? dataset.hole: 0;
-        const holeRadius = (hole*radius);
 
         tempCtx.globalCompositeOperation = "destination-out";
         tempCtx.globalAlpha = 1;
@@ -176,6 +177,10 @@ const DrawElements = (dv, type, dataset) => {
 
             const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
             const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
+
+            const yAxisName = valueAxisName === "y2"? "y2Axis": "yAxis";
+            const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
+            const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
 
             //const axisData = layout.axisData;
             const isHorizontal = dataset.direction === "hr";
@@ -203,7 +208,7 @@ const DrawElements = (dv, type, dataset) => {
                     const positionType = i === 0? "start": i === (labels.length-1)? "end": "";
                     
                     if(value || value === 0){ //proceed if y is valid
-
+     
                         const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
 
                         if(type === "arcs"){
@@ -223,6 +228,9 @@ const DrawElements = (dv, type, dataset) => {
                             
                             DrawPoints(dv, size, position);
                         }
+
+                        //set tooltip
+                        dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle});
 
                     }else {
                         

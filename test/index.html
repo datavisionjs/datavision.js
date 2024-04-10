@@ -13,16 +13,16 @@
 
     <script>
 
-        const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
-        const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
+        //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
+        //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        //const xArray = [55, -49, 44, 20, 15, 20, 10, 40];
-        //const yArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
+        const yArray = [55, -49, 44, 20, 15, 20, 10, 40];
+        const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
 
-        //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
-        //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+        //const xArray = [0,60,70,80,90,100,110,120,130,140,0];
+        //const yArray = [0,8,8,9,9,9,10,11,14,14,15];
 
         //console.log("x: ", xValues);
         //console.log("y: ", yValues);
@@ -33,23 +33,27 @@
         //const xArray = [2600, 2600,"2600","2600","2623"];
         //const yArray = [-0.3, -0.2, -0.44, -0.3, -0.15];
 
-        console.log(Math.min(...yArray));
+        //const yArray = [55, -49];
+        //const xArray = ["USA", "Italy"];
 
         // Define Data
         const data = [
-            {values: yArray, labels: xArray, type: "bar",
+           {values: yArray, labels: xArray, type: "pie",
                 name: "Minimum",
+                direction: "",
                 operation: "max",
-                direction: "h",
-                mode: "stack",
-            },{values: yArray, labels: xArray, type: "bar",
-                name: "Minimum",
-                operation: "min",
+                direction: "hr",
+                hole: .3,
+                mode: "",
+                design: {
+                    size: 4
+                }
             }
-        ];  
+        ]; 
+        
 
         //Define Layout
-        const layout = {title: "Testing"};
+        const layout = {title: "Testing", yAxis: {title: "Population"}};
 
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
@@ -57,13 +61,6 @@
         window.addEventListener('resize', function () {
             chart.plot(data, layout);
         });
-
-        function generateData(value, i1, i2, step = 1) {
-            for (let x = i1; x <= i2; x += step) {
-                yValues.push(eval(value));
-                xValues.push(x);
-            }
-        }
 
         
     </script>
