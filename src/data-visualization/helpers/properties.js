@@ -455,7 +455,6 @@ export function setUpChart(dv){
 
                                 const newValue = Calc.computeOperation(operation, bucket);
 
-                                //newLabels[k] === "SCD"? console.log("nice: ", newValue, bucket): null;
                                 if(!isNaN(newValue)){
 
                                     if(valueIsAllNumbers){

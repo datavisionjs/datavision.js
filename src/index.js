@@ -146,20 +146,25 @@ function DataVision(targetId) {
         ctx.drawImage(canvasCopy, 0, 0);
     };
     this.addCanvasToTarget = function (){
+
         const canvas = this.getCanvas();
-        //canvas.width = this.canvas.width;
-        //canvas.height = this.canvas.height;
-        
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(this.getCanvas(), 0, 0);
 
         //set event on canvas
         const dv = this; //get datavision object
         Global.on(canvas, "mousemove", function (event){
+
+            event.stopPropagation();
             const mousePosition = Global.getMousePosition(event);
             DisplayToolTip(event, dv, mousePosition);
+
+        }, "click");
+
+        Global.on(document, "click", function (){
+            dv.updateTargetCanvas();
         }, "touchend");
-       
+        
+
+        //add canvas to target
         if(this.target){
             this.target.innerHTML = "";
             this.target.appendChild(canvas);

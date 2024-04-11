@@ -146,12 +146,14 @@ const DrawElements = (dv, type, dataset) => {
 
                 if(!isNaN(value)){
 
-                    const valPercent = (value/totalValues);
-                    degrees += (valPercent*360);
+                    const valDecimal = (value/totalValues);
+                    degrees += (valDecimal*360);
 
                     const endDegrees = degrees;
 
-                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value);
+                    const percent = (valDecimal*100).toFixed(1);
+
+                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent);
 
                     startDegrees = endDegrees;
                 }
