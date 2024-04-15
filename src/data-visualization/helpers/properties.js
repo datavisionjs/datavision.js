@@ -224,7 +224,7 @@ export function setUpChart(dv){
     const axisValues = { y1: new NewAxis(), y2: new NewAxis() };
 
 
-    const axisChartTypes = ["line", "scatter", "bar"];
+    const axisChartTypes = ["line", "bar", "scatter", "bubble"];
     let hasAxisData = false;
     let hasPieData = false;
     let axisDirection = null;

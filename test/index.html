@@ -15,6 +15,7 @@
 
     <script>
 
+        /*
         
         let exp = "Math.cos(x)";
         // Generate values
@@ -24,6 +25,7 @@
             xArray.push(x);
             yArray.push(eval(exp));
         }
+        */
 
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
@@ -48,6 +50,8 @@
         //const yArray = [55, -49];
         //const xArray = ["USA", "Italy"];
 
+        
+
         const dates = ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"];
                     const stockPrices = [45, 70, 110, 70, 60]; // Stock prices for each corresponding date
 
@@ -64,34 +68,40 @@
                     },{
                         values: stockPrices,
                         labels: dates,
-                        type: "line"
+                        type: "bubble",
+                        design: {
+                            size: 5
+                        }
+                        
                         }
                     ]; 
 
                     //Define Layout
                     const layout = {title: "-"};
 
+
         
 
-        /*
+        
         // Define Data
+        /*
         const data = [
-           {values: yArray, labels: xArray, type: "scatter",
+           {values: yArray, labels: xArray, type: "line",
                 name: "Minimum",
                 direction: "",
                 operation: "max",
                 
                 mode: "",
                 design: {
-                    size: 4
+                    size: 5,
+                    text: ["A Size", "B Size", "C Size", "D Size"]
                 }
             }
-        ]; 
+        ]; */
         
 
         //Define Layout
-        const layout = {title: "Testing", yAxis: {title: "Population"}, xAxis: {title: "Country"}};
-        */
+        //const layout = {title: "Testing", yAxis: {title: "Population"}, xAxis: {title: "Country"}};
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 

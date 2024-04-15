@@ -8,14 +8,15 @@ import DrawPieSlice from './pie.js';
 
 import customColors from '../helpers/colors.js';
 
-const DrawElements = (dv, type, dataset) => {
+const DrawElements = (dv, dataset) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    //const colorIndex = (layout.customColorsIndex);
+    const type = dataset.type;
 
-    if(type === "bars"){
+
+    if(type === "bar"){
 
         const axisData = layout.axisData;
 
@@ -189,6 +190,7 @@ const DrawElements = (dv, type, dataset) => {
 
             const designColor = dataset.design.color;
             const designSize = dataset.design.size;
+            const designText = dataset.design.text; // for tooltip text
 
             ctx.fillStyle = designColor;
             ctx.strokeStyle = designColor;
@@ -206,6 +208,7 @@ const DrawElements = (dv, type, dataset) => {
 
                     const color = Array.isArray(designColor)? designColor[i]: designColor;
                     const size = Array.isArray(designSize)? designSize[i]: designSize;
+                    const text = Array.isArray(designText)? designText[i]: designText;
                     
                     const positionType = i === 0? "start": i === (labels.length-1)? "end": "";
                     
@@ -213,11 +216,9 @@ const DrawElements = (dv, type, dataset) => {
      
                         const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
 
-                        if(type === "arcs"){
-
-                        }else if(type === "lines"){
+                        if(type === "line"){
                             DrawLines(dv, dataset, positionType, size, position);
-                        }else if(type === "points"){
+                        }else if(type === "scatter" || "bubble"){
 
                             const designLine = dataset.design.line;
                             const lineColor = designLine? designLine.color? designLine.color: color: color;
@@ -232,7 +233,7 @@ const DrawElements = (dv, type, dataset) => {
                         }
 
                         //set tooltip
-                        dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle});
+                        dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle, size: type === "bubble"? size: null, sizeTitle: text});
 
                     }else {
                         

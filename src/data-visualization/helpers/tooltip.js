@@ -23,6 +23,43 @@ const DrawHover = (dv, ctx, data) => {
     ctx.stroke();
 }
 
+const GetText = (data, ctx, name, maxTextWidth) => {
+    if(!data[name]) return {text: null, width: 0};
+
+    let text = data[name+"Text"];
+    let textWidth = data[name+"Width"];
+
+    if(!textWidth){
+        //set value
+        let value = Calc.toFixedIfNeeded(data[name]);
+        //shorten value
+        const valueWidth = Math.min(ctx.measureText(value).width, maxTextWidth);
+        const valueCharSize = (valueWidth/value.length);
+        value = Global.shortenText(value, ((maxTextWidth)/valueCharSize));
+        
+
+        //set title
+        let title = data[name+"Title"];
+        if(title){
+            //shorten title
+            const titleWidth = Math.min(ctx.measureText(title).width, maxTextWidth);
+            const titleCharSize = (titleWidth/title.length);
+            title = Global.shortenText(title, ((maxTextWidth)/titleCharSize))+": ";
+        }
+
+        //set percent
+        const percent = data.percent && name === "value"? " ("+data.percent+"%)": "";
+
+        text = (title? title+" ": "") + value + percent;
+        textWidth = ctx.measureText(text).width;
+    }
+
+    data[name+"Text"] = text;
+    data[name+"Width"] = textWidth;
+
+    return {text: text, width: textWidth};
+}
+
 const DrawToolTip = (dv, ctx, pos, data) => {
 
     //draw hover
@@ -30,21 +67,29 @@ const DrawToolTip = (dv, ctx, pos, data) => {
 
     const labelStyle = dv.getStyle().label;
     const fontSize = labelStyle.fontSize;
+    const halfFontSize = fontSize/2;
+    const maxTextWidth = ctx.canvas.width * 0.15;
 
-    let labelTitle = data.labelTitle? data.labelTitle: null;
-    let valueTitle = data.valueTitle? data.valueTitle: null;
+    const label = GetText(data, ctx, "label", maxTextWidth);
+    const value = GetText(data, ctx, "value", maxTextWidth);
+    const size = GetText(data, ctx, "size", maxTextWidth);
+
+
+    /*
 
     !data.labelTitleWidth && labelTitle? data.labelTitleWidth = ctx.measureText(labelTitle).width: null;
     !data.valueTitleWidth && valueTitle? data.valueTitleWidth = ctx.measureText(valueTitle).width: null;
+    !data.sizeTitleWidth && sizeTitle? data.sizeTitleWidth = ctx.measureText(sizeTitle).width: null;
 
+    
     let label = Calc.toFixedIfNeeded(data.label), value = Calc.toFixedIfNeeded(data.value), percent = data.percent? " ("+data.percent+"%)": "";
 
     !data.labelWidth? data.labelWidth = ctx.measureText(label).width: null;
     !data.valueWidth? data.valueWidth = ctx.measureText(value).width: null;
+    !data.sizeWidth? data.sizeWidth = ctx.measureText(size).width: null;
     
     !data.percentWidth? data.percentWidth = ctx.measureText(percent).width: null;
 
-    const maxTextWidth = ctx.canvas.width * 0.15;
     const labelTitleWidth = Math.min(data.labelTitleWidth? data.labelTitleWidth: 0, maxTextWidth);
     const valueTitleWidth = Math.min(data.valueTitleWidth? data.valueTitleWidth: 0, maxTextWidth);
 
@@ -70,13 +115,14 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     //sharten value
     const valueCharSize = (data.valueWidth/value.length);
     value = Global.shortenText(value, ((maxTextWidth)/valueCharSize));
+    */
     
 
-    const labelText = (labelTitle? labelTitle: "")+label;
-    const valueText =  (valueTitle? valueTitle: "")+ value +percent;
+    //const labelText = (labelTitle? labelTitle: "")+label;
+    //const valueText =  (valueTitle? valueTitle: "")+ value +percent;
 
-    const textWidth = (Math.max((labelTitleWidth+labelWidth), (valueTitleWidth+valueWidth+data.percentWidth))+(fontSize*2));
-    const textHeight = (fontSize*3.5);
+    const textWidth = (Math.max(label.width, value.width, size.width)+(fontSize*2));
+    const textHeight = (fontSize*(size.text? 5: 3.5));
     
     // Calculate tooltip position
     let tooltipX = (pos.x+20);
@@ -117,10 +163,13 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     //ctx.fillText(text, (tooltipX+(textWidth/2)), tooltipY+(textHeight/2));
 
     //draw label text
-    ctx.fillText(labelText, (tooltipX+(fontSize/2)), tooltipY+(fontSize/2));
+    ctx.fillText(label.text, (tooltipX+(fontSize/2)), tooltipY+(halfFontSize));
 
     //draw value text
-    ctx.fillText(valueText, (tooltipX+(fontSize/2)), tooltipY+(fontSize*2));
+    ctx.fillText(value.text, (tooltipX+(fontSize/2)), tooltipY+(fontSize*2));
+
+    //draw size text
+    size.text? ctx.fillText(size.text, (tooltipX+(fontSize/2)), tooltipY+(fontSize*3)+(halfFontSize)): null;
 }
 
 
@@ -135,7 +184,7 @@ const DisplayToolTip = (event, dv, position) => {
 
         dv.updateTargetCanvas();
 
-        const toolTipData = [...dv.getToolTipData().reverse()];
+        const toolTipData = [...dv.getToolTipData()].reverse();
 
         const currentRect = {x: x, y: y, width: 1, height: 1};
 

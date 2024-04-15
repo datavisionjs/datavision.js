@@ -4,7 +4,7 @@ const Scatter = (dv, dataset) => {
     
     if(dataset){
 
-        DrawElements(dv, "points", dataset);
+        DrawElements(dv, dataset);
     }
 }
 

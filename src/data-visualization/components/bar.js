@@ -4,7 +4,7 @@ const Bar = (dv, dataset) => {
 
     if(dataset){
 
-        DrawElements(dv, "bars", dataset);
+        DrawElements(dv, dataset);
     }
 
 }
