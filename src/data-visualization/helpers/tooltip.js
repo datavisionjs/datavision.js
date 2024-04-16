@@ -24,7 +24,7 @@ const DrawHover = (dv, ctx, data) => {
 }
 
 const GetText = (data, ctx, name, maxTextWidth) => {
-    if(!data[name]) return {text: null, width: 0};
+    if(!data[name] && data[name] !== 0) return {text: null, width: 0};
 
     let text = data[name+"Text"];
     let textWidth = data[name+"Width"];
@@ -33,16 +33,16 @@ const GetText = (data, ctx, name, maxTextWidth) => {
         //set value
         let value = Calc.toFixedIfNeeded(data[name]);
         //shorten value
-        const valueWidth = Math.min(ctx.measureText(value).width, maxTextWidth);
+        const valueWidth = ctx.measureText(value).width;
+        
         const valueCharSize = (valueWidth/value.length);
         value = Global.shortenText(value, ((maxTextWidth)/valueCharSize));
-        
 
         //set title
         let title = data[name+"Title"];
         if(title){
             //shorten title
-            const titleWidth = Math.min(ctx.measureText(title).width, maxTextWidth);
+            const titleWidth = ctx.measureText(title).width;
             const titleCharSize = (titleWidth/title.length);
             title = Global.shortenText(title, ((maxTextWidth)/titleCharSize))+": ";
         }

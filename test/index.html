@@ -15,17 +15,17 @@
 
     <script>
 
-        /*
+        const title = "Testing";
         
-        let exp = "Math.cos(x)";
+        /*
+        let exp = "x + 17";
         // Generate values
         const xArray = [];
         const yArray = [];
-        for (let x = 0; x <= 10; x += 0.2) {
+        for (let x = 0; x <= 10; x += 1) {
             xArray.push(x);
             yArray.push(eval(exp));
-        }
-        */
+        }*/
 
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
@@ -35,8 +35,18 @@
         //const yArray = [55.1234, -49, 44, 20, 15, 20, 10, 40];
         //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
 
-        //const xArray = [0,60,70,80,90,100,110,120,130,140,0];
-        //const yArray = [0,8,8,9,9,9,10,11,14,14,15];
+        const yArray = [55, 49, 44, 24, 15];
+        const xArray = ["Italy","France","Spain","USA","Argentina"];
+
+        //const yArray = [1.5, 1, 0.01, 0.2];
+        //const xArray = ["Cadillac","Mercedes","Genesis","Porshe"];
+
+        //const xArray = ["Electronics", "Clothing", "Home Goods", "Books", "Toys"];
+        //const yArray = [30, 25, 20, 15, 10]; // Sales percentage for each category
+
+       
+        //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
+        //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
 
         //console.log("x: ", xValues);
         //console.log("y: ", yValues);
@@ -51,7 +61,7 @@
         //const xArray = ["USA", "Italy"];
 
         
-
+        /*
         const dates = ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"];
                     const stockPrices = [45, 70, 110, 70, 60]; // Stock prices for each corresponding date
 
@@ -79,29 +89,29 @@
                     //Define Layout
                     const layout = {title: "-"};
 
-
+                        */
         
 
         
         // Define Data
-        /*
+
+        //const xArray = [1, 2, 3, 4];
+        //const yArray = [10, 20, 30, 40];
+        
         const data = [
-           {values: yArray, labels: xArray, type: "line",
+           {values: yArray, labels: xArray, type: "pie",
                 name: "Minimum",
-                direction: "",
-                operation: "max",
-                
-                mode: "",
+                mode: "scatter",
+               
                 design: {
-                    size: 5,
                     text: ["A Size", "B Size", "C Size", "D Size"]
                 }
             }
-        ]; */
+        ]; 
         
 
         //Define Layout
-        //const layout = {title: "Testing", yAxis: {title: "Population"}, xAxis: {title: "Country"}};
+        const layout = {title: title, yAxis: {title: "Population"}, xAxis: {}};
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 

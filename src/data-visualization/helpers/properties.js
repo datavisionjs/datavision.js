@@ -531,24 +531,12 @@ export function setUpChart(dv){
             }else if(dataType === "pie"){
 
                 for(let j = 0; j < values.length; j++){
-                    const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
-                    const value = valueIsAllNumbers? Math.round(values[j]): values[j];
+                    const label = labelIsAllNumbers? labels[j]: labels[j];
+                    const value = valueIsAllNumbers? values[j]: values[j];
                     
                     if(value >= 0 && label){
                         //set maxTextlength
                         const labelWidth = ctx.measureText(label).width;
-
-                        /*
-                        //set all pie data into universal pie labels and values 
-                        if(pieLabels.includes(label)){
-                            const index = pieLabels.indexOf(label);
-                            const currentValue = pieValues[index];
-
-                            pieValues[index] = (currentValue+value);
-                        }else {
-                            pieLabels.push(label);
-                            pieValues.push(value);
-                        }*/
 
                         //set new pie dataset labels and values 
                         if(newPieLabels.includes(label)){

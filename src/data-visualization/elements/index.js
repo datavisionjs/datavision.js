@@ -14,6 +14,7 @@ const DrawElements = (dv, dataset) => {
     const layout = dv.getLayout();
 
     const type = dataset.type;
+    const mode = dataset.mode;
 
 
     if(type === "bar"){
@@ -23,7 +24,6 @@ const DrawElements = (dv, dataset) => {
         const barDataset = dataset.dataset;
 
         const isHorizontal = dataset.direction === "hr";
-        const mode = dataset.mode;
 
         const maxBarPerLabel = barDataset.length;
 
@@ -152,7 +152,7 @@ const DrawElements = (dv, dataset) => {
 
                     const endDegrees = degrees;
 
-                    const percent = (valDecimal*100).toFixed(1);
+                    const percent = Calc.toFixedIfNeeded(valDecimal*100);
 
                     DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent);
 
@@ -201,6 +201,8 @@ const DrawElements = (dv, dataset) => {
             
             if(labels){
                 
+                let lastPosition = {x: null, y: null}, positionType;
+
                 for(var i = 0; i < labels.length; i++){
 
                     let label = labels[i];
@@ -210,30 +212,47 @@ const DrawElements = (dv, dataset) => {
                     const size = Array.isArray(designSize)? designSize[i]: designSize;
                     const text = Array.isArray(designText)? designText[i]: designText;
                     
-                    const positionType = i === 0? "start": i === (labels.length-1)? "end": "";
+                    positionType = i === 0? "start": i === (labels.length-1)? "end": "";
                     
                     if(value || value === 0){ //proceed if y is valid
      
                         const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
 
+                        //check if position is out of range
+                        const positionIsOut = Calc.posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName);
+
                         if(type === "line"){
-                            DrawLines(dv, dataset, positionType, size, position);
-                        }else if(type === "scatter" || "bubble"){
+                            if(positionIsOut && (position.x === lastPosition.x || position.y === lastPosition.y)){
+                                ctx.stroke();
+                                ctx.closePath();
+                                break;
+                            }else {
+                                
+                                if(!positionIsOut){
+                                    DrawLines(dv, dataset, positionType, size, position, positionIsOut);
+                                    lastPosition = position;
+                                }
+                            }
+                        }else if(type === "scatter" || type === "bubble"){
 
-                            const designLine = dataset.design.line;
-                            const lineColor = designLine? designLine.color? designLine.color: color: color;
-                            const lineSize = designLine? designLine.size? designLine.size: 0: 0;
-                            
-                            //set line color and size
-                            ctx.fillStyle = color;
-                            ctx.strokeStyle = lineColor;
-                            ctx.lineWidth = lineSize;
-                            
-                            DrawPoints(dv, size, position);
+                            if(!positionIsOut){
+
+                                const designLine = dataset.design.line;
+                                const lineColor = designLine? designLine.color? designLine.color: color: color;
+                                const lineSize = designLine? designLine.size? designLine.size: 0: 0;
+                                
+                                //set line color and size
+                                ctx.fillStyle = color;
+                                ctx.strokeStyle = lineColor;
+                                ctx.lineWidth = lineSize;
+                                
+                                DrawPoints(dv, size, position);
+                            }
                         }
-
+                        
                         //set tooltip
-                        dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle, size: type === "bubble"? size: null, sizeTitle: text});
+                        !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle, size: type === "bubble"? size: null, sizeTitle: text}): null;
+                        
 
                     }else {
                         
