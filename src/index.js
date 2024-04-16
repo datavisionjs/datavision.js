@@ -22,7 +22,11 @@ function DataVision(targetId) {
     this.canvas = document.createElement("canvas");
     this.canvasCopy = document.createElement("canvas");
 
+    this.ctx = null;
+
     this.tempCanvas = document.createElement("canvas");
+
+    this.toolTipData = [];
 
     //setter and getter 
 
@@ -78,10 +82,23 @@ function DataVision(targetId) {
         canvas.height = height;
 
         this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
     };
     this.getCanvas = function (){
         return this.canvas;
     };
+
+    //tooltip 
+    this.setToolTipData = function (data){
+        this.toolTipData.push(data);
+    };
+    this.getToolTipData = function (){
+        return this.toolTipData;
+    };
+    this.clearToolTipData = function (){
+        this.toolTipData = [];
+    };
+
 
 
     this.updateCanvasCopy = function (){
@@ -103,7 +120,7 @@ function DataVision(targetId) {
 
     //2d context 
     this.getCtx = function (){
-        return this.getCanvas().getContext("2d");
+        return this.ctx;
     };
 
     this.getTempCanvas = function (){
@@ -116,33 +133,38 @@ function DataVision(targetId) {
     };
 
     this.getTargetCanvas = function (){
-        return this.targetCanvas;
+        return this.getTarget().getElementsByTagName("canvas")[0];
     };
     this.updateTargetCanvas = function (){
         const canvasCopy = this.getCanvasCopy();
-        const canvas = this.getTargetCanvas();
+        //const canvas = this.getTargetCanvas();
 
-        const ctx = canvas.getContext("2d");
+        const ctx = this.getCtx();
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         ctx.drawImage(canvasCopy, 0, 0);
     };
     this.addCanvasToTarget = function (){
-        const canvas = this.getTargetCanvas();
-        canvas.width = this.canvas.width;
-        canvas.height = this.canvas.height;
-        
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(this.getCanvas(), 0, 0);
+
+        const canvas = this.getCanvas();
 
         //set event on canvas
         const dv = this; //get datavision object
         Global.on(canvas, "mousemove", function (event){
+
+            event.stopPropagation();
             const mousePosition = Global.getMousePosition(event);
-            DisplayToolTip(dv, mousePosition);
+            DisplayToolTip(event, dv, mousePosition);
+
+        }, "click");
+
+        Global.on(document, "click", function (){
+            dv.updateTargetCanvas();
         }, "touchend");
-       
+        
+
+        //add canvas to target
         if(this.target){
             this.target.innerHTML = "";
             this.target.appendChild(canvas);
@@ -152,7 +174,9 @@ function DataVision(targetId) {
 }
 
 DataVision.prototype.plot = function (data, layout){
-    
+    //clear tooltipData 
+    this.clearToolTipData();
+
     const chartArea = Calc.getChartArea(this, layout);
 
     this.setCanvas(chartArea.width, chartArea.height);

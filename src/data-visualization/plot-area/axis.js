@@ -99,6 +99,8 @@ function drawLabels(dv, position){
 
 function drawYAxis(dv, position){
     const ctx = dv.getCtx();
+    const canvas = dv.getCanvas();
+
     const layout = dv.getLayout();
 
     const labelStyle = dv.getStyle().label;
@@ -108,6 +110,8 @@ function drawYAxis(dv, position){
 
     const graphX = position.x;
     const graphY = position.y;
+    
+    const yMaxLabelWidth = position.yMaxLabelWidth;
 
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
@@ -197,7 +201,8 @@ function drawYAxis(dv, position){
         }else {
             //const maxTextWidth = barData.maxTextWidth;
             
-    
+            const maxValueWidth = axis.maxWidth;
+
             let step = (graphHeight/values.length);
             step < 1? step = 1: null;
     
@@ -210,7 +215,14 @@ function drawYAxis(dv, position){
     
                 axisY = ((graphY+graphHeight)-((step/2)+(step*i)));
     
-                const value = values[i];
+                let value = values[i];
+               
+                const valueWidth = ctx.measureText(value).width;
+                const valueCharSize = (valueWidth/value.length);
+
+                if(maxValueWidth > (yMaxLabelWidth-fontSize)){
+                    value = Global.shortenText(value, ((yMaxLabelWidth-fontSize)/valueCharSize));
+                }
 
                 const textPosX = "y2" === key? ((axisX+graphWidth)+fontSize): (axisX-(fontSize));
                 const textPosY = (axisY);

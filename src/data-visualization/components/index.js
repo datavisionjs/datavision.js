@@ -21,12 +21,11 @@ const Chart = (dv) => {
                 
                 Line(dv, dataset);
 
-            }else if(type === "scatter"){
+            }else if(type === "scatter" || "bubble"){
 
                 Scatter(dv, dataset);
 
             }else if(type === "bar"){
-
                 Bar(dv, dataset);
             }else if(type === "pie"){
 

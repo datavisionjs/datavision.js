@@ -31,7 +31,8 @@ export function setGraphPosition(dv){
     const axisTitleSpace = (labelFontSize*2);
 
     //set y axis space from left and right
-    let yAxisLeft = (canvasWidth*0.15), yAxisRight = (canvasWidth*0.15);
+    const yMaxLabelWidth = (canvasWidth*0.15);
+    let yAxisLeft = yMaxLabelWidth, yAxisRight = yMaxLabelWidth;
 
 
     //y1
@@ -68,9 +69,6 @@ export function setGraphPosition(dv){
         datasetSpace = 0;
     }
 
-
-
-
     //set x axis space from bottom
     let xAxisBottom = ((axisTitleSpace)+labelFontSize);
     let xAxisRight = 0;
@@ -104,7 +102,8 @@ export function setGraphPosition(dv){
         y: graphY,
         width: graphWidth,
         height: graphHeight,
-        yAxisRight: yAxisRight
+        yAxisRight: yAxisRight,
+        yMaxLabelWidth: yMaxLabelWidth
     }
 
 
@@ -225,7 +224,7 @@ export function setUpChart(dv){
     const axisValues = { y1: new NewAxis(), y2: new NewAxis() };
 
 
-    const axisChartTypes = ["line", "scatter", "bar"];
+    const axisChartTypes = ["line", "bar", "scatter", "bubble"];
     let hasAxisData = false;
     let hasPieData = false;
     let axisDirection = null;
@@ -456,7 +455,6 @@ export function setUpChart(dv){
 
                                 const newValue = Calc.computeOperation(operation, bucket);
 
-                                //newLabels[k] === "SCD"? console.log("nice: ", newValue, bucket): null;
                                 if(!isNaN(newValue)){
 
                                     if(valueIsAllNumbers){
@@ -533,24 +531,12 @@ export function setUpChart(dv){
             }else if(dataType === "pie"){
 
                 for(let j = 0; j < values.length; j++){
-                    const label = labelIsAllNumbers? Math.round(labels[j]): labels[j];
-                    const value = valueIsAllNumbers? Math.round(values[j]): values[j];
+                    const label = labelIsAllNumbers? labels[j]: labels[j];
+                    const value = valueIsAllNumbers? values[j]: values[j];
                     
                     if(value >= 0 && label){
                         //set maxTextlength
                         const labelWidth = ctx.measureText(label).width;
-
-                        /*
-                        //set all pie data into universal pie labels and values 
-                        if(pieLabels.includes(label)){
-                            const index = pieLabels.indexOf(label);
-                            const currentValue = pieValues[index];
-
-                            pieValues[index] = (currentValue+value);
-                        }else {
-                            pieLabels.push(label);
-                            pieValues.push(value);
-                        }*/
 
                         //set new pie dataset labels and values 
                         if(newPieLabels.includes(label)){

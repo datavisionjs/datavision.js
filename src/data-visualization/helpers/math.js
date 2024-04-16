@@ -12,6 +12,29 @@ export function linearInterpolation(x, x1, y1, x2, y2) {
     return y;
 }
 
+//find the distance between two points 
+export function distance(point1, point2) {
+    const deltaX = point2.x - point1.x;
+    const deltaY = point2.y - point1.y;
+
+    // Using Math.hypot() to compute the square root of the sum of squares of its arguments
+    return Math.hypot(deltaX, deltaY);
+}
+
+export function angleBetweenPoints(center, point) {
+    // Compute the angle (in radians) between the positive x-axis and the line segment
+    var angleRad = Math.atan2(point.y - center.y, point.x - center.x);
+
+    // Convert radians to degrees
+    var angleDeg = angleRad * (180 / Math.PI);
+
+    // Ensure the angle is between 0 and 360 degrees
+    angleDeg = (angleDeg + 360) % 360;
+
+    return angleDeg;
+}
+
+
 //find minimum numbers 
 export function findMinAndMax(arr) {
     if(arr){
@@ -126,9 +149,12 @@ export function toFixedIfNeeded(number){
 
             const numberStr = number.toString();
             const splitNumberStr = numberStr.split(".");
-            const nonZeroIndex = splitNumberStr[1].search(/[^0]/) || 1;
+            let nonZeroIndex = splitNumberStr[1].search(/[^0]/);
 
-            return number.toFixed((nonZeroIndex+1));
+            nonZeroIndex? nonZeroIndex += 1: null;
+
+
+            return number.toFixed(nonZeroIndex || 1);
 
         }
     }else {
@@ -189,6 +215,44 @@ export function zeroBasedRangeAdjust(range, interval){
     rangeEnd = interval * Math.ceil(rangeEnd / interval);
 
     return [rangeStart, rangeEnd];
+}
+
+//check if positon is out of range or not
+export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
+    const layout = dv.getLayout();
+
+    !labelAxisName? labelAxisName = "x1": null;
+    !valueAxisName? valueAxisName = "y1": null;
+
+    const axisData = layout.axisData;
+
+    const labelAxis = axisData.labels[labelAxisName];
+    const valueAxis = axisData.values[valueAxisName];
+
+    let labelIsOut = false;
+    let valueIsOut = false;
+
+    if(labelAxis){
+        const range = labelAxis.range;
+        if(range){
+            const start = range[0];
+            const end = range[1];
+
+            label < start || label > end? labelIsOut = true: null;
+        }
+    }
+
+    if(valueAxis){
+        const range = valueAxis.range;
+        if(range){
+            const start = range[0];
+            const end = range[1];
+
+            value < start || value > end? valueIsOut = false: null;
+        }
+    }
+
+    return labelIsOut || valueIsOut;
 }
 
 

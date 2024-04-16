@@ -4,7 +4,7 @@ const Line = (dv, dataset) => {
 
     if(dataset){
 
-        DrawElements(dv, "lines", dataset);
+        DrawElements(dv, dataset);
     }
 }
 
