@@ -511,8 +511,8 @@ export function setUpChart(dv){
 
                 if(dataType === "bar"){
                     barDatasetNames.push(newDataName);
-                    design.color? barDatasetColors.push(Array.isArray(design.color)? design.color[0]: design.color): null;
                     barData.design = setUpAxisChartDesign(dataType, design, axisDataCount);
+                    barData.design.color? barDatasetColors.push(Array.isArray(barData.design.color)? barData.design.color[0]: barData.design.color): null;
                     barDataset.dataset.push(barData);
                 }else {
                     dataset.name = newDataName;
