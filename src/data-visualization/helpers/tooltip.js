@@ -33,7 +33,7 @@ const GetText = (data, ctx, name, fontSize) => {
 
     if(!textWidth){
         //set value
-        let value = Calc.toFixedIfNeeded(data[name]);
+        let value = Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[name]));
         //shorten value
         const valueWidth = ctx.measureText(value).width;
         const maxValueWidth = valueWidth > canvasWidth? (canvasWidth*0.9): valueWidth;

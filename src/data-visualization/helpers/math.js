@@ -89,6 +89,16 @@ export function getNumberInRange(number, range){
     }
 }
 
+//add comma to every third digit from the right of numbers
+export function commaSeparateNumber(number) {
+    if (typeof number !== 'number' || isNaN(number)) {
+        return number;
+    }
+
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+
 //find sum of an array of numbers
 export function sum(arr) {
     return arr.reduce((sum, current) => sum + current, 0);

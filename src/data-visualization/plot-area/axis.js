@@ -169,7 +169,7 @@ function drawYAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    value = Calc.toFixedIfNeeded((rangeStart)+(step*i));
+                    value = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
 
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
@@ -181,7 +181,7 @@ function drawYAxis(dv, position){
 
                     //draw lines 
                     ctx.beginPath();
-                    ctx.strokeStyle = value === 0? "black":"#b5b5b5";
+                    ctx.strokeStyle = value === "0"? "black":"#b5b5b5";
                     if("y2" === key){
                         ctx.moveTo((graphX+graphWidth), axisY);
                         ctx.lineTo(((graphX+graphWidth)+(fontSize/2)), (axisY));
@@ -322,7 +322,7 @@ function drawXAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    label = Calc.toFixedIfNeeded((rangeStart)+(step*i));
+                    label = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
                     axisX = (graphX+(pixelStep*i));
 
 
@@ -334,7 +334,7 @@ function drawXAxis(dv, position){
 
                     //draw lines 
                     ctx.beginPath();
-                    ctx.strokeStyle = label === 0? "black":"#b5b5b5";
+                    ctx.strokeStyle = label === "0"? "black":"#b5b5b5";
                     
                     ctx.moveTo(axisX, graphY);
                     ctx.lineTo(axisX, ((graphY+graphHeight)+(fontSize/2)));
