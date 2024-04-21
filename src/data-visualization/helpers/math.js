@@ -164,7 +164,7 @@ export function toFixedIfNeeded(number){
             nonZeroIndex? nonZeroIndex += 1: null;
 
 
-            return number.toFixed(nonZeroIndex || 1);
+            return parseFloat(number.toFixed(nonZeroIndex || 1));
 
         }
     }else {

@@ -35,7 +35,7 @@
         //const yArray = [55.1234, -49, 44, 20, 15, 20, 10, 40];
         //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
 
-        const yArray = [55000, 4900, 4400, 2400, 1500];
+        const yArray = [55000.3, 49000, 44000, 24000, 15000];
         const xArray = ["Italy","France","Spain","USA","Argentina"];
 
         //const yArray = [1.5, 1, 0.01, 0.2];
@@ -95,16 +95,17 @@
         
         // Define Data
 
-        //const xArray = [100000.0030, 2000000, 300000, 400000];
+        //const xArray = [1, 2, 3, 4];
         //const yArray = [10, 20, 30, 40];
+
         
         const data = [
-           {values: yArray, labels: xArray, type: "pie",
+           {values: yArray, labels: xArray, type: "line",
                 name: "Minimum",
-                mode: "scatter",
                
                 design: {
-                    text: ["A Size", "B Size", "C Size", "D Size"]
+                    color: ['red', 'green', 'blue', 'orange'],
+                    text: ["A Size", "B Size", "C Size", "D Size"],
                 }
             }
         ]; 
