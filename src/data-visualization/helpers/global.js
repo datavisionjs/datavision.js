@@ -1,5 +1,10 @@
 import * as Calc from './math.js';
 
+//get axis chart types 
+export function getAxisChartTypes(){
+    return ["line", "bar", "scatter", "bubble"];
+}
+
 //adds event listeners
 export function on(element, event, handler, eventAlt) {
     if (element && typeof element === 'object') {
@@ -177,6 +182,19 @@ export function crashWithCircle(rect, target){
 
     if(Calc.distance(rect, midPoint) <= radius){
         return true;
+    }else {
+        return false;
+    }
+}
+
+export function crashWithDistance(rect, target, tolerace){
+    const radius = Math.max(target.radius, tolerace);
+    const newTarget = {midPoint: target.midPoint, radius: radius};
+
+    const distance = Calc.distance(rect, target.midPoint);
+
+    if(crashWithCircle(rect, newTarget)){
+        return {dist: distance, data: target};
     }else {
         return false;
     }

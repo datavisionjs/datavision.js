@@ -51,7 +51,7 @@ const DrawDatasetNames = (dv) => {
                 const dataType = dataset.type;
                 let colors = dataset.colors;
 
-                const axisChartTypes = ["line", "bar", "scatter", "bubble"];
+                const axisChartTypes = Global.getAxisChartTypes();
                 if(axisChartTypes.includes(dataType)){
                     if(dataType === "bar"){
                         labels = dataset.names;

@@ -16,6 +16,11 @@ const DrawHover = (dv, ctx, data) => {
         ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
         ctx.lineWidth = ctx.canvas.width * 0.0063;
         ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-4), data.startAngle, data.endAngle);
+    }else if(data.type === "line"){
+        ctx.strokeStyle = data.color || "#000";
+        ctx.fillStyle = data.color || "transparent";
+        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius+1), 0, 2 * Math.PI);
+        ctx.fill();
     }else {
         ctx.arc(data.midPoint.x, data.midPoint.y, data.radius, 0, 2 * Math.PI);
     }
@@ -150,6 +155,8 @@ const DisplayToolTip = (event, dv, position) => {
 
         const currentRect = {x: x, y: y, width: 1, height: 1};
 
+        let closestData = null;
+
         for (let i = 0; i < toolTipData.length; i++) {
             const data = toolTipData[i];
 
@@ -159,20 +166,40 @@ const DisplayToolTip = (event, dv, position) => {
 
                 if(Global.crashWithRect(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                    closestData = null;
                     break;
                 }
             }else if(type === "pie"){
                 if(Global.crashWithAngle(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                    closestData = null;
                     break;
                 }
             }else {
                 if(Global.crashWithCircle(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                    closestData = null;
                     break;
+                }else {
+
+                    const newClosestData = Global.crashWithDistance(currentRect, data, 22);
+                    if(newClosestData){
+                        if(closestData){
+                            if(closestData.dist > newClosestData.dist){
+                                closestData = newClosestData;
+                            }
+                        }else {
+                            closestData = newClosestData;
+                        }
+                    }
+
                 }
             }
             
+        }
+
+        if(closestData){
+            DrawToolTip(dv, ctx, {x: x, y: y}, closestData.data);
         }
 
     }

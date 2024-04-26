@@ -208,7 +208,7 @@ const DrawElements = (dv, dataset) => {
                     let label = labels[i];
                     let value = values[i];
 
-                    const color = Array.isArray(designColor)? designColor[i]: designColor;
+                    const color = Array.isArray(designColor)? designColor[i]? designColor[i]: designColor[0]: designColor;
                     const size = Array.isArray(designSize)? designSize[i]: designSize;
                     const text = Array.isArray(designText)? designText[i]: designText;
                     
@@ -249,9 +249,10 @@ const DrawElements = (dv, dataset) => {
                                 DrawPoints(dv, size, position);
                             }
                         }
+
                         
                         //set tooltip
-                        !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle, size: type === "bubble"? size: null, sizeTitle: text}): null;
+                        !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle, size: type === "bubble"? size: null, sizeTitle: text, color: color}): null;
                         
 
                     }else {
