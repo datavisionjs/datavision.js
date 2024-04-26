@@ -18,6 +18,7 @@
         const title = "Testing";
         
         /*
+        //let exp = "Math.cos(x)";
         let exp = "x + 17";
         // Generate values
         const xArray = [];
@@ -26,7 +27,7 @@
             xArray.push(x);
             yArray.push(eval(exp));
         }*/
-
+        
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
 
@@ -35,16 +36,17 @@
         //const yArray = [55.1234, -49, 44, 20, 15, 20, 10, 40];
         //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
 
-        const yArray = [55000.3, 49000, 44000, 24000, 15000];
-        const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
-        
-        const xArray = ["Italy","France","Spain","USA","Argentina"];
+        //const yArray = [55000.3, 49000, 44000, 24000, 15000];
+        //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
+        //const yArray = [55, 49, 44, 24, 15];
+
+        //const xArray = ["Italy","France","Spain","USA","Argentina"];
 
         //const yArray = [1.5, 1, 0.01, 0.2];
         //const xArray = ["Cadillac","Mercedes","Genesis","Porshe"];
 
-        //const xArray = ["Electronics", "Clothing", "Home Goods", "Books", "Toys"];
-        //const yArray = [30, 25, 20, 15, 10]; // Sales percentage for each category
+        const xArray = ["Electronics", "Clothing", "Home Goods", "Books", "Toys"];
+        const yArray = [30, 25, 20, 15, 10]; // Sales percentage for each category
 
        
         //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
@@ -102,21 +104,21 @@
 
         
         const data = [
-           {values: yArray, labels: xArray, type: "scatter",
+           {values: yArray, labels: xArray, type: "line",
                 name: "Minimum",
                 mode: "",
+                hole: .4,
                
                 design: {
-                   
-            
                     
                 }
             }
         ]; 
+
         
 
         //Define Layout
-        const layout = {title: title, yAxis: {title: "Price in Millions"}, xAxis: {title: ""}};
+        const layout = {title: title, yAxis: {title: "Population"}, xAxis: {title: ""}};
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 

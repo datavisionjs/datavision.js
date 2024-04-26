@@ -95,7 +95,13 @@ export function commaSeparateNumber(number) {
         return number;
     }
 
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    //split number into parts before and after the decimal point
+    const parts = number.toString().split('.');
+
+    // Add commas to the part before the decimal point
+    parts[0] = parts[0].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    return parts.join(".");
 }
 
 
