@@ -157,26 +157,59 @@ export function haveOppositeSigns(num1, num2) {
     return (num1 >= 0 && num2 < 0) || (num1 < 0 && num2 >= 0);
 }
 
-export function toFixedIfNeeded(number){
+/*
+export function toFixedIfNeeded(number, decimalPlaces){
     if(Number(number)){
         if(Number.isInteger(Number(number))){
-            return number;
+            return number.toFixed(decimalPlaces || 0);
         }else {
+            if(!isNaN(decimalPlaces)){
+                return number.toFixed(decimalPlaces);
+            }else {
+                const numberStr = number.toString();
+                const splitNumberStr = numberStr.split(".");
+                let nonZeroIndex = splitNumberStr[1].search(/[^0]/);
 
-            const numberStr = number.toString();
-            const splitNumberStr = numberStr.split(".");
-            let nonZeroIndex = splitNumberStr[1].search(/[^0]/);
-
-            nonZeroIndex? nonZeroIndex += 1: null;
+                nonZeroIndex? nonZeroIndex += 1: null;
 
 
-            return parseFloat(number.toFixed(nonZeroIndex || 1));
-
+                return parseFloat(number.toFixed(nonZeroIndex || 1));
+            }
         }
     }else {
         return number;
     }
+}*/
+
+export function toFixedIfNeeded(number, decimalPlaces) {
+    if (typeof number !== 'number' || isNaN(number)) {
+        return number; // Return original value if not a valid number
+    }
+
+    const parsedNumber = parseFloat(number);
+
+    if (Number.isInteger(parsedNumber)) {
+        return parsedNumber.toFixed(decimalPlaces || 0); // Round integer numbers
+    } else {
+        const numberStr = parsedNumber.toString();
+        const decimalIndex = numberStr.indexOf('.');
+        
+        if (decimalIndex !== -1) {
+            const fractionalPart = numberStr.substring(decimalIndex + 1);
+            const nonZeroIndex = fractionalPart.search(/[^0]/);
+
+            if (nonZeroIndex === -1) {
+                return parsedNumber.toFixed(0); // Return integer part if all decimals are zeros
+            } else {
+                const newDecimalPlaces = !isNaN(decimalPlaces)? decimalPlaces: nonZeroIndex + 1;
+                return parsedNumber.toFixed(newDecimalPlaces);
+            }
+        } else {
+            return parsedNumber; // Return original value if no decimal part
+        }
+    }
 }
+
 
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
     // Convert degrees to radians
@@ -452,6 +485,40 @@ export function getChartArea(dv, layout){
     const layoutWidth = layout.width;
     const layoutHeight = layout.height;
 
+    let width = 700, height = 350;
+
+    
+    if(layoutWidth || layoutHeight){
+        width = !layoutWidth? (layoutHeight*2): layoutWidth;
+        height = !layoutHeight? (layoutWidth*0.5): layoutHeight;
+    }else {
+        if(target){
+            const targetWidth = target.offsetWidth, targetHeight = target.offsetHeight;
+            
+            if(targetWidth > targetHeight){
+                width = targetWidth;
+                height = (targetWidth/2);
+            }else {
+                if(targetWidth || targetHeight){
+                    width = (targetWidth || width);
+                    height = (width/2);
+                }
+            }
+        }
+    }
+
+    return {
+        width: width,
+        height: height
+    };
+}
+
+/*export function getChartArea(dv, layout){
+    const target = dv.getTarget();
+
+    const layoutWidth = layout.width;
+    const layoutHeight = layout.height;
+
     let width = 0, height = 0;
     if(target){
         width = Math.max(target.offsetWidth, target.offsetHeight);
@@ -469,3 +536,4 @@ export function getChartArea(dv, layout){
         height: height
     };
 }
+*/

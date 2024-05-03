@@ -27,7 +27,7 @@ function DataVision(targetId) {
     this.tempCanvas = document.createElement("canvas");
 
     this.toolTipData = [];
-
+    
     //setter and getter 
 
     //data 

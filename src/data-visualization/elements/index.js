@@ -41,6 +41,8 @@ const DrawElements = (dv, dataset) => {
             const yAxis = axisData.values[barData.yAxis];
             const xAxis = axisData.labels[barData.xAxis];
 
+            const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
+
             const labelCount = xAxis.values.length;
 
             const step = (graphLength/labelCount);
@@ -84,9 +86,9 @@ const DrawElements = (dv, dataset) => {
                     const currentStack = value >= 0? [value, lastStack[1]]: [lastStack[0], currentValue];
                     stackLastValues.set(key, currentStack);
 
-                    Bars.Stack(dv, barData, barSize, key, lastValue, value, currentValue);
+                    Bars.Stack(dv, barData, barSize, key, lastValue, value, currentValue, tickFormat);
                 }else {
-                    Bars.Group(dv, barData, i, key, value, barSize, maxBarPerLabel);
+                    Bars.Group(dv, barData, i, key, value, barSize, maxBarPerLabel, tickFormat);
                 }
 
                 index++;
@@ -95,6 +97,15 @@ const DrawElements = (dv, dataset) => {
         
 
     }else if(type === "pie"){
+
+        const axisData = layout.axisData;
+        const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
+        const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
+
+        const yAxis = axisData.values[valueAxisName];
+        const xAxis = axisData.labels[labelAxisName];
+
+        const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
 
         const tempCanvas = dv.getTempCanvas();
         tempCanvas.width = ctx.canvas.width;
@@ -154,7 +165,7 @@ const DrawElements = (dv, dataset) => {
 
                     const percent = Calc.toFixedIfNeeded(valDecimal*100);
 
-                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent);
+                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat);
 
                     startDegrees = endDegrees;
                 }
@@ -181,9 +192,9 @@ const DrawElements = (dv, dataset) => {
             const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
             const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
 
-            const yAxisName = valueAxisName === "y2"? "y2Axis": "yAxis";
             const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
-            const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
+
+            const datasetName = dataset.name || "";
 
             //const axisData = layout.axisData;
             const isHorizontal = dataset.direction === "hr";
@@ -252,7 +263,12 @@ const DrawElements = (dv, dataset) => {
 
                         
                         //set tooltip
-                        !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelTitle: labelTitle, valueTitle: valueTitle, size: type === "bubble"? size: null, sizeTitle: text, color: color}): null;
+                        const xAxis = layout.axisData.labels[labelAxisName];
+                        const yAxis = layout.axisData.values[valueAxisName];
+
+                        const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
+
+                        !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelName: labelTitle, valueName: datasetName, size: type === "bubble"? size: null, sizeName: text, color: color, tickFormat: tickFormat}): null;
                         
 
                     }else {

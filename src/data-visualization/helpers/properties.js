@@ -185,7 +185,17 @@ function fillData(filledData, toFillData, axisValues){
 }
 
 
+function getAxisFromLayout(layout, key){
+    let axisName = (key === "y1" || key === "yAxis")? "yAxis": "";
+    axisName = (key === "y2" || key === "y2Axis")? "y2Axis": axisName;
+    axisName = (key === "x1" || key === "xAxis")? "xAxis": axisName;
+
+    return layout[axisName];
+}
+
+
 export function setUpChart(dv){
+
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
@@ -295,6 +305,18 @@ export function setUpChart(dv){
             const labelIsAllNumbers = Calc.isAllNumbers(labels);
             const valueIsAllNumbers = Calc.isAllNumbers(values);
 
+             //get and set tick format
+                
+             const layoutXAxis = getAxisFromLayout(layout, dataLabelAxis);
+             const xAxisTickFormat = xAxis.tickFormat = {...layoutXAxis.tickFormat};
+             const xPrefix = xAxisTickFormat.prefix || "", xSuffix = xAxisTickFormat.suffix || "";
+             const xDecimalPlaces = xAxisTickFormat.decimalPlaces;
+
+             const layoutYAxis = getAxisFromLayout(layout, dataValueAxis);
+             const yAxisTickFormat = yAxis.tickFormat = {...layoutYAxis.tickFormat};
+             const yPrefix = yAxisTickFormat.prefix || "", ySuffix = yAxisTickFormat.suffix || "";
+             const yDecimalPlaces = yAxisTickFormat.decimalPlaces;
+
             if(axisChartTypes.includes(dataType)){
 
                 const loopEnd = labels.length > 0? labels.length: values.length;
@@ -305,15 +327,14 @@ export function setUpChart(dv){
                     
                     const label = labels[j];
                     const value = valueIsAllNumbers? Number(values[j]): values[j]? values[j]: "";
-
-                
+                    
                     //set maxTextlength
-                    let labelWidth = label.length > lastMaxLabel.length? ctx.measureText(Calc.toFixedIfNeeded(label)).width: null;
+                    const labelToMeasure = labelIsAllNumbers? xPrefix + Calc.toFixedIfNeeded(label, xDecimalPlaces) + xSuffix: label;
+                    let labelWidth = label.length > lastMaxLabel.length? ctx.measureText(labelToMeasure).width: null;
 
                     //If there's a value between 0 and -10 set the value to -10 and for measurement.
-                    const valueToMeasure = valueIsAllNumbers? value < 0 && value > 10? -10: value: value;
-                    let valueWidth = value.length > lastMaxValue.length? ctx.measureText(Calc.toFixedIfNeeded(valueToMeasure)).width: 0;
-                    
+                    const valueToMeasure = valueIsAllNumbers? yPrefix + Calc.toFixedIfNeeded((value < 0 && value > 10? -10: value), yDecimalPlaces) + ySuffix: value;
+                    let valueWidth = valueToMeasure.length > lastMaxValue.length? ctx.measureText(valueToMeasure).width: 0;
                     
                     if(dataType === "bar"){
                         
@@ -343,6 +364,10 @@ export function setUpChart(dv){
 
                         const newValueIsAllNumbers = isHorizontal? labelIsAllNumbers: valueIsAllNumbers;
                         const newLabelIsAllNumbers = isHorizontal? valueIsAllNumbers: labelIsAllNumbers;
+
+                        const prefix = isHorizontal? xPrefix: yPrefix;
+                        const suffix = isHorizontal? xSuffix: ySuffix;
+                        const decimalPlaces = isHorizontal? xDecimalPlaces: yDecimalPlaces;
 
                         //set barDataset labelIsAllNumbers to newLabelIsAllNumbers
                         barDataset.labelIsAllNumbers = newLabelIsAllNumbers;
@@ -391,13 +416,14 @@ export function setUpChart(dv){
                             }
                             
                             if(valueIsAllNumbers || labelIsAllNumbers){
-                                
+
                                 //loop through barData values bucket and execute the operation
                                 barData.values.forEach((bucket, key) => {
+
                                     let newValue = Calc.computeOperation(operation, bucket);
 
                                     isNaN(newValue)? newValue = bucket[0]: null;
-                                    valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
+                                    const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
 
                                     barData.values.set(key, newValue);
 
@@ -412,7 +438,20 @@ export function setUpChart(dv){
                                         barStackTrackValues.set(key, currentStack);
                                     }
                                     
-                                    isHorizontal? xAxis.values.push(newValue):yAxis.values.push(newValue);
+
+                                    if(isHorizontal){
+                                        xAxis.values.push(newValue);
+                                        
+                                        if(newValueWidth > maxLabelWidth){
+                                            maxLabelWidth = newValueWidth;
+                                        }
+                                    }else {
+                                        yAxis.values.push(newValue);
+
+                                        if(newValueWidth > maxValueWidth){
+                                            maxValueWidth = newValueWidth;
+                                        }
+                                    }
 
                                 });
                             }
@@ -450,6 +489,7 @@ export function setUpChart(dv){
                         }
 
                         if(j === (loopEnd-1)){ //at the end of the j loop 
+
                             for(let k = 0; k < axisBucket.length; k++){
                                 const bucket = axisBucket[k];
 
@@ -458,15 +498,23 @@ export function setUpChart(dv){
                                 if(!isNaN(newValue)){
 
                                     if(valueIsAllNumbers){
-                                        valueWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
+                                        valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
 
                                         newValues[k] = newValue;
                                         yAxis.values.push(newValue);
+
+                                        if(valueWidth > maxLabelWidth){
+                                            maxLabelWidth = valueWidth;
+                                        }
                                     }else {
-                                        labelWidth = ctx.measureText(Calc.toFixedIfNeeded(newValue)).width;
+                                        labelWidth = ctx.measureText(xPrefix + Calc.toFixedIfNeeded(newValue, xDecimalPlaces) + xSuffix).width;
 
                                         newLabels[k] = newValue;
                                         xAxis.values.push(newValue);
+
+                                        if(labelWidth > maxLabelWidth){
+                                            maxLabelWidth = labelWidth;
+                                        }
                                     }
                                 }
                                 
@@ -511,6 +559,7 @@ export function setUpChart(dv){
 
                 if(dataType === "bar"){
                     barDatasetNames.push(newDataName);
+                    barData.name = newDataName;
                     barData.design = setUpAxisChartDesign(dataType, design, axisDataCount);
                     barData.design.color? barDatasetColors.push(Array.isArray(barData.design.color)? barData.design.color[0]: barData.design.color): null;
                     barDataset.dataset.push(barData);
@@ -654,14 +703,6 @@ export function setUpChart(dv){
         values: axisValues,
         direction: axisDirection
     };
-
-    //set pie data
-    /*
-    layout.pieData = {
-        labels: pieLabels,
-        values: pieValues,
-        maxLabelWidth: pieMaxLabelWidth,
-    };*/
     
     //set whether for not a particular chart type exists.
     layout.hasAxisData = hasAxisData;

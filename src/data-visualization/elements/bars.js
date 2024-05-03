@@ -2,7 +2,7 @@ import * as Calc from '../helpers/math.js'
 import customColors from '../helpers/colors.js';
 
 
-export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel) => { //process grouped bars
+export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel, tickFormat) => { //process grouped bars
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
@@ -14,8 +14,10 @@ export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel) =
     const xAxis = axisData.labels[barData.xAxis];
 
     const yAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
+    
     const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
     const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
+    const datasetName = barData.name || "";
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -59,7 +61,7 @@ export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel) =
         ctx.fill();
 
         //set tooltip
-        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelTitle: labelTitle, valueTitle: valueTitle});
+        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
     }else {
         
         const labelPositionX = Calc.getAxisLabelPosition(dv, key);
@@ -88,13 +90,13 @@ export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel) =
 
 
         //set tooltip
-        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelTitle: labelTitle, valueTitle: valueTitle});
+        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: labelTitle, valueName: datasetName, tickFormat: tickFormat});
 
     }
 
 };
 
-export const Stack = (dv, barData, barSize, key, lastValue, value, currentValue) => {
+export const Stack = (dv, barData, barSize, key, lastValue, value, currentValue, tickFormat) => {
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
@@ -108,6 +110,7 @@ export const Stack = (dv, barData, barSize, key, lastValue, value, currentValue)
     const yAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
     const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
     const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
+    const datasetName = barData.name || "";
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -149,7 +152,7 @@ export const Stack = (dv, barData, barSize, key, lastValue, value, currentValue)
         ctx.fill();
 
         //set tooltip
-        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelTitle: labelTitle, valueTitle: valueTitle});
+        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
     }else {
         
         const labelPositionX = Calc.getAxisLabelPosition(dv, key);
@@ -177,6 +180,6 @@ export const Stack = (dv, barData, barSize, key, lastValue, value, currentValue)
         ctx.fill();
 
         //set tooltip
-        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelTitle: labelTitle, valueTitle: valueTitle});
+        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelName: labelTitle, valueName: datasetName, tickFormat: tickFormat});
     }
 }

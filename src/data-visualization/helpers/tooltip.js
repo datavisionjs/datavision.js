@@ -28,17 +28,23 @@ const DrawHover = (dv, ctx, data) => {
     ctx.stroke();
 }
 
-const GetText = (data, ctx, name, fontSize) => {
-    if(!data[name] && data[name] !== 0) return {text: null, width: 0};
+const GetText = (data, ctx, type, fontSize) => {
+    if(!data[type] && data[type] !== 0) return {text: null, width: 0};
 
     const canvasWidth = ctx.canvas.width;
 
-    let text = data[name+"Text"];
-    let textWidth = data[name+"Width"];
+    let text = data[type+"Text"];
+    let textWidth = data[type+"Width"];
+
+    const tickFormat = data.tickFormat? data.tickFormat[type]: {};
+
+    const prefix = (tickFormat.prefix || ""), suffix = (tickFormat.suffix || "");
+    const decimalPlaces = tickFormat.decimalPlaces;
 
     if(!textWidth){
         //set value
-        let value = Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[name]));
+        let value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[type], decimalPlaces)) + suffix;
+
         //shorten value
         const valueWidth = ctx.measureText(value).width;
         const maxValueWidth = valueWidth > canvasWidth? (canvasWidth*0.9): valueWidth;
@@ -47,25 +53,25 @@ const GetText = (data, ctx, name, fontSize) => {
         value = Global.shortenText(value, ((maxValueWidth)/valueCharSize));
 
         //set title
-        let title = data[name+"Title"];
-        if(title){
+        let name = data[type+"Name"];
+        if(name){
             //shorten title
-            const titleWidth = ctx.measureText(title).width;
+            const titleWidth = ctx.measureText(name).width;
             const maxTitleWidth = ((canvasWidth-maxValueWidth)-fontSize) || 0;
 
-            const titleCharSize = (titleWidth/title.length);
-            title = Global.shortenText(title, ((maxTitleWidth)/titleCharSize))+": ";
+            const titleCharSize = (titleWidth/name.length);
+            name = Global.shortenText(name, ((maxTitleWidth)/titleCharSize))+": ";
         }
 
         //set percent
-        const percent = data.percent && name === "value"? " ("+data.percent+"%)": "";
+        const percent = data.percent && type === "value"? " ("+data.percent+"%)": "";
 
-        text = (title? title+" ": "") + value + percent;
+        text = (name? name+" ": "") + value + percent;
         textWidth = ctx.measureText(text).width;
     }
 
-    data[name+"Text"] = text;
-    data[name+"Width"] = textWidth;
+    data[type+"Text"] = text;
+    data[type+"Width"] = textWidth;
 
     return {text: text, width: textWidth};
 }
