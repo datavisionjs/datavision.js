@@ -9,12 +9,24 @@ import DisplayToolTip from './data-visualization/helpers/tooltip.js';
 //import all global functions 
 import * as Global from './data-visualization/helpers/global.js';
 
+//drawdataset names 
+import DrawDatasetNames from './data-visualization/plot-area/dataset-names.js';
+
 
 function DataVision(targetId) {
     //styles 
+    this.rawData = [];
     this.data = [];
+
     this.layout = {};
     this.style = {};
+
+    //scrolls
+    this.axisScrollBar = document.createElement("div");
+    this.axisScroll = {topIndex: 0, leftIndex: 0};
+
+    this.datasetNamesScrollBar = document.createElement("div");
+    this.datasetNamesScrollTop = 0;
 
     this.target = document.getElementById(targetId);
     this.targetCanvas = document.createElement("canvas");
@@ -27,16 +39,28 @@ function DataVision(targetId) {
     this.tempCanvas = document.createElement("canvas");
 
     this.toolTipData = [];
+
+    //clear target
+    this.clearTarget = function (){
+        this.getTarget().innerHTML = "";
+    }
     
     //setter and getter 
 
     //data 
+    this.setRawData = function (data){
+        this.rawData = data;
+    }
+    this.getRawData = function (){
+        return this.rawData;
+    }
+
     this.setData = function (data){
         //set data to a new data
         this.data = data;
     };
     this.getData = function (){
-        return this.data;
+        return [...this.data];
     };
 
     //layout
@@ -127,6 +151,108 @@ function DataVision(targetId) {
         return this.tempCanvas;
     };
 
+    //scrolls 
+    this.getAxisScroll = function (){
+        return this.axisScroll;
+    }
+    this.getAxisScrollbar = function (){
+        return this.axisScrollBar;
+    };
+
+    this.setAxisScroll = function (top, left){
+        const layout = this.getLayout();
+        const axisData = layout? layout.axisData: null;
+
+        const labelStyle = this.getStyle().label || {};
+        const fontSize = labelStyle.fontSize || 0;
+
+        const axisScroll = this.getAxisScroll();
+
+        if(!isNaN(left)){
+
+            left < 0? left = 0: null;
+
+            let valuesCount = 0;
+
+            const labels = axisData.labels || {};
+            for(let key in labels){
+                const axis = labels[key];
+                const values = axis.values;
+                values.length > valuesCount? valuesCount = values.length: null;
+            }
+
+            const contentWidth = (valuesCount*fontSize);
+
+            //index is given in decimal
+            const index = (left/contentWidth)*valuesCount;
+
+            axisScroll.leftIndex = index;
+        }
+    }
+
+    this.addAxisScrollBars = function (){
+
+    };
+
+    this.getDatasetNamesScrollTop = function (){
+        return this.datasetNamesScrollTop;
+    };
+    this.setDatasetNamesScrollTop = function (value){
+        this.datasetNamesScrollTop = value;
+    };
+
+    this.getDatasetNamesScrollBar = function (){
+        return this.datasetNamesScrollBar;
+    }
+
+    this.addDatasetNamesScrollBar = function (position, contentHeight){
+        const target = this.getTarget();
+        const bar = this.getDatasetNamesScrollBar();
+        const content = bar.children[0] || document.createElement("div");
+
+        if(content){ 
+            content.style.height = (contentHeight||0) + "px";
+            content.style.border = "0px";
+            content.style.margin = "0px";
+            content.style.padding = "0px";
+            content.style.backgroundColor = "transparent";
+        }
+
+        if(bar){
+            bar.style.position = "absolute";
+            bar.style.left = (position.x||0) + "px";
+            bar.style.top = (position.y||0) + "px";
+            bar.style.height = (position.height||0) + "px";
+            bar.style.width = (position.width||0) +"px";
+            bar.style.border = "0px";
+            bar.style.margin = "0px";
+            bar.style.padding = "0px";
+            bar.style.overflowY = "auto";
+            bar.style.backgroundColor = "transparent";
+        }
+        
+        if(target && (contentHeight > position.height) && bar.parentElement !== target){
+            const dv = this; //get datavision object
+            let timeoutId;
+            Global.on(bar, "scroll", function (){
+                dv.setDatasetNamesScrollTop(bar.scrollTop);
+                
+                // Clear previous timeout, if any
+                clearTimeout(timeoutId);
+
+                // Set a new timeout
+                timeoutId = setTimeout(function() {
+                    DrawDatasetNames(dv);
+                    dv.updateCanvasCopy();
+                }, 10); // Adjust the delay as needed
+
+            }, "");
+
+            bar.appendChild(content);
+            target.appendChild(bar);
+        }
+    };
+
     //target 
     this.getTarget = function (){
         return this.target;
@@ -146,32 +272,65 @@ function DataVision(targetId) {
         ctx.drawImage(canvasCopy, 0, 0);
     };
     this.addCanvasToTarget = function (){
-
+        const target = this.getTarget();
         const canvas = this.getCanvas();
 
-        //set event on canvas
-        const dv = this; //get datavision object
-        Global.on(canvas, "mousemove", function (event){
+        if(!target){
+            return;
+        }
 
-            event.stopPropagation();
-            const mousePosition = Global.getMousePosition(event);
-            DisplayToolTip(event, dv, mousePosition);
+        if(canvas.parentElement !== target){
+            //set style on target 
+            target.style.position = "relative";
 
-        }, "click");
+            //set event on canvas
+            const dv = this; //get datavision object
+            Global.on(canvas, "mousemove", function (event){
 
-        Global.on(document, "click", function (){
-            dv.updateTargetCanvas();
-        }, "touchend");
-        
+                event.stopPropagation();
+                const mousePosition = Global.getMousePosition(event);
+                DisplayToolTip(event, dv, mousePosition);
 
-        //add canvas to target
-        if(this.target){
-            this.target.innerHTML = "";
-            this.target.appendChild(canvas);
+            }, "click");
+
+            Global.on(document, "click", function (){
+                dv.updateTargetCanvas();
+            }, "touchend");
+
+            //add canvas to target
+            target.appendChild(canvas);
         }
     };
 
+    //clearTarget 
+    this.clearTarget();
+
 }
+
+DataVision.prototype.update = function (){
+    //clear tooltipData 
+    this.clearToolTipData();
+
+    //set data
+    this.setData(this.getRawData());
+
+    //set chart properties
+    Prop.setUpChart(this);
+    Prop.setGraphPosition(this);
+    
+    //Draw dataset names
+    DrawDatasetNames(this);
+
+    dataVis.DrawPlotArea(this);
+
+    dataVis.Chart(this);
+
+    //update date canvas copy with main canvas
+    this.updateCanvasCopy();
+
+    //add main canvas to user target element
+    this.addCanvasToTarget();
+};
 
 DataVision.prototype.plot = function (data, layout){
     //clear tooltipData 
@@ -185,18 +344,12 @@ DataVision.prototype.plot = function (data, layout){
     this.setStyle();
 
     //set data and layout
-    this.setData(data);
+    //this.setData(data);
+    this.setRawData(data);
+
     this.setLayout(layout);
 
-    dataVis.DrawPlotArea(this);
-
-    dataVis.Chart(this);
-
-    //update date canvas copy with main canvas
-    this.updateCanvasCopy();
-
-    //add main canvas to user target element
-    this.addCanvasToTarget();
-}
+    this.update();
+};
 
 export default DataVision;

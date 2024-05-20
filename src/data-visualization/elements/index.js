@@ -13,6 +13,9 @@ const DrawElements = (dv, dataset) => {
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
+    const labelStyle = dv.getStyle().label;
+    const fontSize = labelStyle.fontSize;
+
     const type = dataset.type;
     const mode = dataset.mode;
 
@@ -45,7 +48,9 @@ const DrawElements = (dv, dataset) => {
 
             const labelCount = xAxis.values.length;
 
-            const step = (graphLength/labelCount);
+            let step = (graphLength/labelCount);
+            step < fontSize? step = fontSize: null;
+
             let barSize = mode === "stack"? (step*0.7): (step/(maxBarPerLabel+1));
 
             //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
@@ -145,13 +150,12 @@ const DrawElements = (dv, dataset) => {
             
             for(var i = 0; i < values.length; i++){
                 //get defaultColor
-                const defaultColor = customColors[i].code;
+                const defaultColor = customColors.get(i).code;
                
-                const pieColor = colors? colors[i]: null;
+                const pieColor = colors? colors[i]: defaultColor;
 
                 //set fillColor
-                const fillColor = pieColor? pieColor: defaultColor;
-                fillColor? tempCtx.fillStyle = fillColor: null;//set bar color if exists
+                pieColor? tempCtx.fillStyle = pieColor: null;//set bar color if exists
 
                 const value = values[i];
                 const label= dataset.labels[i];
@@ -165,7 +169,7 @@ const DrawElements = (dv, dataset) => {
 
                     const percent = Calc.toFixedIfNeeded(valDecimal*100);
 
-                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat);
+                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, pieColor);
 
                     startDegrees = endDegrees;
                 }

@@ -1,4 +1,13 @@
-const customColors = [
+
+const customColors = {
+  get: function (index){
+    const colorLen = this.colors.length;
+
+    const indexToDecimal = (index/colorLen) % 1;
+    return this.colors[Math.round(indexToDecimal * colorLen)];
+  },
+
+  colors: [
     { name: 'Royal Blue', code: '#4169E1' },
     { name: 'Emerald Green', code: '#008000' },
     { name: 'Coral Orange', code: '#FF6B57' },
@@ -17,9 +26,10 @@ const customColors = [
     { name: 'Emerald Green', code: '#50C878' },
     { name: 'Golden Yellow', code: '#FFD700' },
     { name: 'Violet Purple', code: '#8A2BE2' },
-    { name: 'Sunshine Yellow', code: '#FFD700' },
+    { "name": "Mint Green", "code": "#98FF98" },
     { name: 'Plum Purple', code: '#DDA0DD' },
-];
+  ]
+}
   
   export default customColors;
   

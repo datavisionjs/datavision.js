@@ -159,26 +159,27 @@ export function haveOppositeSigns(num1, num2) {
 
 /*
 export function toFixedIfNeeded(number, decimalPlaces){
-    if(Number(number)){
-        if(Number.isInteger(Number(number))){
-            return number.toFixed(decimalPlaces || 0);
-        }else {
-            if(!isNaN(decimalPlaces)){
-                return number.toFixed(decimalPlaces);
-            }else {
-                const numberStr = number.toString();
-                const splitNumberStr = numberStr.split(".");
-                let nonZeroIndex = splitNumberStr[1].search(/[^0]/);
-
-                nonZeroIndex? nonZeroIndex += 1: null;
-
-
-                return parseFloat(number.toFixed(nonZeroIndex || 1));
-            }
-        }
-    }else {
-        return number;
+    if (typeof number !== 'number' || isNaN(number)) {
+        return number; // Return original value if not a valid number
     }
+   
+    if(Number.isInteger(number)){
+        return number.toFixed(decimalPlaces || 0);
+    }else {
+        if(!isNaN(decimalPlaces)){
+            return number.toFixed(decimalPlaces);
+        }else {
+            const numberStr = number.toString();
+            const splitNumberStr = numberStr.split(".");
+            let nonZeroIndex = splitNumberStr[1].search(/[^0]/);
+
+            nonZeroIndex? nonZeroIndex += 1: null;
+
+
+            return parseFloat(number.toFixed(nonZeroIndex || 1));
+        }
+    }
+   
 }*/
 
 export function toFixedIfNeeded(number, decimalPlaces) {
@@ -187,9 +188,10 @@ export function toFixedIfNeeded(number, decimalPlaces) {
     }
 
     const parsedNumber = parseFloat(number);
+    let result = parsedNumber;
 
     if (Number.isInteger(parsedNumber)) {
-        return parsedNumber.toFixed(decimalPlaces || 0); // Round integer numbers
+        result = parsedNumber.toFixed(decimalPlaces || 0); // Round integer numbers
     } else {
         const numberStr = parsedNumber.toString();
         const decimalIndex = numberStr.indexOf('.');
@@ -199,15 +201,17 @@ export function toFixedIfNeeded(number, decimalPlaces) {
             const nonZeroIndex = fractionalPart.search(/[^0]/);
 
             if (nonZeroIndex === -1) {
-                return parsedNumber.toFixed(0); // Return integer part if all decimals are zeros
+                result = parsedNumber.toFixed(0); // Return integer part if all decimals are zeros
             } else {
                 const newDecimalPlaces = !isNaN(decimalPlaces)? decimalPlaces: nonZeroIndex + 1;
-                return parsedNumber.toFixed(newDecimalPlaces);
+                result = parsedNumber.toFixed(newDecimalPlaces);
             }
         } else {
-            return parsedNumber; // Return original value if no decimal part
+            result = parseFloatparsedNumber; // Return original value if no decimal part
         }
     }
+
+    return parseFloat(result);
 }
 
 
@@ -404,6 +408,9 @@ export function getAxisLabelPosition(dv, label, axisName){
 
     const layout = dv.getLayout();
 
+    const labelStyle = dv.getStyle().label;
+    const fontSize = labelStyle.fontSize;
+
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x;
     const graphWidth = graphPosition.width;
@@ -418,7 +425,10 @@ export function getAxisLabelPosition(dv, label, axisName){
         const axisLabels = axis.values;
 
         if(!labelIsAllNumbers){
-            const step = (graphWidth/axisLabels.length);
+
+            let step = (graphWidth/axisLabels.length);
+            step < fontSize? step = fontSize: null;
+
             const halfStep = (step/2);
             const index = axisLabels.indexOf(label);
 
@@ -436,6 +446,9 @@ export function getAxisLabelPosition(dv, label, axisName){
 export function getAxisValuePosition(dv, value, axisName){
     const layout = dv.getLayout();
 
+    const labelStyle = dv.getStyle().label;
+    const fontSize = labelStyle.fontSize;
+
     const graphPosition = layout.graphPosition;
     const graphY = graphPosition.y;
     const graphHeight = graphPosition.height;
@@ -451,7 +464,9 @@ export function getAxisValuePosition(dv, value, axisName){
 
         if(!valueIsAllNumbers){
 
-            const step = (graphHeight/axisValues.length);
+            let step = (graphHeight/axisValues.length);
+            step < fontSize? step = fontSize: null;
+
             const halfStep = (step/2);
             const index = axisValues.indexOf(value);
             

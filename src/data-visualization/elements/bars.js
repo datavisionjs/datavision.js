@@ -1,5 +1,4 @@
 import * as Calc from '../helpers/math.js'
-import customColors from '../helpers/colors.js';
 
 
 export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel, tickFormat) => { //process grouped bars

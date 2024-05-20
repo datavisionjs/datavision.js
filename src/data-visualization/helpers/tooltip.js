@@ -14,8 +14,11 @@ const DrawHover = (dv, ctx, data) => {
     }else if(data.type === "pie"){
         //draw arc line
         ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.lineWidth = ctx.canvas.width * 0.0063;
-        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-4), data.startAngle, data.endAngle);
+
+        const lineWidth = ctx.canvas.width * 0.0063;
+        ctx.lineWidth = lineWidth;
+        
+        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-2), data.startAngle, data.endAngle);
     }else if(data.type === "line"){
         ctx.strokeStyle = data.color || "#000";
         ctx.fillStyle = data.color || "transparent";

@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat) => {
+const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, pieColor) => {
     
     const layout = dv.getLayout();
 
@@ -23,8 +23,8 @@ const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, valu
     const endAngle = (endDegrees)*degreesToRadians;
 
     ctx.beginPath();
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = pieColor;
+    ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     

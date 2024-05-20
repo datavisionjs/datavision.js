@@ -111,7 +111,7 @@ function drawYAxis(dv, position){
     const graphX = position.x;
     const graphY = position.y;
     
-    const yMaxLabelWidth = position.yMaxLabelWidth;
+    const yMaxLabelWidth = position.maxLabelWidth;
 
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
@@ -204,7 +204,7 @@ function drawYAxis(dv, position){
             const maxValueWidth = axis.maxWidth;
 
             let step = (graphHeight/values.length);
-            step < 1? step = 1: null;
+            step < fontSize? step = fontSize: null;
     
             let iterator = 1;
 
@@ -260,6 +260,8 @@ function drawXAxis(dv, position){
 
     const graphX = position.x;
     const graphY = position.y;
+
+    const maxLabelWidth = position.maxLabelWidth;
 
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
@@ -350,10 +352,10 @@ function drawXAxis(dv, position){
             }
 
         }else {
-            const maxLabelWidth = axis.maxWidth;
+            const axisMaxWidth = axis.maxWidth;
             
             let step = (graphWidth/values.length);
-            step < 1? step = 1: null;
+            step < fontSize? step = fontSize: null;
 
             let iterator = 1;
 
@@ -383,13 +385,13 @@ function drawXAxis(dv, position){
                 const labelCharSize = (labelWidth/label.length);
 
                 if((step/fontSize) < 4){
-                    label = Global.shortenText(label, ((canvasHeight-(graphY+graphHeight))/labelCharSize));
+                    label = Global.shortenText(label, ((maxLabelWidth-fontSize)/labelCharSize));
                     angle = -90
                     textPosX = axisX;
 
                     ctx.textAlign = "end";
                     ctx.textBaseline = "middle";
-                }else if(maxLabelWidth > step) {
+                }else if(axisMaxWidth > step) {
                     label = Global.shortenText(label, (step/labelCharSize));
                 }
 

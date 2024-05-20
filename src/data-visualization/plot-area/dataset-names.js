@@ -15,6 +15,8 @@ const DrawDatasetNames = (dv) => {
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
+    let pixelSpace = (fontSize+(fontSize/2));
+
 
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;
@@ -22,12 +24,12 @@ const DrawDatasetNames = (dv) => {
     const yAxisRight = graphPosition.yAxisRight;
 
     const labelAreaWidth = (canvasWidth*0.2);
-    const labelAreaHeight = (canvasHeight-graphY);
+    //const labelAreaHeight = (canvasHeight-graphY);
 
     const labelX = ((graphX+graphWidth)+yAxisRight)+fontSize;
 
-    const datasetNameData = layout.datasetNameData;
-    const datasetTotal = datasetNameData.total;
+    //const datasetNameData = layout.datasetNameData;
+    //const datasetTotal = datasetNameData.total;
 
     const datasetData = dv.getData();
 
@@ -42,6 +44,26 @@ const DrawDatasetNames = (dv) => {
     if(datasetData.length > 1 || !layout.hasAxisData || hasMultiBarChart){
 
         let startY = (graphY+(fontSize/2));
+
+        let namesCount = 0;
+
+        for (let i = 0; i < datasetData.length; i++) {
+            const dataset = datasetData[i]; // Assuming datasetData is your array of datasets
+            const names = dataset.names || [dataset.name || ""]; // Check if dataset has 'names' property, else fallback to 'name'
+            namesCount += names.length;
+        }
+
+        const strollTop = dv.getDatasetNamesScrollTop();
+        const contentHeight = (namesCount*pixelSpace);
+
+        const scrollIndexDecimal = (strollTop/contentHeight)*namesCount;
+        const scrollIndex = Math.floor(scrollIndexDecimal);
+
+        startY -= (fontSize*(scrollIndexDecimal-scrollIndex));
+
+        //clear dataset area names
+        const labelFontX = (labelX-(fontSize/2));
+        ctx.clearRect(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
 
         for(let o = 0; o < datasetData.length; o++){
             const dataset = datasetData[o];
@@ -66,16 +88,10 @@ const DrawDatasetNames = (dv) => {
 
                 if(labels){
 
-                    let pixelSpace = (fontSize*2);
-
-                    if((datasetTotal*(fontSize*2)) >= (graphHeight+(fontSize/2))){
-                        pixelSpace = Math.round(labelAreaHeight/datasetTotal);
-                    }
-
-                    for (let i = 0; i < labels.length; i++) {
+                    for (let i = scrollIndex; i < labels.length; i++) {
 
                         //set defualtColor
-                        const defaultColor = customColors[i].code;
+                        const defaultColor = customColors.get(i).code;
 
                         let label = labels[i];
                         const labelWidth = ctx.measureText(label).width;
@@ -94,7 +110,7 @@ const DrawDatasetNames = (dv) => {
                         fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
 
                     
-                        const textPosX = (labelX+(fontSize)), textPosY = startY;
+                        const textPosX = (labelX+fontSize), textPosY = startY;
 
                         ctx.beginPath();
                         ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
@@ -113,6 +129,13 @@ const DrawDatasetNames = (dv) => {
                 }
             }
         }
+
+        //clear top of dataset names 
+        ctx.clearRect(labelFontX, 0, (canvasWidth-labelFontX), graphY);
+         //clear bottom of dataset names 
+        ctx.clearRect(labelFontX, (graphY+graphHeight), (canvasWidth-labelFontX), (canvasHeight-(graphY+graphHeight)));
+
+        dv.addDatasetNamesScrollBar({x: labelFontX, y: graphY, width: (canvasWidth-labelFontX), height: graphHeight}, contentHeight);
     }
 }
 

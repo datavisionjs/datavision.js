@@ -83,12 +83,10 @@ export function setGraphPosition(dv){
     //give space to the right of the x axis using x1MaxWidth
     xAxisRight = x1.isAllNumbers? x1MaxWidth: 0;
 
-    if(((labelStep/labelFontSize) < 4)){
+    if(!x1.isAllNumbers && ((labelStep/labelFontSize) < 4)){
         const thirdHeight = (canvasHeight*0.3);
-        xAxisBottom += x1MaxWidth > thirdHeight? thirdHeight: x1MaxWidth;
-    }/*else if(x1MaxWidth > labelStep && x1MaxWidth > axisTitleSpace){
-        //xAxisBottom += (x1MaxWidth*0.7);
-    }*/
+        xAxisBottom += x1MaxWidth > thirdHeight? thirdHeight: (labelFontSize*2);
+    }
 
     const x1Title = layout.xAxis? layout.xAxis.title: null;
     x1Title? xAxisBottom += axisTitleSpace: null;
@@ -103,7 +101,7 @@ export function setGraphPosition(dv){
         width: graphWidth,
         height: graphHeight,
         yAxisRight: yAxisRight,
-        yMaxLabelWidth: yMaxLabelWidth
+        maxLabelWidth: yMaxLabelWidth
     }
 
 
@@ -199,7 +197,7 @@ export function setUpChart(dv){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const data = [...dv.getData()];
+    const data = dv.getData();
 
     
 
@@ -247,7 +245,7 @@ export function setUpChart(dv){
     if(data){
         
         //loop through data and set xRange and yRange
-        const tempData = [...data];
+        const tempData = data;
         const tempDataLength = tempData.length;
         const prevDataset = {labels: [], values: []};
 
@@ -268,8 +266,8 @@ export function setUpChart(dv){
             const xAxis = axisLabels[dataLabelAxis];
 
             const dataName = dataset.name;
-            const labels = dataset.labels? dataset.labels: [];
-            const values = dataset.values? dataset.values: [];
+            const labels = dataset.labels? [...dataset.labels]: [];
+            const values = dataset.values? [...dataset.values]: [];
             const dataType = dataset.type;
             const design = dataset.design || {};
             const operation = dataset.operation;
@@ -308,12 +306,12 @@ export function setUpChart(dv){
              //get and set tick format
                 
              const layoutXAxis = getAxisFromLayout(layout, dataLabelAxis);
-             const xAxisTickFormat = xAxis.tickFormat = {...layoutXAxis.tickFormat};
+             const xAxisTickFormat = xAxis.tickFormat = layoutXAxis? {...layoutXAxis.tickFormat}: {};
              const xPrefix = xAxisTickFormat.prefix || "", xSuffix = xAxisTickFormat.suffix || "";
              const xDecimalPlaces = xAxisTickFormat.decimalPlaces;
 
              const layoutYAxis = getAxisFromLayout(layout, dataValueAxis);
-             const yAxisTickFormat = yAxis.tickFormat = {...layoutYAxis.tickFormat};
+             const yAxisTickFormat = yAxis.tickFormat = layoutYAxis? {...layoutYAxis.tickFormat}: {};
              const yPrefix = yAxisTickFormat.prefix || "", ySuffix = yAxisTickFormat.suffix || "";
              const yDecimalPlaces = yAxisTickFormat.decimalPlaces;
 
@@ -503,17 +501,19 @@ export function setUpChart(dv){
                                         newValues[k] = newValue;
                                         yAxis.values.push(newValue);
 
-                                        if(valueWidth > maxLabelWidth){
-                                            maxLabelWidth = valueWidth;
+                                        if(valueWidth > maxValueWidth){
+                                            maxValueWidth = valueWidth;
                                         }
                                     }else {
-                                        labelWidth = ctx.measureText(xPrefix + Calc.toFixedIfNeeded(newValue, xDecimalPlaces) + xSuffix).width;
+                                        if(labelIsAllNumbers){
+                                            labelWidth = ctx.measureText(xPrefix + Calc.toFixedIfNeeded(newValue, xDecimalPlaces) + xSuffix).width;
 
-                                        newLabels[k] = newValue;
-                                        xAxis.values.push(newValue);
+                                            newLabels[k] = newValue;
+                                            xAxis.values.push(newValue);
 
-                                        if(labelWidth > maxLabelWidth){
-                                            maxLabelWidth = labelWidth;
+                                            if(labelWidth > maxLabelWidth){
+                                                maxLabelWidth = labelWidth;
+                                            }
                                         }
                                     }
                                 }
@@ -608,6 +608,7 @@ export function setUpChart(dv){
                 
                 newPieDataset.labels = newPieLabels;
                 newPieDataset.values = newPieValues;
+                newPieDataset.names = newPieLabels;
                 newPieDataset.type = "pie";
 
                 pieData.push(newPieDataset);
@@ -670,14 +671,24 @@ export function setUpChart(dv){
             const tick = getTickData(range);
             const tickRange = tick.range;
             
-            const tickRangeStart = Calc.toFixedIfNeeded(tickRange[0]), tickRangeEnd = Calc.toFixedIfNeeded(tickRange[1]);
+            const tickRangeStart = tickRange[0], tickRangeEnd = tickRange[1];
 
-            const tickRangeStartWidth = tickRangeStart && !isNaN(tickRangeStart)? ctx.measureText(tickRangeStart).width: 0;
-            const tickRangeEndWidth = tickRangeEnd && !isNaN(tickRangeStart)? ctx.measureText(tickRangeEnd).width: 0;
+            let maxWidth = axisMaxWidth;
 
-            const maxWidth = Math.max(axisMaxWidth, Math.max(tickRangeStartWidth, tickRangeEndWidth));
+            if(isAllNumbers){
+                const tickFormat = axis.tickFormat;
+                const decimalPlaces = tickFormat? tickFormat.decimalPlaces: null;
+                const prefix = tickFormat? tickFormat.prefix || "": "";
+                const suffix = tickFormat? tickFormat.suffix || "": "";
+
+                if( !isNaN(tickRangeStart) && !isNaN(tickRangeEnd) ){
+                    const startWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeStart, decimalPlaces) + suffix).width;
+                    const endWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeEnd, decimalPlaces) + suffix).width;
+
+                    maxWidth = Math.max(startWidth, endWidth);
+                }
+            }
             
-
             axis.maxWidth = maxWidth;
             axis.range = tick.range;
             axis.tickData = tick;
@@ -718,7 +729,7 @@ function setUpAxisChartDesign(dataType, design, count){
     const newDesign = design? design: {};
 
     //set deign colors
-    const color = customColors[count].code;
+    const color = customColors.get(count).code;
     !newDesign.color? newDesign.color = color: null;
 
     dataType === "line"? Array.isArray(newDesign.color)? newDesign.color = color: null: null;
