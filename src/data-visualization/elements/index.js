@@ -18,6 +18,21 @@ const DrawElements = (dv, dataset) => {
 
     const type = dataset.type;
     const mode = dataset.mode;
+    const isHorizontal = dataset.direction === "hr";
+
+    const graphPosition = layout.graphPosition;
+    const graphX = graphPosition.x, graphY = graphPosition.y;
+    const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+
+    
+    const axisScroll = dv.getAxisScroll();
+    //const scrollIndex = isHorizontal? axisScroll.topIndex: axisScroll.leftIndex;
+
+    const topIndex = (axisScroll.topIndex-1), leftIndex = (axisScroll.leftIndex-1);
+    const isTopIndexMax = axisScroll.topIndex > axisScroll.leftIndex;
+
+    const scrollIndex = Math.floor(Math.max((topIndex < 0? 0: topIndex), (leftIndex < 0? 0: leftIndex)));
+    const scrollIndexEnd = Math.ceil((scrollIndex + 2) + ((isTopIndexMax? graphHeight: graphWidth)/fontSize));
 
 
     if(type === "bar"){
@@ -26,12 +41,9 @@ const DrawElements = (dv, dataset) => {
 
         const barDataset = dataset.dataset;
 
-        const isHorizontal = dataset.direction === "hr";
-
         const maxBarPerLabel = barDataset.length;
 
-        const graphPosition = layout.graphPosition;
-        const graphLength = isHorizontal? graphPosition.height: graphPosition.width;
+        const graphLength = isHorizontal? graphHeight: graphWidth;
 
         const stackLastValues = new Map();
         
@@ -71,10 +83,10 @@ const DrawElements = (dv, dataset) => {
 
             ctx.fillStyle = designColor;
 
-            let index = 0;
-
             const range = isHorizontal? xAxis.range: yAxis.range;
             const rangeStart = Calc.getNumberInRange(0, range);
+
+            /*
 
             barData.values.forEach((value, key) => {
                 Array.isArray(value)? value = value[0]: null;
@@ -97,7 +109,39 @@ const DrawElements = (dv, dataset) => {
                 }
 
                 index++;
-            });
+            });*/
+            const barObject = barData.values;
+            const barValues = Array.from(barObject.values());
+            const keys = Array.from(barObject.keys());
+
+            const loopEnd = baseAxis.isAllNumbers?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
+
+            for(let index = scrollIndex; index < loopEnd; index++){
+
+
+                let value = barValues[index];
+                const key = keys[index];
+                
+                Array.isArray(value)? value = value[0]: null;
+                Array.isArray(designColor)? ctx.fillStyle = designColor[(index>=designColor.length? 0: index)]: null;
+                
+                if(mode === "stack"){
+
+                    const lastStack = stackLastValues.has(key)? stackLastValues.get(key): [rangeStart, rangeStart];
+                    const lastValue = value >= 0? (lastStack[0]): (lastStack[1]);
+                    
+                    const currentValue = value;
+                    value = i === 0? value: (lastValue+value);
+
+                    const currentStack = value >= 0? [value, lastStack[1]]: [lastStack[0], currentValue];
+                    stackLastValues.set(key, currentStack);
+
+                    Bars.Stack(dv, barData, barSize, key, lastValue, value, currentValue, tickFormat);
+                }else {
+                    Bars.Group(dv, barData, i, key, value, barSize, maxBarPerLabel, tickFormat);
+                }
+
+            }
         }
         
 
@@ -117,10 +161,6 @@ const DrawElements = (dv, dataset) => {
         tempCanvas.height = ctx.canvas.height;
 
         const tempCtx = tempCanvas.getContext("2d");
-
-        const graphPosition = layout.graphPosition;
-        const graphX = graphPosition.x, graphY = graphPosition.y;
-        const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
         const radius = (Math.min(graphWidth, graphHeight)/2);
         
@@ -196,12 +236,12 @@ const DrawElements = (dv, dataset) => {
             const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
             const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
 
+            const xAxis = layout.axisData.labels[labelAxisName];
+            const yAxis = layout.axisData.values[valueAxisName];
+
             const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
 
             const datasetName = dataset.name || "";
-
-            //const axisData = layout.axisData;
-            const isHorizontal = dataset.direction === "hr";
 
             const designColor = dataset.design.color;
             const designSize = dataset.design.size;
@@ -210,46 +250,78 @@ const DrawElements = (dv, dataset) => {
             ctx.fillStyle = designColor;
             ctx.strokeStyle = designColor;
 
+            const isAllNumbers = isHorizontal? yAxis.isAllNumbers: xAxis.isAllNumbers;
+
             //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
             const labels = isHorizontal? dataset.values: dataset.labels;
             const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
             
             if(labels){
                 
+                let isDrawStarted = false;
                 let lastPosition = {x: null, y: null}, positionType;
 
-                for(var i = 0; i < labels.length; i++){
+                //const loopStart = (Math.floor(scrollIndex) - (Math.floor(scrollIndex) > 0? 1: 0));
+
+                const loopStart = (scrollIndex);
+                const loopEnd = isAllNumbers? labels.length: scrollIndexEnd < labels.length? scrollIndexEnd: labels.length;
+                
+                
+                for(var i = loopStart; i < loopEnd; i++){
+
 
                     let label = labels[i];
                     let value = values[i];
+
+                    const prevI = (i-1);
+                    let prevLabel = labels[prevI] || label;
+                    let prevValue = values[prevI] || value;
+
+                    const nextI = (i+1);
+                    let nextLabel = labels[nextI] || label;
+                    let nextValue = values[nextI] || value;
 
                     const color = Array.isArray(designColor)? designColor[i]? designColor[i]: designColor[0]: designColor;
                     const size = Array.isArray(designSize)? designSize[i]: designSize;
                     const text = Array.isArray(designText)? designText[i]: designText;
                     
-                    positionType = i === 0? "start": i === (labels.length-1)? "end": "";
+                    positionType = i === loopStart? "start": i === (loopEnd-1)? "end": "";
                     
                     if(value || value === 0){ //proceed if y is valid
-     
+                        
+                        const prevPosition = Calc.getAxisPosition(dv, prevLabel, prevValue, valueAxisName, labelAxisName);
                         const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
+                        const nextPosition = Calc.getAxisPosition(dv, nextLabel, nextValue, valueAxisName, labelAxisName);
 
-                        //check if position is out of range
-                        const positionIsOut = Calc.posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName);
+                        let positionIsOut = false;
 
                         if(type === "line"){
-                            if(positionIsOut && (position.x === lastPosition.x || position.y === lastPosition.y)){
+
+                            const boundPosition = Calc.findAxisBoundPositions(dv, i, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted);
+
+                            positionIsOut = Calc.posIsOutOfBound(dv, prevPosition) && Calc.posIsOutOfBound(dv, position) && Calc.posIsOutOfBound(dv, nextPosition);
+                            const isCurrentPositionOut = Calc.posIsOutOfBound(dv, position);
+                            
+                            if((positionIsOut && isDrawStarted) || (isCurrentPositionOut && (position.x === lastPosition.x || position.y === lastPosition.y))){
                                 ctx.stroke();
                                 ctx.closePath();
                                 break;
                             }else {
                                 
                                 if(!positionIsOut){
-                                    DrawLines(dv, dataset, positionType, size, position, positionIsOut);
+                                    isDrawStarted = true;
+                                    positionIsOut = Calc.posIsOutOfBound(dv, position);
+                                    
+                                    DrawLines(dv, dataset, positionType, size, position, lastPosition, boundPosition, positionIsOut);
                                     lastPosition = position;
                                 }
                             }
-                        }else if(type === "scatter" || type === "bubble"){
+                            
 
+                        }else if(type === "scatter" || type === "bubble"){
+                            
+                            positionIsOut = Calc.posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName) || Calc.posIsOutOfBound(dv, position);
+                            
                             if(!positionIsOut){
 
                                 const designLine = dataset.design.line;
@@ -260,6 +332,7 @@ const DrawElements = (dv, dataset) => {
                                 ctx.fillStyle = color;
                                 ctx.strokeStyle = lineColor;
                                 ctx.lineWidth = lineSize;
+
                                 
                                 DrawPoints(dv, size, position);
                             }
@@ -267,9 +340,6 @@ const DrawElements = (dv, dataset) => {
 
                         
                         //set tooltip
-                        const xAxis = layout.axisData.labels[labelAxisName];
-                        const yAxis = layout.axisData.values[valueAxisName];
-
                         const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
 
                         !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelName: labelTitle, valueName: datasetName, size: type === "bubble"? size: null, sizeName: text, color: color, tickFormat: tickFormat}): null;

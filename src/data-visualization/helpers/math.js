@@ -2,7 +2,7 @@
 
 
 //finds a point on a straight line between two known points.
-export function linearInterpolation(x, x1, y1, x2, y2) {
+export function linearInterpolationX(x, x1, y1, x2, y2) {
     if (x1 === x2) {
         return y1; // Avoid division by zero
     }
@@ -10,6 +10,16 @@ export function linearInterpolation(x, x1, y1, x2, y2) {
     // Calculate the intermediate point (x, y)
     const y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
     return y;
+}
+
+export function linearInterpolationY(y, x1, y1, x2, y2) {
+    if (y1 === y2) {
+        return x1; // Avoid division by zero
+    }
+
+    // Calculate the intermediate point (x, y)
+    const x = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+    return x;
 }
 
 //find the distance between two points 
@@ -80,6 +90,10 @@ export function getNumberInRange(number, range){
     const rangeMin = Math.min(...range);
     const rangeMax = Math.max(...range);
 
+    if(isNaN(rangeMin) || isNaN(rangeMax)){
+        return null;
+    }
+
     if(number < rangeMin){
         return rangeMin;
     }else if(number > rangeMax){
@@ -134,7 +148,22 @@ export function isAllNumbers(arr) {
     if(!arr){
         return null;
     }
-    return arr.every(element => typeof element === 'number');
+    //return arr.every(element => typeof element === 'number');
+    let numberCount = 0;
+    let stringCount = 0;
+
+    for(let i = 0; i < arr.length; i++){
+        const value = arr[i];
+        const type = typeof value;
+
+        if(type === "string"){
+            stringCount++;
+        }else if(type === "number") {
+            numberCount++;
+        }
+    }
+
+    return numberCount > (stringCount/2);
 }
 
 //Function to get the next key given a key in a Map
@@ -270,6 +299,30 @@ export function zeroBasedRangeAdjust(range, interval){
     return [rangeStart, rangeEnd];
 }
 
+//find next position
+export function findAxisBoundPositions(dv, index, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted){
+    
+    let prevPosition = lastPosition;
+    let nextPosition = getAxisPosition(dv, labels[index], values[index], valueAxisName, labelAxisName);
+
+    let newIndex = index;
+
+    if(!isDrawStarted){
+
+        while(posIsOutOfBound(dv, nextPosition)){
+            newIndex++;
+            prevPosition = {...nextPosition};
+            nextPosition = getAxisPosition(dv, labels[newIndex], values[newIndex], valueAxisName, labelAxisName);
+            
+            if(!nextPosition){
+                break;
+            }
+        }
+    }
+
+    return {next: nextPosition, prev: prevPosition};
+}
+
 //check if positon is out of range or not
 export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
     const layout = dv.getLayout();
@@ -290,7 +343,6 @@ export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
         if(range){
             const start = range[0];
             const end = range[1];
-
             label < start || label > end? labelIsOut = true: null;
         }
     }
@@ -306,6 +358,23 @@ export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
     }
 
     return labelIsOut || valueIsOut;
+}
+
+export function posIsOutOfBound(dv, position){
+    const layout = dv.getLayout();
+    const graphPosition = layout.graphPosition;
+    const graphX = graphPosition.x, graphY = graphPosition.y;
+    const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+
+    if(position.x > (graphX+graphWidth) || position.x < (graphX)){
+        return true;
+    }
+
+    if(position.y > (graphY+graphHeight) || position.y < (graphY)){
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -433,7 +502,8 @@ export function getAxisLabelPosition(dv, label, axisName){
             const index = axisLabels.indexOf(label);
 
             if(index >= 0){
-                label = (graphX+((step*index)+halfStep));
+                const leftIndex = (dv.getAxisScroll().leftIndex);
+                label = (graphX+((step*(index-leftIndex))+halfStep));
             }
         }else {
             label = posOnGraphXAxis(dv, label);
@@ -471,7 +541,8 @@ export function getAxisValuePosition(dv, value, axisName){
             const index = axisValues.indexOf(value);
             
             if(index >= 0){
-                value = ((graphY+graphHeight)-((step*index)+halfStep));
+                const topIndex = (dv.getAxisScroll().topIndex);
+                value = ((graphY+graphHeight)-((step*(index-topIndex))+halfStep));
             }
         }else {
             value = posOnGraphYAxis(dv, value, axisName);

@@ -45,18 +45,22 @@ const DrawDatasetNames = (dv) => {
 
         let startY = (graphY+(fontSize/2));
 
-        let namesCount = 0;
+        const names = [];
+        const colors = [];
 
         for (let i = 0; i < datasetData.length; i++) {
             const dataset = datasetData[i]; // Assuming datasetData is your array of datasets
-            const names = dataset.names || [dataset.name || ""]; // Check if dataset has 'names' property, else fallback to 'name'
-            namesCount += names.length;
+            const dataNames = dataset.names || [dataset.name || ""]; // Check if dataset has 'names' property, else fallback to 'name'
+            const dataColors = dataset.colors || (dataset.design? dataset.design.color: "");
+
+           names.push(...dataNames);
+           colors.push(...Array.isArray(dataColors)? dataColors: [dataColors]);
         }
 
         const strollTop = dv.getDatasetNamesScrollTop();
-        const contentHeight = (namesCount*pixelSpace);
+        const contentHeight = (names.length*pixelSpace);
 
-        const scrollIndexDecimal = (strollTop/contentHeight)*namesCount;
+        const scrollIndexDecimal = (strollTop/contentHeight)*names.length;
         const scrollIndex = Math.floor(scrollIndexDecimal);
 
         startY -= (fontSize*(scrollIndexDecimal-scrollIndex));
@@ -65,68 +69,45 @@ const DrawDatasetNames = (dv) => {
         const labelFontX = (labelX-(fontSize/2));
         ctx.clearRect(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
 
-        for(let o = 0; o < datasetData.length; o++){
-            const dataset = datasetData[o];
+        if(names){
 
-            if(dataset){
-                let labels = dataset.labels;
-                const dataType = dataset.type;
-                let colors = dataset.colors;
+            for (let i = scrollIndex; i < names.length; i++) {
 
-                const axisChartTypes = Global.getAxisChartTypes();
-                if(axisChartTypes.includes(dataType)){
-                    if(dataType === "bar"){
-                        labels = dataset.names;
-                        colors = dataset.colors;
-                    }else {
-                        labels = [dataset.name];
+                //set defualtColor
+                const defaultColor = customColors.get(i).code;
 
-                        const designColor = dataset.design.color;
-                        colors = Array.isArray(designColor)? designColor: [designColor];
+                let label = names[i];
+                const labelWidth = ctx.measureText(label).width;
+
+                if((labelWidth+pixelSpace) > labelAreaWidth){
+                    if(label.length > 3){
+                        const estSizePerChar = (labelWidth/label.length);
+                        label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
                     }
                 }
+                
 
-                if(labels){
+                const pieColor = colors? colors[i]: null;
 
-                    for (let i = scrollIndex; i < labels.length; i++) {
+                const fillColor = pieColor? pieColor: defaultColor;
+                fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
 
-                        //set defualtColor
-                        const defaultColor = customColors.get(i).code;
+            
+                const textPosX = (labelX+fontSize), textPosY = startY;
 
-                        let label = labels[i];
-                        const labelWidth = ctx.measureText(label).width;
+                ctx.beginPath();
+                ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
+                ctx.fill();
 
-                        if((labelWidth+pixelSpace) > labelAreaWidth){
-                            if(label.length > 3){
-                                const estSizePerChar = (labelWidth/label.length);
-                                label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
-                            }
-                        }
-                        
+                //add text
+                ctx.beginPath();
+                ctx.fillStyle = "black";
+                ctx.textAlign = "start";
+                ctx.textBaseline = "middle";
+                ctx.fillText(label, textPosX, textPosY);
 
-                        const pieColor = colors? colors[i]: null;
-
-                        const fillColor = pieColor? pieColor: defaultColor;
-                        fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
-
-                    
-                        const textPosX = (labelX+fontSize), textPosY = startY;
-
-                        ctx.beginPath();
-                        ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
-                        ctx.fill();
-
-                        //add text
-                        ctx.beginPath();
-                        ctx.fillStyle = "black";
-                        ctx.textAlign = "start";
-                        ctx.textBaseline = "middle";
-                        ctx.fillText(label, textPosX, textPosY);
-
-                        startY += pixelSpace;
-                        
-                    }
-                }
+                startY += pixelSpace;
+                
             }
         }
 

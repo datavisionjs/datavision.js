@@ -23,7 +23,7 @@ function DataVision(targetId) {
 
     //scrolls
     this.axisScrollBar = document.createElement("div");
-    this.axisScroll = {topIndex: 0, leftIndex: 0};
+    this.axisScroll = {topIndex: 0, leftIndex: 0, isScrollY: false, isScrollX: false};
 
     this.datasetNamesScrollBar = document.createElement("div");
     this.datasetNamesScrollTop = 0;
@@ -154,12 +154,63 @@ function DataVision(targetId) {
     //scrolls 
     this.getAxisScroll = function (){
         return this.axisScroll;
-    }
+    };
     this.getAxisScrollbar = function (){
         return this.axisScrollBar;
     };
+    this.getAxisScrollBarSize = function (){
+        return 20;
+    };
+    this.setAxisScrollContentSize = function (){
+        const layout = this.getLayout();
 
-    this.setAxisScroll = function (top, left){
+        const labelStyle = this.getStyle().label;
+        const fontSize = labelStyle.fontSize;
+
+        const canvas = this.getCanvas();
+        const canvasWidth = canvas.width, canvasHeight = canvas.height;
+
+        const graphPosition = layout.graphPosition;
+        const graphY = graphPosition.y;
+        const graphX = graphPosition.x;
+        const graphWidth = graphPosition.width;
+        const graphHeight = graphPosition.height;
+
+        const axisScroll = this.getAxisScroll();
+
+        //set barData
+        const axisData = layout.axisData;
+
+        const axisValues = axisData.values;
+        for(let key in axisValues){
+            const axis = axisValues[key];
+            const values = axis.values;
+
+            if(!axis.isAllNumbers){
+                let step = (graphWidth/values.length);
+                step < fontSize? step = fontSize: null;
+
+                axisScroll.contentHeight = ((values.length*step)+(canvasHeight-(graphY+graphHeight)));
+            }
+        }
+
+        const labels = axisData.labels;
+        for(let key in labels){
+
+            const axis = labels[key];
+            const values = axis.values;
+    
+            if(!axis.isAllNumbers){ 
+                let step = (graphWidth/values.length);
+                step < fontSize? step = fontSize: null;
+
+                axisScroll.contentWidth = ((fontSize*values.length)+graphX);
+
+            }
+        }
+    };
+
+    this.setAxisScrollIndex = function (top, left){
         const layout = this.getLayout();
         const axisData = layout? layout.axisData: null;
 
@@ -167,6 +218,8 @@ function DataVision(targetId) {
         const fontSize = labelStyle.fontSize || 0;
 
         const axisScroll = this.getAxisScroll();
+        const bar = this.getAxisScrollbar();
+        
 
         if(!isNaN(left)){
 
@@ -188,10 +241,106 @@ function DataVision(targetId) {
 
             axisScroll.leftIndex = index;
         }
-    }
 
-    this.addAxisScrollBars = function (){
+        if(!isNaN(top)){
 
+            top < 0? top = 0: null;
+
+            let valuesCount = 0;
+
+            const labels = axisData.values || {};
+            for(let key in labels){
+                const axis = labels[key];
+                const values = axis.values;
+                values.length > valuesCount? valuesCount = values.length: null;
+            }
+
+            const contentWidth = (valuesCount*fontSize);
+
+            const newTop = (top-(bar.scrollHeight-bar.clientHeight));
+            //index is given in decimal
+            const index = Math.abs((newTop/contentWidth)*valuesCount);
+
+            axisScroll.topIndex = index;
+        }
+    };
+
+    this.addAxisScrollBars = function (position){
+        const layout = this.getLayout();
+
+        const graphPosition = layout.graphPosition;
+        const graphWidth = graphPosition.width;
+        const graphHeight = graphPosition.height;
+
+
+        const target = this.getTarget();
+        const bar = this.getAxisScrollbar();
+        const content = bar.children[0] || document.createElement("div");
+
+        const axisScroll = this.getAxisScroll();
+
+        const contentWidth = axisScroll.contentWidth || 0, contentHeight = axisScroll.contentHeight || 0;
+
+        const barHasParent = bar.parentElement? true: false;
+
+        if(content){ 
+            content.style.width = (contentWidth||0) + "px";
+            content.style.height = (contentHeight||0) + "px";
+            content.style.border = "0px";
+            content.style.margin = "0px";
+            content.style.padding = "0px";
+            content.style.backgroundColor = "transparent";
+        }
+
+        if(bar){
+            bar.style.position = "absolute";
+            bar.style.left = (position.x||0) + "px";
+            bar.style.top = (position.y||0) + "px";
+            bar.style.height = (position.height||0) + "px";
+            bar.style.width = (position.width||0) +"px";
+            bar.style.border = "0px";
+            bar.style.margin = "0px";
+            bar.style.padding = "0px";
+            bar.style.overflow = "auto";
+            bar.style.backgroundColor = "transparent";
+        }
+        
+
+        if(target && ((contentWidth > graphWidth) || (contentHeight > graphHeight)) && bar.parentElement !== target){
+            const dv = this; //get datavision object
+            let timeoutId;
+            Global.on(bar, "scroll", function (){
+                dv.setAxisScrollIndex(bar.scrollTop, bar.scrollLeft);
+                
+                // Clear previous timeout, if any
+                clearTimeout(timeoutId);
+
+                // Set a new timeout
+                timeoutId = setTimeout(function() {
+                    dv.clearToolTipData();
+                    
+                    dv.updateTargetCanvas();
+
+                    dataVis.DrawPlotArea(dv);
+                    dataVis.Chart(dv);
+                    dv.updateCanvasCopy();
+                }, 10); // Adjust the delay as needed
+
+            }, "");
+
+            Global.on(bar, "mousemove", function (){
+                this.style.pointerEvents = "none";
+            }, "");
+
+            bar.appendChild(content);
+            target.appendChild(bar);
+
+            //set axis scroll after adding bar
+            !barHasParent? this.setAxisScrollIndex(0, 0): null;
+
+            axisScroll.isScrollX = contentWidth > graphWidth? true: false;
+            axisScroll.isScrollY = contentHeight > graphHeight? true: false;
+        }
     };
 
     this.getDatasetNamesScrollTop = function (){
@@ -285,13 +434,24 @@ function DataVision(targetId) {
 
             //set event on canvas
             const dv = this; //get datavision object
+            
+            Global.on(canvas, "wheel", function (){
+                const axisBar = dv.getAxisScrollbar();
+                axisBar? axisBar.style.pointerEvents = "": null;
+            });
+
+            Global.on(canvas, "mousedown", function (){
+                const axisBar = dv.getAxisScrollbar();
+                axisBar? axisBar.style.pointerEvents = "": null;
+            }, "touchstart");
+
             Global.on(canvas, "mousemove", function (event){
 
                 event.stopPropagation();
                 const mousePosition = Global.getMousePosition(event);
                 DisplayToolTip(event, dv, mousePosition);
 
-            }, "click");
+            }, "");
 
             Global.on(document, "click", function (){
                 dv.updateTargetCanvas();

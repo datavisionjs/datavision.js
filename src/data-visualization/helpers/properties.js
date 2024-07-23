@@ -91,6 +91,7 @@ export function setGraphPosition(dv){
     const x1Title = layout.xAxis? layout.xAxis.title: null;
     x1Title? xAxisBottom += axisTitleSpace: null;
 
+
     const graphX = (yAxisLeft), graphY = (titleTop);
     const graphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace+xAxisRight));
     const graphHeight = (canvasHeight-(titleTop+xAxisBottom));
@@ -327,13 +328,14 @@ export function setUpChart(dv){
                     const value = valueIsAllNumbers? Number(values[j]): values[j]? values[j]: "";
                     
                     //set maxTextlength
-                    const labelToMeasure = labelIsAllNumbers? xPrefix + Calc.toFixedIfNeeded(label, xDecimalPlaces) + xSuffix: label;
-                    let labelWidth = label.length > lastMaxLabel.length? ctx.measureText(labelToMeasure).width: null;
+                    const labelToMeasure = labelIsAllNumbers? xPrefix + Calc.toFixedIfNeeded(label, xDecimalPlaces) + xSuffix: label + "";
+                    let labelWidth = (label+"").length > (lastMaxLabel+"").length? ctx.measureText(labelToMeasure).width: null;
 
                     //If there's a value between 0 and -10 set the value to -10 and for measurement.
-                    const valueToMeasure = valueIsAllNumbers? yPrefix + Calc.toFixedIfNeeded((value < 0 && value > 10? -10: value), yDecimalPlaces) + ySuffix: value;
-                    let valueWidth = valueToMeasure.length > lastMaxValue.length? ctx.measureText(valueToMeasure).width: 0;
-                    
+                    const valueToMeasure = valueIsAllNumbers? yPrefix + Calc.toFixedIfNeeded((value < 0 && value > 10? -10: value), yDecimalPlaces) + ySuffix: value+"";
+                    let valueWidth = valueToMeasure.length > (lastMaxValue+"").length? ctx.measureText(valueToMeasure).width: 0;
+
+
                     if(dataType === "bar"){
                         
                         //loop to assign direction and mode to barDataset if a bar dataset includes it.
@@ -375,14 +377,23 @@ export function setUpChart(dv){
                         if(barData.values.has(newLabel)){
 
                             labelValues = barData.values.get(newLabel);
-                            labelValues.push(newValue);
+
+                            if(newValueIsAllNumbers){
+
+                                !isNaN(newValue)? labelValues.push(newValue): null;
+                            }else {
+                                labelValues.push(newValue);
+                            }
                         }
                         
                         if(!newLabelIsAllNumbers? newLabel.toString().length > 0:true){
 
+                            if(labelValues.length === 1 && newValueIsAllNumbers){
+                                isNaN(newValue)? labelValues = []: null;
+                            }
+
                             //set maxBarPerCategory if labelValues is more then the current value.
                             labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
-                            
 
                             barData.values.set(newLabel, labelValues);
         
@@ -480,9 +491,9 @@ export function setUpChart(dv){
 
                             //push value into an array bucket
                             if(valueIsAllNumbers){
-                                axisBucket.push([value]);
+                                !isNaN(value)? axisBucket.push([value]): axisBucket.push([]);
                             }else {
-                                labelIsAllNumbers? axisBucket.push([label]): null;
+                                labelIsAllNumbers? axisBucket.push([label]): axisBucket.push([]);
                             }
                         }
 
@@ -492,7 +503,6 @@ export function setUpChart(dv){
                                 const bucket = axisBucket[k];
 
                                 const newValue = Calc.computeOperation(operation, bucket);
-
                                 if(!isNaN(newValue)){
 
                                     if(valueIsAllNumbers){

@@ -16,11 +16,14 @@ const DrawTitleLabel = (dv) => {
 
     //set text alignment
     ctx.textAlign = 'center';
+    ctx.textBaseline = "alphabetic";
 
     if(titleLines){
 
         const fontSize = titleStyle.fontSize;
         ctx.font = fontSize+"px "+titleStyle.fontFamily;
+
+        ctx.fillStyle = "black";
 
         let x = (canvasWidth/2);
         let y = ((graphY/2)+(fontSize/2));
@@ -29,6 +32,8 @@ const DrawTitleLabel = (dv) => {
         if(titleLines.length > 1){
             y = fontSize;
         }
+
+        ctx.clearRect(0, 0, (position.x + position.width), position.y);
 
         for(let i = 0; i < titleLines.length; i++){
             const title = titleLines[i];

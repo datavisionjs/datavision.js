@@ -21,20 +21,21 @@
         let exp = "Math.cos(x)";
         //let exp = "x + 17";
         // Generate values
+        /*
         const xArray = [];
         const yArray = [];
-        for (let x = 0; x <= 5; x += 0.1) {
+        for (let x = 0; x <= 10; x += 0.1) {
             xArray.push(x);
             yArray.push(eval(exp));
-        }
+        }*/
         
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        //const yArray = [55.1234, -49, 44, 20, 15, 20, 10, 40];
-        //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
+        const yArray = [55.1234, "N/A", 44, 20, 15, 20, 49, 40];
+        const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France", "France"];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -104,12 +105,8 @@
 
         
         const data = [
-           {values: yArray, labels: xArray, type: "pie",
-                mode: "scatter",
-               
-                design: {
-                    
-                }
+           {
+                values: yArray, labels: xArray, type: "bar",
             }
         ]; 
 
@@ -124,8 +121,7 @@
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 
-        const chart2 = new DataVision("my-chart2");
-        chart2.plot(data, layout);
+        
 
         window.addEventListener('resize', function () {
             chart.plot(data, layout);
