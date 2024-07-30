@@ -22,7 +22,10 @@ function DataVision(targetId) {
     this.style = {};
 
     //scrolls
-    this.axisScrollBar = document.createElement("div");
+    this.axisScrollWheelArea = document.createElement("div");
+    this.axisHrScrollBar = document.createElement("div");
+    this.axisVrScrollBar = document.createElement("div");
+
     this.axisScroll = {topIndex: 0, leftIndex: 0, isScrollY: false, isScrollX: false};
 
     this.datasetNamesScrollBar = document.createElement("div");
@@ -156,11 +159,27 @@ function DataVision(targetId) {
         return this.axisScroll;
     };
     this.getAxisScrollbar = function (){
-        return this.axisScrollBar;
+
+        return {
+            wheelArea: this.axisScrollWheelArea,
+            hr: this.axisHrScrollBar,
+            vr: this.axisVrScrollBar
+        };
     };
+
+
     this.getAxisScrollBarSize = function (){
-        return 20;
+        const bar = this.getAxisScrollbar();
+
+        const hrHeight = bar.hr? bar.hr.offsetHeight: 0;
+        const vrWidth = bar.vr? bar.vr.offsetWidth: 0;
+
+        return {
+            vrWidth: vrWidth,
+            hrHeight: hrHeight
+        };
     };
+
     this.setAxisScrollContentSize = function (){
         const layout = this.getLayout();
 
@@ -180,8 +199,10 @@ function DataVision(targetId) {
 
         //set barData
         const axisData = layout.axisData;
+        const isHorizontal = axisData.direction === "hr";
 
-        const axisValues = axisData.values;
+        const axisValues = isHorizontal? axisData.labels: axisData.values;
+        
         for(let key in axisValues){
             const axis = axisValues[key];
             const values = axis.values;
@@ -190,14 +211,18 @@ function DataVision(targetId) {
                 let step = (graphWidth/values.length);
                 step < fontSize? step = fontSize: null;
 
-                axisScroll.contentHeight = ((values.length*step)+(canvasHeight-(graphY+graphHeight)));
+                const newContentHeight = ((values.length*fontSize)+(canvasHeight-(graphY+graphHeight))) || 0;
+                const contentHeight = axisScroll.contentHeight || 0;
+
+                newContentHeight > contentHeight? axisScroll.contentHeight = newContentHeight: null;
+                
             }
         }
 
-        const labels = axisData.labels;
-        for(let key in labels){
+        const axisLabels = isHorizontal? axisData.values: axisData.labels;
+        for(let key in axisLabels){
 
-            const axis = labels[key];
+            const axis = axisLabels[key];
             const values = axis.values;
     
             if(!axis.isAllNumbers){ 
@@ -218,7 +243,7 @@ function DataVision(targetId) {
         const fontSize = labelStyle.fontSize || 0;
 
         const axisScroll = this.getAxisScroll();
-        const bar = this.getAxisScrollbar();
+        const wheelArea = this.getAxisScrollbar().wheelArea;
         
 
         if(!isNaN(left)){
@@ -257,7 +282,7 @@ function DataVision(targetId) {
 
             const contentWidth = (valuesCount*fontSize);
 
-            const newTop = (top-(bar.scrollHeight-bar.clientHeight));
+            const newTop = (top-(wheelArea.scrollHeight-wheelArea.clientHeight));
             //index is given in decimal
             const index = Math.abs((newTop/contentWidth)*valuesCount);
 
@@ -272,10 +297,14 @@ function DataVision(targetId) {
         const graphWidth = graphPosition.width;
         const graphHeight = graphPosition.height;
 
-
         const target = this.getTarget();
+
         const bar = this.getAxisScrollbar();
-        const content = bar.children[0] || document.createElement("div");
+        const wheelArea = bar.wheelArea;
+        const hrBar = bar.hr;
+        const vrBar = bar.vr;
+
+        const content = wheelArea.children[0] || document.createElement("div");
 
         const axisScroll = this.getAxisScroll();
 
@@ -284,56 +313,138 @@ function DataVision(targetId) {
         const barHasParent = bar.parentElement? true: false;
 
         if(content){ 
-            content.style.width = (contentWidth||0) + "px";
-            content.style.height = (contentHeight||0) + "px";
+            content.style.width = (contentWidth||1) + "px";
+            content.style.height = (contentHeight||1) + "px";
             content.style.border = "0px";
             content.style.margin = "0px";
             content.style.padding = "0px";
             content.style.backgroundColor = "transparent";
         }
 
-        if(bar){
-            bar.style.position = "absolute";
-            bar.style.left = (position.x||0) + "px";
-            bar.style.top = (position.y||0) + "px";
-            bar.style.height = (position.height||0) + "px";
-            bar.style.width = (position.width||0) +"px";
-            bar.style.border = "0px";
-            bar.style.margin = "0px";
-            bar.style.padding = "0px";
-            bar.style.overflow = "auto";
-            bar.style.backgroundColor = "transparent";
+
+        if(wheelArea){
+            wheelArea.style.position = "absolute";
+            wheelArea.style.left = (position.x||0) + "px";
+            wheelArea.style.top = (position.y||0) + "px";
+            wheelArea.style.height = (position.height||0) + "px";
+            wheelArea.style.width = (position.width||0) +"px";
+            wheelArea.style.border = "0px";
+            wheelArea.style.margin = "0px";
+            wheelArea.style.padding = "0px";
+            wheelArea.style.overflow = "auto";
+            wheelArea.style.scrollbarWidth = "none";
+            wheelArea.style.backgroundColor = "transparent";
+        }
+
+        if(hrBar){
+            hrBar.style.position = "absolute";
+            hrBar.style.left = "0px";
+            hrBar.style.top = ((position.y+position.height)||0) + "px";
+            hrBar.style.width = (position.width||1) +"px";
+            hrBar.style.border = "0px";
+            hrBar.style.margin = "0px";
+            hrBar.style.padding = "0px";
+            hrBar.style.overflow = "auto";
+            hrBar.style.backgroundColor = "transparent";
+        }
+
+        if(vrBar){
+            vrBar.style.position = "absolute";
+            vrBar.style.left = (position.x+position.width+2||0) + "px";
+            vrBar.style.top = ((position.y)||0) + "px";
+            vrBar.style.height = (graphHeight||1) +"px";
+            vrBar.style.border = "0px";
+            vrBar.style.margin = "0px";
+            vrBar.style.padding = "0px";
+            vrBar.style.overflow = "auto";
+            vrBar.style.backgroundColor = "transparent";
         }
         
 
-        if(target && ((contentWidth > graphWidth) || (contentHeight > graphHeight)) && bar.parentElement !== target){
+        if(target && ((contentWidth > graphWidth) || (contentHeight > graphHeight)) && wheelArea.parentElement !== target){
             const dv = this; //get datavision object
+
+            const scrollAndChart = function (){
+                dv.clearToolTipData();
+                    
+                dv.updateTargetCanvas();
+
+                dataVis.DrawPlotArea(dv);
+                dataVis.Chart(dv);
+                dv.updateCanvasCopy();
+            };
+
             let timeoutId;
-            Global.on(bar, "scroll", function (){
-                dv.setAxisScrollIndex(bar.scrollTop, bar.scrollLeft);
+            let isClickScroll = false;
+    
+            Global.on(wheelArea, "wheel", function (){
+                isClickScroll = false;
+            }, "");
+            Global.on(wheelArea, "scroll", function (){
+                dv.setAxisScrollIndex(wheelArea.scrollTop, wheelArea.scrollLeft);
                 
                 // Clear previous timeout, if any
                 clearTimeout(timeoutId);
 
                 // Set a new timeout
                 timeoutId = setTimeout(function() {
-                    dv.clearToolTipData();
+                    scrollAndChart();
+
+                    hrBar.scrollLeft = wheelArea.scrollLeft;
                     
-                    dv.updateTargetCanvas();
-
-                    dataVis.DrawPlotArea(dv);
-                    dataVis.Chart(dv);
-                    dv.updateCanvasCopy();
+                    const topScrollPercentage = wheelArea.scrollTop / (wheelArea.scrollHeight - wheelArea.clientHeight);
+                    vrBar.scrollTop = (topScrollPercentage * (vrBar.scrollHeight - vrBar.clientHeight));
+                    
                 }, 10); // Adjust the delay as needed
-
             }, "");
 
-            Global.on(bar, "mousemove", function (){
+            Global.on(hrBar, "mousedown", function (){
+                isClickScroll = true;
+            }, "");
+            Global.on(hrBar, "scroll", function (){
+                if(isClickScroll){
+                    wheelArea.scrollLeft = hrBar.scrollLeft;
+                }
+            }, "");
+
+            Global.on(vrBar, "mousedown", function (){
+                   isClickScroll = true;
+            }, "");
+            Global.on(vrBar, "scroll", function (){
+                if(isClickScroll){
+                    const topScrollPercentage = vrBar.scrollTop / (vrBar.scrollHeight - vrBar.clientHeight);
+                    wheelArea.scrollTop = (topScrollPercentage * (wheelArea.scrollHeight - wheelArea.clientHeight));
+                }
+            }, "");
+
+            Global.on(wheelArea, "mousemove", function (){
                 this.style.pointerEvents = "none";
             }, "");
 
-            bar.appendChild(content);
-            target.appendChild(bar);
+            //add content to scroll bars 
+            wheelArea.appendChild(content);
+
+            target.appendChild(wheelArea);
+
+            //add horizontal scrollbar
+            if(contentWidth > position.width){
+                const newContent = content.cloneNode(true);
+                hrBar.appendChild(newContent);
+                target.appendChild(hrBar);
+
+                const barWidth = hrBar.offsetHeight - hrBar.clientHeight;
+                hrBar.style.height = barWidth +"px";
+            }
+            
+            //add vertical scrollbar
+            if(contentHeight > position.height){
+                const newContent = content.cloneNode(true);
+                vrBar.appendChild(newContent);
+                target.appendChild(vrBar);
+
+                const barWidth = vrBar.offsetWidth - vrBar.clientWidth;
+                vrBar.style.width = barWidth +"px";
+            }
 
             //set axis scroll after adding bar
             !barHasParent? this.setAxisScrollIndex(0, 0): null;
@@ -436,13 +547,13 @@ function DataVision(targetId) {
             const dv = this; //get datavision object
             
             Global.on(canvas, "wheel", function (){
-                const axisBar = dv.getAxisScrollbar();
-                axisBar? axisBar.style.pointerEvents = "": null;
+                const wheelArea = dv.getAxisScrollbar().wheelArea;
+                wheelArea? wheelArea.style.pointerEvents = "": null;
             });
 
             Global.on(canvas, "mousedown", function (){
-                const axisBar = dv.getAxisScrollbar();
-                axisBar? axisBar.style.pointerEvents = "": null;
+                const wheelArea = dv.getAxisScrollbar().wheelArea;
+                wheelArea? wheelArea.style.pointerEvents = "": null;
             }, "touchstart");
 
             Global.on(canvas, "mousemove", function (event){

@@ -43,10 +43,11 @@ const GetText = (data, ctx, type, fontSize) => {
 
     const prefix = (tickFormat.prefix || ""), suffix = (tickFormat.suffix || "");
     const decimalPlaces = tickFormat.decimalPlaces;
+    const separateNumbers = tickFormat.separateNumbers;
 
     if(!textWidth){
         //set value
-        let value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[type], decimalPlaces)) + suffix;
+        let value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[type], decimalPlaces), separateNumbers) + suffix;
 
         //shorten value
         const valueWidth = ctx.measureText(value).width;

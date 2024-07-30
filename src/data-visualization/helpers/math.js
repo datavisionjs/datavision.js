@@ -86,6 +86,8 @@ export function getClosestToZero(arr){
     return closestValue;
 }
 
+
+
 export function getNumberInRange(number, range){
     const rangeMin = Math.min(...range);
     const rangeMax = Math.max(...range);
@@ -104,8 +106,8 @@ export function getNumberInRange(number, range){
 }
 
 //add comma to every third digit from the right of numbers
-export function commaSeparateNumber(number) {
-    if (typeof number !== 'number' || isNaN(number)) {
+export function commaSeparateNumber(number, separateNumbers) {
+    if (typeof number !== 'number' || isNaN(number) || separateNumbers === false) {
         return number;
     }
 
@@ -164,6 +166,28 @@ export function isAllNumbers(arr) {
     }
 
     return numberCount > (stringCount/2);
+}
+
+export function isYearSeries(range){
+    // Define the typical range for year values
+    const minYear = 1000;
+    const maxYear = 9999;
+
+    const minRange = range[0];
+    const maxRange = range[1];
+
+    // Check if the data series is an array
+    if (isNaN(minRange) || isNaN(maxRange)) {
+        return false;
+    }
+
+    if(minRange < minYear || maxRange > maxYear){
+        return false;
+    }
+
+
+    return true;
+
 }
 
 //Function to get the next key given a key in a Map
@@ -300,7 +324,7 @@ export function zeroBasedRangeAdjust(range, interval){
 }
 
 //find next position
-export function findAxisBoundPositions(dv, index, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted){
+export function findAxisBoundPositions(dv, index, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted, loopStart, loopEnd){
     
     let prevPosition = lastPosition;
     let nextPosition = getAxisPosition(dv, labels[index], values[index], valueAxisName, labelAxisName);
@@ -308,12 +332,16 @@ export function findAxisBoundPositions(dv, index, labels, values, valueAxisName,
     let newIndex = index;
 
     if(!isDrawStarted){
-
-        while(posIsOutOfBound(dv, nextPosition)){
+      
+        let isInLoop = (newIndex >= loopStart && newIndex <= loopEnd);
+        
+        while(posIsOutOfBound(dv, nextPosition) && isInLoop){
             newIndex++;
+            isInLoop = (newIndex >= loopStart && newIndex <= loopEnd);
+
             prevPosition = {...nextPosition};
             nextPosition = getAxisPosition(dv, labels[newIndex], values[newIndex], valueAxisName, labelAxisName);
-            
+
             if(!nextPosition){
                 break;
             }

@@ -28,11 +28,16 @@ const DrawElements = (dv, dataset) => {
     const axisScroll = dv.getAxisScroll();
     //const scrollIndex = isHorizontal? axisScroll.topIndex: axisScroll.leftIndex;
 
-    const topIndex = (axisScroll.topIndex-1), leftIndex = (axisScroll.leftIndex-1);
-    const isTopIndexMax = axisScroll.topIndex > axisScroll.leftIndex;
+    const topIndex = Math.floor(axisScroll.topIndex > 0? (axisScroll.topIndex-1): 0), leftIndex = Math.floor(axisScroll.leftIndex > 0? (axisScroll.leftIndex-1): 0);
+    const topIndexEnd = Math.ceil((topIndex + 2) + (graphHeight/fontSize));
+    const leftIndexEnd = Math.ceil((leftIndex + 2) + (graphWidth/fontSize));
 
-    const scrollIndex = Math.floor(Math.max((topIndex < 0? 0: topIndex), (leftIndex < 0? 0: leftIndex)));
-    const scrollIndexEnd = Math.ceil((scrollIndex + 2) + ((isTopIndexMax? graphHeight: graphWidth)/fontSize));
+    const topIndexDiff = Math.abs(topIndexEnd-topIndex), leftIndexDiff = Math.abs(leftIndexEnd-leftIndex);
+
+    const isLoopLeftAxis = axisScroll.isScrollX && (leftIndexDiff > topIndexDiff);
+
+    const scrollIndex = isLoopLeftAxis? leftIndex: topIndex;
+    const scrollIndexEnd = isLoopLeftAxis? leftIndexEnd: topIndexEnd;
 
 
     if(type === "bar"){
@@ -114,7 +119,8 @@ const DrawElements = (dv, dataset) => {
             const barValues = Array.from(barObject.values());
             const keys = Array.from(barObject.keys());
 
-            const loopEnd = baseAxis.isAllNumbers?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
+            //const loopEnd = baseAxis.isAllNumbers?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
+            const loopEnd = scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
 
             for(let index = scrollIndex; index < loopEnd; index++){
 
@@ -256,6 +262,7 @@ const DrawElements = (dv, dataset) => {
             const labels = isHorizontal? dataset.values: dataset.labels;
             const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
             
+            let darwEndedHere = false;
             if(labels){
                 
                 let isDrawStarted = false;
@@ -265,8 +272,7 @@ const DrawElements = (dv, dataset) => {
 
                 const loopStart = (scrollIndex);
                 const loopEnd = isAllNumbers? labels.length: scrollIndexEnd < labels.length? scrollIndexEnd: labels.length;
-                
-                
+
                 for(var i = loopStart; i < loopEnd; i++){
 
 
@@ -297,8 +303,8 @@ const DrawElements = (dv, dataset) => {
 
                         if(type === "line"){
 
-                            const boundPosition = Calc.findAxisBoundPositions(dv, i, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted);
-
+                            const boundPosition = Calc.findAxisBoundPositions(dv, i, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted, loopStart, loopEnd);
+                            
                             positionIsOut = Calc.posIsOutOfBound(dv, prevPosition) && Calc.posIsOutOfBound(dv, position) && Calc.posIsOutOfBound(dv, nextPosition);
                             const isCurrentPositionOut = Calc.posIsOutOfBound(dv, position);
                             
@@ -309,9 +315,12 @@ const DrawElements = (dv, dataset) => {
                             }else {
                                 
                                 if(!positionIsOut){
-                                    isDrawStarted = true;
+                                    !isDrawStarted? positionType = "start": null;
                                     positionIsOut = Calc.posIsOutOfBound(dv, position);
-                                    
+                                   
+                                    isDrawStarted = true;
+
+
                                     DrawLines(dv, dataset, positionType, size, position, lastPosition, boundPosition, positionIsOut);
                                     lastPosition = position;
                                 }
@@ -346,7 +355,6 @@ const DrawElements = (dv, dataset) => {
                         
 
                     }else {
-                        
                         //draw what lines drawn
                         ctx.stroke();
 

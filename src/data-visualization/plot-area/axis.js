@@ -94,7 +94,7 @@ function drawLabels(dv, position){
         if(title){
             ctx.beginPath();
             
-            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize/2)+scrollBarSize)));
+            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize/2)+scrollBarSize.hrHeight)));
         }
     }
 }
@@ -155,6 +155,7 @@ function drawYAxis(dv, position){
 
                 const format = axis.tickFormat || {};
                 const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+                const separateNumbers = format.separateNumbers;
 
                 const rangeStart = range[0];
 
@@ -174,7 +175,7 @@ function drawYAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces)) + suffix;
+                    value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
 
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
@@ -313,6 +314,7 @@ function drawXAxis(dv, position){
 
                 const format = axis.tickFormat || {};
                 const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+                const separateNumbers = format.separateNumbers;
 
                 const rangeStart = range[0];
                 const rangeEnd = range[1];
@@ -339,7 +341,7 @@ function drawXAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    label = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces)) + suffix;
+                    label = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
 
                     //label = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
                     axisX = (graphX+(pixelStep*i));

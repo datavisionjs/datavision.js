@@ -139,7 +139,7 @@ function getTickData(range){
             }else if(rangeStart > 0){
 
                 // Calculate the interval size based on the desired number of ticks
-                intervalSize = rangeEnd / Math.max(desiredTickCount - 1, 1);
+                intervalSize = (rangeEnd-rangeStart) / Math.max(desiredTickCount - 1, 1);
             }
 
         }
@@ -486,8 +486,18 @@ export function setUpChart(dv){
                                 bucket.push(label);
                             }
                         }else {
-                            newLabels.push(label);
-                            newValues.push(value);
+                            if(!labelIsAllNumbers && !valueIsAllNumbers){
+                                const xIndex = newLabels.indexOf(label) != -1;
+                                const yIndex = newValues.indexOf(value) != -1;
+        
+                                if(!xIndex || !yIndex){
+                                    newLabels.push(label);
+                                    newValues.push(value);
+                                }
+                            }else {
+                                newLabels.push(label);
+                                newValues.push(value);
+                            }
 
                             //push value into an array bucket
                             if(valueIsAllNumbers){
@@ -498,7 +508,6 @@ export function setUpChart(dv){
                         }
 
                         if(j === (loopEnd-1)){ //at the end of the j loop 
-
                             for(let k = 0; k < axisBucket.length; k++){
                                 const bucket = axisBucket[k];
 
@@ -549,6 +558,7 @@ export function setUpChart(dv){
 
                     (!labelIsAllNumbers || valueIsAllNumbers)? xAxis.values.push(label): null;
                     (!valueIsAllNumbers || labelIsAllNumbers)? yAxis.values.push(value): null;
+                    
 
                 }
                 
@@ -698,11 +708,20 @@ export function setUpChart(dv){
                     maxWidth = Math.max(startWidth, endWidth);
                 }
             }
+
+            //set separateNumbers
+            const tickFormat = axis.tickFormat;
+            if(tickFormat){
+                if(!tickFormat.separateNumbers){
+                    tickFormat.separateNumbers = !Calc.isYearSeries(tick.range);
+                }
+            }
             
             axis.maxWidth = maxWidth;
             axis.range = tick.range;
             axis.tickData = tick;
             axis.isAllNumbers = isAllNumbers;
+            axis.tickFormat = {...tickFormat};
         }
     };
 
