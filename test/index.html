@@ -14,29 +14,33 @@
     <div id="my-chart2" style="width:100%;max-width:800px"></div>
 
     <script>
-
-        const title = "Testing";
+    
         
         /*
+        //let exp = "Math.cos(x)";
         let exp = "x + 17";
         // Generate values
+        
         const xArray = [];
         const yArray = [];
         for (let x = 0; x <= 10; x += 1) {
-            xArray.push(x);
             yArray.push(eval(exp));
+            xArray.push(x);
         }*/
-
+        
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        //const yArray = [55.1234, -49, 44, 20, 15, 20, 10, 40];
-        //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France"];
+        //const xArray = ["Italy","France","Spain","USA","Argentina"];
+        //const yArray = [55, 49, 44, 24, 15];
 
-        const yArray = [55000.3, 49000, 44000, 24000, 15000];
-        const xArray = ["Italy","France","Spain","USA","Argentina"];
+        //const yArray = [55000.3, 49000, 44000, 24000, 15000];
+        //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
+        //const yArray = [55, 49, 44, 24, 15];
+
+        //const xArray = ["Italy","France","Spain","USA","Argentina"];
 
         //const yArray = [1.5, 1, 0.01, 0.2];
         //const xArray = ["Cadillac","Mercedes","Genesis","Porshe"];
@@ -95,29 +99,62 @@
         
         // Define Data
 
-        //const xArray = [1, 2, 3, 4];
-        //const yArray = [10, 20, 30, 40];
+        //const xArray = [1, 2];
+        //const yArray = [10, 20];
+    
+    const xArray = [2010, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2030];
+    const yArray = [12000, 14000, 16000, 18000, 20000, 22000, 24000, 26000, 28000, 30000, 32000, 34000, 36000, 38000, 40000, 42000, 44000, 46000, 48000, 50000];
 
-        
+    var valu = [
+      ['Salaries', 'Office', 'Merchandise', 'Legal', 'TOTAL'],
+      [1200000, 20000, 80000, 2000, 12120000],
+      [1300000, 20000, 70000, 2000, 130902000],
+      [1300000, 20000, 120000, 2000, 131222000],
+      [1400000, 20000, 90000, 2000, 14102000]];
+
+      var values = [
+      ['Salaries', 'Salaries', 'Salaries', 'Legal', 'Legal'],
+      [1200000, 20000, 80000, 2000, 12120000],
+      [1300000, 20000, 70000, 2000, 130902000],
+      [1300000, 20000, 120000, 2000, 131222000],
+      [0, 0, 0, 0, "NA"]];
+
+
+
         const data = [
-           {values: yArray, labels: xArray, type: "line",
-                name: "Minimum",
-               
-                design: {
-                    color: ['red', 'green', 'blue', 'orange'],
-                    text: ["A Size", "B Size", "C Size", "D Size"],
-                }
+           
+           {
+                columnWidth: [1,2,1],
+                header: {
+                    values: ["EXPENSES", "Q1", "Q2", "Q3", "Q4", "Q5"],
+                    font: {weight: "bold", style: "italic", color: "white"},
+                    line: {width: 1, color: "black"},
+                    fill: {color: "gray"}
+                },
+                
+                data: {
+                    
+                    values: values,
+                    font: {color: [["black","black","black","black","white"], "black"], size: 12},
+                    line: {width: 1},
+                    fill: {color: [["", "#CCC", "", "#CCC", ""]]},
+                    operation: ["sum"]
+                },
+                
+                type: "table",
             }
-        ]; 
+        ];
+
         
 
         //Define Layout
-        const layout = {title: title, yAxis: {title: "Population"}, xAxis: {title: ""}};
+        const layout = {
+            title: "My Table"
+        };
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 
-        const chart2 = new DataVision("my-chart2");
-        chart2.plot(data, layout);
+        
 
         window.addEventListener('resize', function () {
             chart.plot(data, layout);

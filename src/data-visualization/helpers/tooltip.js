@@ -14,8 +14,16 @@ const DrawHover = (dv, ctx, data) => {
     }else if(data.type === "pie"){
         //draw arc line
         ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.lineWidth = ctx.canvas.width * 0.0063;
-        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-4), data.startAngle, data.endAngle);
+
+        const lineWidth = ctx.canvas.width * 0.0063;
+        ctx.lineWidth = lineWidth;
+        
+        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-2), data.startAngle, data.endAngle);
+    }else if(data.type === "line"){
+        ctx.strokeStyle = data.color || "#000";
+        ctx.fillStyle = data.color || "transparent";
+        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius+1), 0, 2 * Math.PI);
+        ctx.fill();
     }else {
         ctx.arc(data.midPoint.x, data.midPoint.y, data.radius, 0, 2 * Math.PI);
     }
@@ -23,17 +31,24 @@ const DrawHover = (dv, ctx, data) => {
     ctx.stroke();
 }
 
-const GetText = (data, ctx, name, fontSize) => {
-    if(!data[name] && data[name] !== 0) return {text: null, width: 0};
+const GetText = (data, ctx, type, fontSize) => {
+    if(!data[type] && data[type] !== 0) return {text: null, width: 0};
 
     const canvasWidth = ctx.canvas.width;
 
-    let text = data[name+"Text"];
-    let textWidth = data[name+"Width"];
+    let text = data[type+"Text"];
+    let textWidth = data[type+"Width"];
+
+    const tickFormat = data.tickFormat? data.tickFormat[type] || {}: {};
+
+    const prefix = (tickFormat.prefix || ""), suffix = (tickFormat.suffix || "");
+    const decimalPlaces = tickFormat.decimalPlaces;
+    const separateNumbers = tickFormat.separateNumbers;
 
     if(!textWidth){
         //set value
-        let value = Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[name]));
+        let value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[type], decimalPlaces), separateNumbers) + suffix;
+
         //shorten value
         const valueWidth = ctx.measureText(value).width;
         const maxValueWidth = valueWidth > canvasWidth? (canvasWidth*0.9): valueWidth;
@@ -42,25 +57,25 @@ const GetText = (data, ctx, name, fontSize) => {
         value = Global.shortenText(value, ((maxValueWidth)/valueCharSize));
 
         //set title
-        let title = data[name+"Title"];
-        if(title){
+        let name = data[type+"Name"];
+        if(name){
             //shorten title
-            const titleWidth = ctx.measureText(title).width;
+            const titleWidth = ctx.measureText(name).width;
             const maxTitleWidth = ((canvasWidth-maxValueWidth)-fontSize) || 0;
 
-            const titleCharSize = (titleWidth/title.length);
-            title = Global.shortenText(title, ((maxTitleWidth)/titleCharSize))+": ";
+            const titleCharSize = (titleWidth/name.length);
+            name = Global.shortenText(name, ((maxTitleWidth)/titleCharSize))+": ";
         }
 
         //set percent
-        const percent = data.percent && name === "value"? " ("+data.percent+"%)": "";
+        const percent = data.percent && type === "value"? " ("+data.percent+"%)": "";
 
-        text = (title? title+" ": "") + value + percent;
+        text = (name? name+" ": "") + value + percent;
         textWidth = ctx.measureText(text).width;
     }
 
-    data[name+"Text"] = text;
-    data[name+"Width"] = textWidth;
+    data[type+"Text"] = text;
+    data[type+"Width"] = textWidth;
 
     return {text: text, width: textWidth};
 }
@@ -150,6 +165,8 @@ const DisplayToolTip = (event, dv, position) => {
 
         const currentRect = {x: x, y: y, width: 1, height: 1};
 
+        let closestData = null;
+
         for (let i = 0; i < toolTipData.length; i++) {
             const data = toolTipData[i];
 
@@ -159,20 +176,40 @@ const DisplayToolTip = (event, dv, position) => {
 
                 if(Global.crashWithRect(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                    closestData = null;
                     break;
                 }
             }else if(type === "pie"){
                 if(Global.crashWithAngle(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                    closestData = null;
                     break;
                 }
             }else {
                 if(Global.crashWithCircle(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                    closestData = null;
                     break;
+                }else {
+
+                    const newClosestData = Global.crashWithDistance(currentRect, data, 22);
+                    if(newClosestData){
+                        if(closestData){
+                            if(closestData.dist > newClosestData.dist){
+                                closestData = newClosestData;
+                            }
+                        }else {
+                            closestData = newClosestData;
+                        }
+                    }
+
                 }
             }
             
+        }
+
+        if(closestData){
+            DrawToolTip(dv, ctx, {x: x, y: y}, closestData.data);
         }
 
     }

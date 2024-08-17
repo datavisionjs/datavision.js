@@ -1,9 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPoints = (dv, size, position) => {
-
-    const ctx = dv.getCtx();
+const DrawPoints = (dv, ctx, size, position) => {
 
     
     if(position){

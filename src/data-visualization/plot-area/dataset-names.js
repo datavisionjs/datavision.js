@@ -15,6 +15,8 @@ const DrawDatasetNames = (dv) => {
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
+    let pixelSpace = (fontSize+(fontSize/2));
+
 
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;
@@ -22,12 +24,12 @@ const DrawDatasetNames = (dv) => {
     const yAxisRight = graphPosition.yAxisRight;
 
     const labelAreaWidth = (canvasWidth*0.2);
-    const labelAreaHeight = (canvasHeight-graphY);
+    //const labelAreaHeight = (canvasHeight-graphY);
 
     const labelX = ((graphX+graphWidth)+yAxisRight)+fontSize;
 
-    const datasetNameData = layout.datasetNameData;
-    const datasetTotal = datasetNameData.total;
+    //const datasetNameData = layout.datasetNameData;
+    //const datasetTotal = datasetNameData.total;
 
     const datasetData = dv.getData();
 
@@ -43,76 +45,78 @@ const DrawDatasetNames = (dv) => {
 
         let startY = (graphY+(fontSize/2));
 
-        for(let o = 0; o < datasetData.length; o++){
-            const dataset = datasetData[o];
+        const names = [];
+        const colors = [];
 
-            if(dataset){
-                let labels = dataset.labels;
-                const dataType = dataset.type;
-                let colors = dataset.colors;
+        for (let i = 0; i < datasetData.length; i++) {
+            const dataset = datasetData[i]; // Assuming datasetData is your array of datasets
+            const dataNames = dataset.names || [dataset.name || ""]; // Check if dataset has 'names' property, else fallback to 'name'
+            const dataColors = dataset.colors || (dataset.design? dataset.design.color: "");
 
-                const axisChartTypes = ["line", "bar", "scatter", "bubble"];
-                if(axisChartTypes.includes(dataType)){
-                    if(dataType === "bar"){
-                        labels = dataset.names;
-                        colors = dataset.colors;
-                    }else {
-                        labels = [dataset.name];
+           names.push(...dataNames);
+           colors.push(...Array.isArray(dataColors)? dataColors: [dataColors]);
+        }
 
-                        const designColor = dataset.design.color;
-                        colors = Array.isArray(designColor)? designColor: [designColor];
+        const strollTop = dv.getDatasetNamesScrollTop();
+        const contentHeight = (names.length*pixelSpace);
+
+        const scrollIndexDecimal = (strollTop/contentHeight)*names.length;
+        const scrollIndex = Math.floor(scrollIndexDecimal);
+
+        startY -= (fontSize*(scrollIndexDecimal-scrollIndex));
+
+        //clear dataset area names
+        const labelFontX = (labelX-((fontSize/2)+1));
+        ctx.clearRect(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
+
+        if(names){
+
+            for (let i = scrollIndex; i < names.length; i++) {
+
+                //set defualtColor
+                const defaultColor = customColors.get(i).code;
+
+                let label = names[i];
+                const labelWidth = ctx.measureText(label).width;
+
+                if((labelWidth+pixelSpace) > labelAreaWidth){
+                    if(label.length > 3){
+                        const estSizePerChar = (labelWidth/label.length);
+                        label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
                     }
                 }
+                
 
-                if(labels){
+                const pieColor = colors? colors[i]: null;
 
-                    let pixelSpace = (fontSize*2);
+                const fillColor = pieColor? pieColor: defaultColor;
+                fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
 
-                    if((datasetTotal*(fontSize*2)) >= (graphHeight+(fontSize/2))){
-                        pixelSpace = Math.round(labelAreaHeight/datasetTotal);
-                    }
+            
+                const textPosX = (labelX+fontSize), textPosY = startY;
 
-                    for (let i = 0; i < labels.length; i++) {
+                ctx.beginPath();
+                ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
+                ctx.fill();
 
-                        //set defualtColor
-                        const defaultColor = customColors[i].code;
+                //add text
+                ctx.beginPath();
+                ctx.fillStyle = "black";
+                ctx.textAlign = "start";
+                ctx.textBaseline = "middle";
+                ctx.fillText(label, textPosX, textPosY);
 
-                        let label = labels[i];
-                        const labelWidth = ctx.measureText(label).width;
-
-                        if((labelWidth+pixelSpace) > labelAreaWidth){
-                            if(label.length > 3){
-                                const estSizePerChar = (labelWidth/label.length);
-                                label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
-                            }
-                        }
-                        
-
-                        const pieColor = colors? colors[i]: null;
-
-                        const fillColor = pieColor? pieColor: defaultColor;
-                        fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
-
-                    
-                        const textPosX = (labelX+(fontSize)), textPosY = startY;
-
-                        ctx.beginPath();
-                        ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
-                        ctx.fill();
-
-                        //add text
-                        ctx.beginPath();
-                        ctx.fillStyle = "black";
-                        ctx.textAlign = "start";
-                        ctx.textBaseline = "middle";
-                        ctx.fillText(label, textPosX, textPosY);
-
-                        startY += pixelSpace;
-                        
-                    }
-                }
+                startY += pixelSpace;
+                
             }
         }
+
+        //clear top of dataset names 
+        ctx.clearRect(labelFontX, 0, (canvasWidth-labelFontX), graphY);
+         //clear bottom of dataset names 
+        ctx.clearRect(labelFontX, (graphY+graphHeight), (canvasWidth-labelFontX), (canvasHeight-(graphY+graphHeight)));
+
+        dv.addDatasetNamesScrollBar({x: labelFontX, y: graphY, width: (canvasWidth-labelFontX), height: graphHeight}, contentHeight);
     }
 }
 

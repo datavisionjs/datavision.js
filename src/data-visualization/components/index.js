@@ -1,40 +1,50 @@
+import * as Global from '../helpers/global.js';
 
-import Scatter from './scatter.js'
-import Bar from './bar.js'
-import Line from './line.js'
-import Pie from './pie.js'
+import AxisChart from './axis-chart.js';
+import PieChart from './pie-chart.js';
+import TableChart from './table-chart.js';
+
 
 const Chart = (dv) => {
     const ctx = dv.getCtx();
     const data = dv.getData();
+
+    const layout = dv.getLayout();
+    const axisData = layout.axisData;
 
     for(let i  = 0; i < data.length; i++){
 
         const dataset = data[i];
         const type = dataset.type;
 
-        //universal styles
-        ctx.lineJoin = "round";
-
         if(type){
-            if(type === "line"){
-                
-                Line(dv, dataset);
+            const axisChartTypes = Global.getAxisChartTypes();
+            if(axisChartTypes.includes(type)){
 
-            }else if(type === "scatter" || "bubble"){
+                const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
+                const yAxis = axisData.values[valueAxisName];
 
-                Scatter(dv, dataset);
+                //reset dataset name
+                if(type === "bar"){
+                    const barDataset = dataset.dataset || {};
+                    barDataset.length === 1? barDataset[0].name = yAxis.title: null;
+                }else if(type === "scatter" || "bubble"){
+                    //
+                    data.length === 1? dataset.name = yAxis.title: null;
+                }
 
-            }else if(type === "bar"){
-                Bar(dv, dataset);
+                AxisChart(dv, dataset);
+
             }else if(type === "pie"){
 
-                Pie(dv, dataset);
+                PieChart(dv, dataset);
+            }else if(type === "table") {
+                
+                TableChart(dv, dataset);
             }
         }
 
     }
-    
 
 }
 

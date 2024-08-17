@@ -1,11 +1,10 @@
 import DrawElements from "../elements";
 
-const Scatter = (dv, dataset) => {
-    
+const DrawTableChart = (dv, dataset) => {
     if(dataset){
 
         DrawElements(dv, dataset);
     }
 }
 
-export default Scatter;
+export default DrawTableChart;

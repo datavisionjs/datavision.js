@@ -1,7 +1,8 @@
 //Contains functions for rendering and formatting axis, ticks, and labels.
 
 import * as Global from '../helpers/global.js';
-import * as Calc from '../helpers/math.js'
+import * as Calc from '../helpers/math.js';
+import * as Scroll from './scrollbar.js';
 
 
 
@@ -26,6 +27,8 @@ function drawLabels(dv, position){
     let y2Axis = layout.y2Axis;
 
     let xAxis = layout.xAxis;
+
+    const scrollBarSize = Scroll.getBarSize(dv);
 
     //set text alignment
     ctx.textAlign = 'center'; 
@@ -91,8 +94,8 @@ function drawLabels(dv, position){
 
         if(title){
             ctx.beginPath();
-
-            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-(fontSize/2)));
+            
+            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize/2)+scrollBarSize.hrHeight)));
         }
     }
 }
@@ -100,6 +103,9 @@ function drawLabels(dv, position){
 function drawYAxis(dv, position){
     const ctx = dv.getCtx();
     const canvas = dv.getCanvas();
+    const canvasWidth = canvas.width, canvasHeight = canvas.height;
+
+    const scrollData = dv.getScrollData();
 
     const layout = dv.getLayout();
 
@@ -111,7 +117,7 @@ function drawYAxis(dv, position){
     const graphX = position.x;
     const graphY = position.y;
     
-    const yMaxLabelWidth = position.yMaxLabelWidth;
+    const yMaxLabelWidth = position.maxLabelWidth;
 
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
@@ -127,7 +133,6 @@ function drawYAxis(dv, position){
 
     //set axisData
     const axisData = layout.axisData;
-    const isHorizontal = axisData.direction === "hr";
 
     const axisValues = axisData.values;
 
@@ -144,12 +149,14 @@ function drawYAxis(dv, position){
 
             values.sort((a, b) => a - b);
 
-            //const dataRange = [values[0], values[values.length-1]];
-
             //let range = ranges? isHorizontal? ranges.labelRange: ranges.valueRange: dataRange;
             let range = axis.range;
             
             if(range){
+
+                const format = axis.tickFormat || {};
+                const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+                const separateNumbers = format.separateNumbers;
 
                 const rangeStart = range[0];
 
@@ -169,7 +176,7 @@ function drawYAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    value = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
+                    value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
 
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
@@ -204,18 +211,25 @@ function drawYAxis(dv, position){
             const maxValueWidth = axis.maxWidth;
 
             let step = (graphHeight/values.length);
-            step < 1? step = 1: null;
+            step < fontSize? step = fontSize: null;
     
             let iterator = 1;
 
             //set iterator to 2 if the highest label length is 2 times the size of the step
             fontSize > step? iterator += Math.round(fontSize/step): null;
+
+            const topIndex = Math.floor(scrollData.topIndex||0);
+
+            //axisX -= (fontSize*(scrollData.leftIndex-leftIndex));
             
-            for(var i = 0; i < values.length; i += iterator){
+            const maxStep = Math.ceil(scrollData.topIndex+(graphHeight/fontSize));
+            const loopEnd = maxStep < values.length? maxStep: values.length;
+            
+            for(var i = topIndex; i < loopEnd; i += iterator){
     
-                axisY = ((graphY+graphHeight)-((step/2)+(step*i)));
+                axisY = ((graphY+graphHeight)-((step/2)+(step*(i-scrollData.topIndex))));
     
-                let value = values[i];
+                let value = values[i]+"";
                
                 const valueWidth = ctx.measureText(value).width;
                 const valueCharSize = (valueWidth/value.length);
@@ -239,6 +253,7 @@ function drawYAxis(dv, position){
                 ctx.textBaseline = "alphabetic";
         
             }
+            
         }
     }
 
@@ -250,6 +265,8 @@ function drawXAxis(dv, position){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
+    const scrollData = dv.getScrollData();
+
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
@@ -260,6 +277,8 @@ function drawXAxis(dv, position){
 
     const graphX = position.x;
     const graphY = position.y;
+
+    const maxLabelWidth = position.maxLabelWidth;
 
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
@@ -278,6 +297,7 @@ function drawXAxis(dv, position){
     //const isHorizontal = axisData.direction === "hr";
 
     const labels = axisData.labels;
+    
 
     for(let key in labels){
 
@@ -289,13 +309,13 @@ function drawXAxis(dv, position){
 
             values.sort((a, b) => a - b);
 
-            //const dataRange = [values[0], values[values.length-1]];
-
-           // let range = axis.range? axis.range: dataRange;
-
             let range = axis.range;
 
             if(range){
+
+                const format = axis.tickFormat || {};
+                const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+                const separateNumbers = format.separateNumbers;
 
                 const rangeStart = range[0];
                 const rangeEnd = range[1];
@@ -322,7 +342,9 @@ function drawXAxis(dv, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    label = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
+                    label = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
+
+                    //label = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
                     axisX = (graphX+(pixelStep*i));
 
 
@@ -349,19 +371,27 @@ function drawXAxis(dv, position){
             }
 
         }else {
-            const maxLabelWidth = axis.maxWidth;
+            const axisMaxWidth = axis.maxWidth;
             
             let step = (graphWidth/values.length);
-            step < 1? step = 1: null;
+            step < fontSize? step = fontSize: null;
 
             let iterator = 1;
 
+
+
             //set iterator to 2 if the highest label length is 2 times the size of the step
             //(maxLabelWidth/2) > step? iterator += Math.round((maxLabelWidth/2)/step): null;
-            
-            for(var i = 0; i < values.length; i += iterator){
 
-                axisX = (graphX+((step/2)+(step*i)));
+            const leftIndex = Math.floor(scrollData.leftIndex||0);
+
+            //axisX -= (fontSize*(scrollData.leftIndex-leftIndex));
+            const maxStep = Math.ceil(leftIndex+(graphWidth/fontSize));
+            const loopEnd = maxStep < values.length? maxStep: values.length;
+
+            for(var i = leftIndex; i < loopEnd; i += iterator){
+
+                axisX = (graphX+((step/2)+(step*(i-scrollData.leftIndex))));
                 
                 //set text width
                 //const textWidth = ctx.measureText(label).width;
@@ -374,7 +404,7 @@ function drawXAxis(dv, position){
                 ctx.textAlign = "center";
                 //ctx.textBaseline = "middle";
 
-                let label = values[i];
+                let label = values[i]+"";
 
                 let angle = 0;
 
@@ -382,13 +412,15 @@ function drawXAxis(dv, position){
                 const labelCharSize = (labelWidth/label.length);
 
                 if((step/fontSize) < 4){
-                    label = Global.shortenText(label, ((canvasHeight-(graphY+graphHeight))/labelCharSize));
+                    const textMax = ((maxLabelWidth-fontSize)/labelCharSize);
+                    label = Global.shortenText(label, textMax);
+
                     angle = -90
                     textPosX = axisX;
 
                     ctx.textAlign = "end";
                     ctx.textBaseline = "middle";
-                }else if(maxLabelWidth > step) {
+                }else if(axisMaxWidth > step) {
                     label = Global.shortenText(label, (step/labelCharSize));
                 }
 
@@ -408,6 +440,7 @@ function drawXAxis(dv, position){
             
                 ctx.restore();
             }
+
         }
     }
 
@@ -420,27 +453,63 @@ function drawXAxis(dv, position){
 const DrawAxis = (dv) => {
     const ctx = dv.getCtx();
 
+    const canvas = ctx.canvas;
+    const canvasHeight = canvas.height;
+
     const layout = dv.getLayout();
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
+    const graphWidth = graphPosition.width;
+    const graphHeight = graphPosition.height;
+    const graphX = graphPosition.x;
+    const graphY = graphPosition.y;
+
+    const labelStyle = dv.getStyle().label;
+    const fontSize = labelStyle.fontSize;
+    const halfFontSize = (fontSize/2);
 
     //draw a rectangle representing the graph area
     
     ctx.beginPath();
+    ctx.fillStyle = "black";
     ctx.strokeStyle = "#b5b5b5";
     ctx.lineWidth = "0.1";
-    ctx.rect((graphPosition.x+1), graphPosition.y, (graphPosition.width-2), graphPosition.height);
+    ctx.rect((graphX+1), graphY, (graphWidth-2), graphHeight);
     ctx.stroke();
     ctx.lineWidth = "1";
-    
 
+    const position = {x: 0, y: graphY, width: (graphX+graphWidth), height: (graphHeight)};
+    
+    //clear axis area
+    ctx.clearRect(position.x, position.y, (position.width+halfFontSize), ((canvasHeight-graphY)+halfFontSize));
+    
+    //set scroll content width and height
+    Scroll.setContentSize(dv);
+
+    //add axis scroll bar
+    const scrollData = dv.getScrollData();
+    Scroll.addBars(dv, position);
+    
     //Draw Y-axis, X-axis around the graph area
     drawXAxis(dv, graphPosition);
     drawYAxis(dv, graphPosition);
 
     //labels around the graph area
     drawLabels(dv, graphPosition);
+
+    ctx.beginPath();
+    //left edge clear
+
+    if(scrollData.isScrollX){
+        ctx.clearRect(position.x, (graphY+graphHeight+fontSize), (graphX), (canvasHeight-(graphY+graphHeight)));
+        ctx.clearRect((graphX+graphWidth), (graphY+graphHeight), fontSize, (canvasHeight-(graphY+graphHeight)));
+    }
+
+    if(scrollData.isScrollY){
+        ctx.clearRect(0, (graphY-fontSize), graphX, fontSize);
+        ctx.clearRect(0, (graphY+graphHeight), graphX, fontSize)
+    }
 }
 
 export default DrawAxis;

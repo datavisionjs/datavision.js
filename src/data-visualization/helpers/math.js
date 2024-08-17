@@ -2,7 +2,7 @@
 
 
 //finds a point on a straight line between two known points.
-export function linearInterpolation(x, x1, y1, x2, y2) {
+export function linearInterpolationX(x, x1, y1, x2, y2) {
     if (x1 === x2) {
         return y1; // Avoid division by zero
     }
@@ -10,6 +10,16 @@ export function linearInterpolation(x, x1, y1, x2, y2) {
     // Calculate the intermediate point (x, y)
     const y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
     return y;
+}
+
+export function linearInterpolationY(y, x1, y1, x2, y2) {
+    if (y1 === y2) {
+        return x1; // Avoid division by zero
+    }
+
+    // Calculate the intermediate point (x, y)
+    const x = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+    return x;
 }
 
 //find the distance between two points 
@@ -34,21 +44,36 @@ export function angleBetweenPoints(center, point) {
     return angleDeg;
 }
 
+export function getNumbericArray (arr){
+    return arr.filter(element => typeof element === 'number' && !isNaN(element));
+}
 
 //find minimum numbers 
 export function findMinAndMax(arr) {
-    if(arr){
+    if(Array.isArray(arr)){
         // Use filter to remove non-numeric elements
-        const numericArray = arr.filter(element => typeof element === 'number' && !isNaN(element));
+        const numericArray = getNumbericArray(arr);
     
         if (numericArray.length === 0) {
             // Handle the case where there are no valid numbers in the array
             return undefined; // or any other value that makes sense in your context
         }
+
+        let min = numericArray[0];
+        let max = numericArray[0];
+
+        for (let i = 1; i < numericArray.length; i++) {
+            if (numericArray[i] < min) {
+                min = numericArray[i];
+            }
+            if (numericArray[i] > max) {
+                max = numericArray[i];
+            }
+        }
     
         return {
-            min: Math.min(...numericArray),
-            max: Math.max(...numericArray)
+            min: min,
+            max: max
         }
     }else {
         return null;
@@ -76,9 +101,29 @@ export function getClosestToZero(arr){
     return closestValue;
 }
 
+export function removeDuplicates(array){ //remove duplicates from array but keep in the same order
+    
+    const seen = new Set();
+    
+    return array.filter(item => {
+        if (seen.has(item)) {
+          return false;
+        } else {
+          seen.add(item);
+          return true;
+        }
+    });
+}
+
+
+
 export function getNumberInRange(number, range){
     const rangeMin = Math.min(...range);
     const rangeMax = Math.max(...range);
+
+    if(isNaN(rangeMin) || isNaN(rangeMax)){
+        return null;
+    }
 
     if(number < rangeMin){
         return rangeMin;
@@ -90,32 +135,49 @@ export function getNumberInRange(number, range){
 }
 
 //add comma to every third digit from the right of numbers
-export function commaSeparateNumber(number) {
-    if (typeof number !== 'number' || isNaN(number)) {
+export function commaSeparateNumber(number, separateNumbers) {
+    if (typeof number !== 'number' || isNaN(number) || separateNumbers === false) {
         return number;
     }
 
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    //split number into parts before and after the decimal point
+    const parts = number.toString().split('.');
+
+    // Add commas to the part before the decimal point
+    parts[0] = parts[0].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    return parts.join(".");
 }
 
 
 //find sum of an array of numbers
 export function sum(arr) {
-    return arr.reduce((sum, current) => sum + current, 0);
+    // Filter out non-numeric elements
+    const numericArr = getNumbericArray(arr);
+
+    // Calculate the sum of numeric elements
+    return numericArr.reduce((sum, current) => sum + current, 0);
 }
 
 //find the avarage of an array of numbers
 export function avg(arr) {
-    return arr.reduce((sum, current) => sum + current, 0) / arr.length;
+    // Filter out non-numeric elements
+    const numericArr = getNumbericArray(arr);
+
+    // Calculate the sum of numeric elements
+    const sum = numericArr.reduce((sum, current) => sum + current, 0);
+
+    // Calculate the average
+    return numericArr.length === 0 ? 0 : sum / numericArr.length;
 }
 
 export function computeOperation(operation, arr){
     if(operation === "avg"){
         return avg(arr);
     }else if(operation === "min"){
-        return Math.min(...arr);
+        return Math.min(...getNumbericArray(arr));
     }else if(operation === "max"){
-        return Math.max(...arr);
+        return Math.max(...getNumbericArray(arr));
     }else if(operation === "count"){
         return arr.length;
     }else {
@@ -128,7 +190,44 @@ export function isAllNumbers(arr) {
     if(!arr){
         return null;
     }
-    return arr.every(element => typeof element === 'number');
+    //return arr.every(element => typeof element === 'number');
+    let numberCount = 0;
+    let stringCount = 0;
+
+    for(let i = 0; i < arr.length; i++){
+        const value = arr[i];
+        const type = typeof value;
+
+        if(type === "string"){
+            stringCount++;
+        }else if(type === "number") {
+            numberCount++;
+        }
+    }
+
+    return numberCount > (stringCount/2);
+}
+
+export function isYearSeries(range){
+    // Define the typical range for year values
+    const minYear = 1000;
+    const maxYear = 9999;
+
+    const minRange = range[0];
+    const maxRange = range[1];
+
+    // Check if the data series is an array
+    if (isNaN(minRange) || isNaN(maxRange)) {
+        return false;
+    }
+
+    if(minRange < minYear || maxRange > maxYear){
+        return false;
+    }
+
+
+    return true;
+
 }
 
 //Function to get the next key given a key in a Map
@@ -151,12 +250,18 @@ export function haveOppositeSigns(num1, num2) {
     return (num1 >= 0 && num2 < 0) || (num1 < 0 && num2 >= 0);
 }
 
-export function toFixedIfNeeded(number){
-    if(Number(number)){
-        if(Number.isInteger(Number(number))){
-            return number;
+/*
+export function toFixedIfNeeded(number, decimalPlaces){
+    if (typeof number !== 'number' || isNaN(number)) {
+        return number; // Return original value if not a valid number
+    }
+   
+    if(Number.isInteger(number)){
+        return number.toFixed(decimalPlaces || 0);
+    }else {
+        if(!isNaN(decimalPlaces)){
+            return number.toFixed(decimalPlaces);
         }else {
-
             const numberStr = number.toString();
             const splitNumberStr = numberStr.split(".");
             let nonZeroIndex = splitNumberStr[1].search(/[^0]/);
@@ -165,12 +270,43 @@ export function toFixedIfNeeded(number){
 
 
             return parseFloat(number.toFixed(nonZeroIndex || 1));
-
         }
-    }else {
-        return number;
     }
+   
+}*/
+
+export function toFixedIfNeeded(number, decimalPlaces) {
+    if (typeof number !== 'number' || isNaN(number)) {
+        return number; // Return original value if not a valid number
+    }
+
+    const parsedNumber = parseFloat(number);
+    let result = parsedNumber;
+
+    if (Number.isInteger(parsedNumber)) {
+        result = parsedNumber.toFixed(decimalPlaces || 0); // Round integer numbers
+    } else {
+        const numberStr = parsedNumber.toString();
+        const decimalIndex = numberStr.indexOf('.');
+        
+        if (decimalIndex !== -1) {
+            const fractionalPart = numberStr.substring(decimalIndex + 1);
+            const nonZeroIndex = fractionalPart.search(/[^0]/);
+
+            if (nonZeroIndex === -1) {
+                result = parsedNumber.toFixed(0); // Return integer part if all decimals are zeros
+            } else {
+                const newDecimalPlaces = !isNaN(decimalPlaces)? decimalPlaces: nonZeroIndex + 1;
+                result = parsedNumber.toFixed(newDecimalPlaces);
+            }
+        } else {
+            result = parseFloatparsedNumber; // Return original value if no decimal part
+        }
+    }
+
+    return parseFloat(result);
 }
+
 
 export function calculatePointOnCircle(degrees, radius, centerPosition = {x: 0, y: 0}){
     // Convert degrees to radians
@@ -227,6 +363,34 @@ export function zeroBasedRangeAdjust(range, interval){
     return [rangeStart, rangeEnd];
 }
 
+//find next position
+export function findAxisBoundPositions(dv, index, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted, loopStart, loopEnd){
+    
+    let prevPosition = lastPosition;
+    let nextPosition = getAxisPosition(dv, labels[index], values[index], valueAxisName, labelAxisName);
+
+    let newIndex = index;
+
+    if(!isDrawStarted){
+      
+        let isInLoop = (newIndex >= loopStart && newIndex <= loopEnd);
+        
+        while(posIsOutOfBound(dv, nextPosition) && isInLoop){
+            newIndex++;
+            isInLoop = (newIndex >= loopStart && newIndex <= loopEnd);
+
+            prevPosition = {...nextPosition};
+            nextPosition = getAxisPosition(dv, labels[newIndex], values[newIndex], valueAxisName, labelAxisName);
+
+            if(!nextPosition){
+                break;
+            }
+        }
+    }
+
+    return {next: nextPosition, prev: prevPosition};
+}
+
 //check if positon is out of range or not
 export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
     const layout = dv.getLayout();
@@ -247,7 +411,6 @@ export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
         if(range){
             const start = range[0];
             const end = range[1];
-
             label < start || label > end? labelIsOut = true: null;
         }
     }
@@ -263,6 +426,23 @@ export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
     }
 
     return labelIsOut || valueIsOut;
+}
+
+export function posIsOutOfBound(dv, position){
+    const layout = dv.getLayout();
+    const graphPosition = layout.graphPosition;
+    const graphX = graphPosition.x, graphY = graphPosition.y;
+    const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
+
+    if(position.x > (graphX+graphWidth) || position.x < (graphX)){
+        return true;
+    }
+
+    if(position.y > (graphY+graphHeight) || position.y < (graphY)){
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -304,9 +484,11 @@ export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
             const rangeDiff = (rangeEnd-rangeStart);
 
 
-            const value = getNumberInRange(y, range);
+            //const value = getNumberInRange(y, range);
 
-            const perc = ((value - rangeStart)/rangeDiff);
+            //console.log("y: ", y, value);
+
+            const perc = ((y - rangeStart)/rangeDiff);
             const pos = ((chartY+chartHeight)-(perc*chartHeight));
                 
             return pos;
@@ -340,9 +522,9 @@ export function posOnGraphXAxis(dv, x, axisName){
 
             const rangeDiff = (rangeEnd-rangeStart);
 
-            const value = getNumberInRange(x, range);
+            //const value = getNumberInRange(x, range);
 
-            const perc = ((value - rangeStart)/rangeDiff);
+            const perc = ((x - rangeStart)/rangeDiff);
             const pos = (chartX+(perc*chartWidth));
                 
             return pos;
@@ -365,6 +547,9 @@ export function getAxisLabelPosition(dv, label, axisName){
 
     const layout = dv.getLayout();
 
+    const labelStyle = dv.getStyle().label;
+    const fontSize = labelStyle.fontSize;
+
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x;
     const graphWidth = graphPosition.width;
@@ -379,12 +564,16 @@ export function getAxisLabelPosition(dv, label, axisName){
         const axisLabels = axis.values;
 
         if(!labelIsAllNumbers){
-            const step = (graphWidth/axisLabels.length);
+
+            let step = (graphWidth/axisLabels.length);
+            step < fontSize? step = fontSize: null;
+
             const halfStep = (step/2);
             const index = axisLabels.indexOf(label);
 
             if(index >= 0){
-                label = (graphX+((step*index)+halfStep));
+                const leftIndex = (dv.getScrollData().leftIndex);
+                label = (graphX+((step*(index-leftIndex))+halfStep));
             }
         }else {
             label = posOnGraphXAxis(dv, label);
@@ -396,6 +585,9 @@ export function getAxisLabelPosition(dv, label, axisName){
 
 export function getAxisValuePosition(dv, value, axisName){
     const layout = dv.getLayout();
+
+    const labelStyle = dv.getStyle().label;
+    const fontSize = labelStyle.fontSize;
 
     const graphPosition = layout.graphPosition;
     const graphY = graphPosition.y;
@@ -412,12 +604,15 @@ export function getAxisValuePosition(dv, value, axisName){
 
         if(!valueIsAllNumbers){
 
-            const step = (graphHeight/axisValues.length);
+            let step = (graphHeight/axisValues.length);
+            step < fontSize? step = fontSize: null;
+
             const halfStep = (step/2);
             const index = axisValues.indexOf(value);
             
             if(index >= 0){
-                value = ((graphY+graphHeight)-((step*index)+halfStep));
+                const topIndex = (dv.getScrollData().topIndex);
+                value = ((graphY+graphHeight)-((step*(index-topIndex))+halfStep));
             }
         }else {
             value = posOnGraphYAxis(dv, value, axisName);
@@ -439,8 +634,65 @@ export function getArcRadius(width, height){
 
 
 //calculate chart Area
+/*
+export function getChartArea(dv, layout){
+    const target = dv.getTarget();
+
+    const layoutWidth = layout.width;
+    const layoutHeight = layout.height;
+
+    let width = 700, height = 350;
+
+    
+    if(layoutWidth || layoutHeight){
+        width = !layoutWidth? (layoutHeight*2): layoutWidth;
+        height = !layoutHeight? (layoutWidth*0.5): layoutHeight;
+    }else {
+        if(target){
+            const targetWidth = target.offsetWidth, targetHeight = target.offsetHeight;
+            
+            if(targetWidth > targetHeight){
+                width = targetWidth;
+                height = (targetWidth/2);
+            }else {
+                if(targetWidth || targetHeight){
+                    width = (targetWidth || width);
+                    height = (width/2);
+                }
+            }
+        }
+    }
+
+    return {
+        width: width,
+        height: height
+    };
+}*/
 
 export function getChartArea(dv, layout){
+    const target = dv.getTarget() || {};
+
+    const layoutWidth = layout.width || target.offsetWidth;
+    const layoutHeight = layout.height || target.offsetHeight;
+
+    let width = layoutWidth || (layoutHeight? (layoutHeight*2): 700), height = layoutHeight || (layoutWidth? (layoutWidth/2): 350);
+
+    const heightTwice = height * 2;
+
+    if(heightTwice > layoutWidth){
+        height = width / 2;
+    }else if(heightTwice < layoutWidth){
+        width = height * 2;
+    }
+    
+
+    return {
+        width: width,
+        height: height
+    };
+}
+
+/*export function getChartArea(dv, layout){
     const target = dv.getTarget();
 
     const layoutWidth = layout.width;
@@ -463,3 +715,4 @@ export function getChartArea(dv, layout){
         height: height
     };
 }
+*/
