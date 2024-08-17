@@ -14,14 +14,12 @@
     <div id="my-chart2" style="width:100%;max-width:800px"></div>
 
     <script>
-
-        const title = "Testing";
         
-        
+        /*
         let exp = "Math.cos(x)";
         //let exp = "x + 17";
         // Generate values
-        /*
+        
         const xArray = [];
         const yArray = [];
         for (let x = 0; x <= 10; x += 0.1) {
@@ -34,8 +32,8 @@
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        const yArray = [55, 10, 44, 20];
-        const xArray = ["55", "56", "59", "58"];
+        const xArray = ["Italy","France","Spain","USA","Argentina"];
+        const yArray = [55, 49, 44, 24, 15];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -122,14 +120,13 @@
 
 
 
-
-
         const data = [
             {
-                type: "bar",
                 labels: xArray,
                 values: yArray,
-            },
+                type: "bar",
+                hole: .4
+            }
            /*
            {
                 columnWidth: [1,2,1],
@@ -157,9 +154,8 @@
 
         //Define Layout
         const layout = {
-           
-            yAxis: {title: "Population", tickFormat: {prefix: "$", decimalPlaces: 2}}, 
-            xAxis: {title: "Income", tickFormat: {decimalPlaces: 1}},
+            title: "House Prices vs. Size",
+            yAxis: {title: "Name"}
         };
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);

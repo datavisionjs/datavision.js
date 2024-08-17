@@ -484,9 +484,11 @@ export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
             const rangeDiff = (rangeEnd-rangeStart);
 
 
-            const value = getNumberInRange(y, range);
+            //const value = getNumberInRange(y, range);
 
-            const perc = ((value - rangeStart)/rangeDiff);
+            //console.log("y: ", y, value);
+
+            const perc = ((y - rangeStart)/rangeDiff);
             const pos = ((chartY+chartHeight)-(perc*chartHeight));
                 
             return pos;
@@ -520,9 +522,9 @@ export function posOnGraphXAxis(dv, x, axisName){
 
             const rangeDiff = (rangeEnd-rangeStart);
 
-            const value = getNumberInRange(x, range);
+            //const value = getNumberInRange(x, range);
 
-            const perc = ((value - rangeStart)/rangeDiff);
+            const perc = ((x - rangeStart)/rangeDiff);
             const pos = (chartX+(perc*chartWidth));
                 
             return pos;

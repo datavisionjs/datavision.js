@@ -39,7 +39,7 @@ const GetText = (data, ctx, type, fontSize) => {
     let text = data[type+"Text"];
     let textWidth = data[type+"Width"];
 
-    const tickFormat = data.tickFormat? data.tickFormat[type]: {};
+    const tickFormat = data.tickFormat? data.tickFormat[type] || {}: {};
 
     const prefix = (tickFormat.prefix || ""), suffix = (tickFormat.suffix || "");
     const decimalPlaces = tickFormat.decimalPlaces;

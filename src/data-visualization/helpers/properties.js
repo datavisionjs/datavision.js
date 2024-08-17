@@ -205,26 +205,19 @@ function setAxisProperties(dv, axisObject, type){
 
         const isAllNumbers = Calc.isAllNumbers(values);
 
-        let range = Calc.rangeFromData(values);
-
+        let targetAxis = {};
         if(type === "values"){
             if(key === "y2"){
-                if(layout.y2Axis){
-                    const layoutRange = layout.y2Axis.range;
-                    layoutRange? range = layoutRange: [null, null];
-                }
+                layout.y2Axis? targetAxis = layout.y2Axis: null;
             }else {
-                if(layout.yAxis){
-                    const layoutRange = layout.yAxis.range;
-                    layoutRange? range = layoutRange: [null, null];
-                }
+                layout.yAxis? targetAxis = layout.yAxis: null;
             }
         }else {
-            if(layout.xAxis){
-                const layoutRange = layout.xAxis.range;
-                layoutRange? range = layoutRange: [null, null];
-            }
+            layout.xAxis? targetAxis = layout.xAxis: null;
         }
+
+        let range = targetAxis.range || Calc.rangeFromData(values);
+        const title = targetAxis.title || "";
 
         const tick = getTickData(range);
         const tickRange = tick.range;
@@ -255,7 +248,7 @@ function setAxisProperties(dv, axisObject, type){
             }
         }
 
-        
+        axis.title = title;
         axis.maxWidth = maxWidth;
         axis.range = tick.range;
         axis.tickData = tick;
