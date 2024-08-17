@@ -66,7 +66,7 @@ const DrawDatasetNames = (dv) => {
         startY -= (fontSize*(scrollIndexDecimal-scrollIndex));
 
         //clear dataset area names
-        const labelFontX = (labelX-(fontSize/2));
+        const labelFontX = (labelX-((fontSize/2)+1));
         ctx.clearRect(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
 
         if(names){

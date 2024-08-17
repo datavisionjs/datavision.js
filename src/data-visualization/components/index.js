@@ -1,8 +1,10 @@
 
-import Scatter from './scatter.js'
-import Bar from './bar.js'
-import Line from './line.js'
-import Pie from './pie.js'
+import Scatter from './scatter.js';
+import Bar from './bar.js';
+import Line from './line.js';
+import Pie from './pie.js';
+
+
 
 const Chart = (dv) => {
     const ctx = dv.getCtx();
@@ -12,9 +14,6 @@ const Chart = (dv) => {
 
         const dataset = data[i];
         const type = dataset.type;
-
-        //universal styles
-        ctx.lineJoin = "round";
 
         if(type){
             if(type === "line"){
@@ -34,7 +33,6 @@ const Chart = (dv) => {
         }
 
     }
-    
 
 }
 

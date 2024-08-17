@@ -2,8 +2,7 @@ import * as Calc from '../helpers/math.js'
 import * as Global from '../helpers/global.js';
 
 
-export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel, tickFormat) => { //process grouped bars
-    const ctx = dv.getCtx();
+export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLabel, tickFormat) => { //process grouped bars
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";
@@ -112,8 +111,7 @@ export const Group = (dv, barData, index, key, value, barSize, maxBarPerLabel, t
 
 };
 
-export const Stack = (dv, barData, barSize, key, lastValue, value, currentValue, tickFormat) => {
-    const ctx = dv.getCtx();
+export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentValue, tickFormat) => {
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";

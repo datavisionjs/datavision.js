@@ -1,7 +1,8 @@
 //Contains functions for rendering and formatting axis, ticks, and labels.
 
 import * as Global from '../helpers/global.js';
-import * as Calc from '../helpers/math.js'
+import * as Calc from '../helpers/math.js';
+import * as Scroll from './scrollbar.js';
 
 
 
@@ -27,7 +28,7 @@ function drawLabels(dv, position){
 
     let xAxis = layout.xAxis;
 
-    const scrollBarSize = dv.getAxisScrollBarSize();
+    const scrollBarSize = Scroll.getBarSize(dv);
 
     //set text alignment
     ctx.textAlign = 'center'; 
@@ -104,7 +105,7 @@ function drawYAxis(dv, position){
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
-    const axisScroll = dv.getAxisScroll();
+    const scrollData = dv.getScrollData();
 
     const layout = dv.getLayout();
 
@@ -217,16 +218,16 @@ function drawYAxis(dv, position){
             //set iterator to 2 if the highest label length is 2 times the size of the step
             fontSize > step? iterator += Math.round(fontSize/step): null;
 
-            const topIndex = Math.floor(axisScroll.topIndex||0);
+            const topIndex = Math.floor(scrollData.topIndex||0);
 
-            //axisX -= (fontSize*(axisScroll.leftIndex-leftIndex));
+            //axisX -= (fontSize*(scrollData.leftIndex-leftIndex));
             
-            const maxStep = Math.ceil(axisScroll.topIndex+(graphHeight/fontSize));
+            const maxStep = Math.ceil(scrollData.topIndex+(graphHeight/fontSize));
             const loopEnd = maxStep < values.length? maxStep: values.length;
             
             for(var i = topIndex; i < loopEnd; i += iterator){
     
-                axisY = ((graphY+graphHeight)-((step/2)+(step*(i-axisScroll.topIndex))));
+                axisY = ((graphY+graphHeight)-((step/2)+(step*(i-scrollData.topIndex))));
     
                 let value = values[i]+"";
                
@@ -264,7 +265,7 @@ function drawXAxis(dv, position){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const axisScroll = dv.getAxisScroll();
+    const scrollData = dv.getScrollData();
 
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;
@@ -382,15 +383,15 @@ function drawXAxis(dv, position){
             //set iterator to 2 if the highest label length is 2 times the size of the step
             //(maxLabelWidth/2) > step? iterator += Math.round((maxLabelWidth/2)/step): null;
 
-            const leftIndex = Math.floor(axisScroll.leftIndex||0);
+            const leftIndex = Math.floor(scrollData.leftIndex||0);
 
-            //axisX -= (fontSize*(axisScroll.leftIndex-leftIndex));
+            //axisX -= (fontSize*(scrollData.leftIndex-leftIndex));
             const maxStep = Math.ceil(leftIndex+(graphWidth/fontSize));
             const loopEnd = maxStep < values.length? maxStep: values.length;
 
             for(var i = leftIndex; i < loopEnd; i += iterator){
 
-                axisX = (graphX+((step/2)+(step*(i-axisScroll.leftIndex))));
+                axisX = (graphX+((step/2)+(step*(i-scrollData.leftIndex))));
                 
                 //set text width
                 //const textWidth = ctx.measureText(label).width;
@@ -478,17 +479,17 @@ const DrawAxis = (dv) => {
     ctx.stroke();
     ctx.lineWidth = "1";
 
-    const position = {x: 0, y: graphY, width: (graphX+graphWidth), height: (canvasHeight-graphY)};
+    const position = {x: 0, y: graphY, width: (graphX+graphWidth), height: (graphHeight)};
     
     //clear axis area
-    ctx.clearRect(position.x, position.y, (position.width+halfFontSize), (position.height+halfFontSize));
+    ctx.clearRect(position.x, position.y, (position.width+halfFontSize), ((canvasHeight-graphY)+halfFontSize));
     
     //set scroll content width and height
-    dv.setAxisScrollContentSize();
+    Scroll.setContentSize(dv);
 
     //add axis scroll bar
-    const axisScroll = dv.getAxisScroll();
-    dv.addAxisScrollBars(position);
+    const scrollData = dv.getScrollData();
+    Scroll.addBars(dv, position);
     
     //Draw Y-axis, X-axis around the graph area
     drawXAxis(dv, graphPosition);
@@ -500,12 +501,12 @@ const DrawAxis = (dv) => {
     ctx.beginPath();
     //left edge clear
 
-    if(axisScroll.isScrollX){
+    if(scrollData.isScrollX){
         ctx.clearRect(position.x, (graphY+graphHeight+fontSize), (graphX), (canvasHeight-(graphY+graphHeight)));
         ctx.clearRect((graphX+graphWidth), (graphY+graphHeight), fontSize, (canvasHeight-(graphY+graphHeight)));
     }
 
-    if(axisScroll.isScrollY){
+    if(scrollData.isScrollY){
         ctx.clearRect(0, (graphY-fontSize), graphX, fontSize);
         ctx.clearRect(0, (graphY+graphHeight), graphX, fontSize)
     }

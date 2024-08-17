@@ -193,6 +193,117 @@ function getAxisFromLayout(layout, key){
 }
 
 
+function setAxisProperties(dv, axisObject, type){
+    const ctx = dv.getCtx();
+    const layout = dv.getLayout();
+
+    for(let key in axisObject){
+        const axis = axisObject[key];
+
+        const values = axis.values;
+        const axisMaxWidth = axis.maxWidth;
+
+        const isAllNumbers = Calc.isAllNumbers(values);
+
+        let range = Calc.rangeFromData(values);
+
+        if(type === "values"){
+            if(key === "y2"){
+                if(layout.y2Axis){
+                    const layoutRange = layout.y2Axis.range;
+                    layoutRange? range = layoutRange: [null, null];
+                }
+            }else {
+                if(layout.yAxis){
+                    const layoutRange = layout.yAxis.range;
+                    layoutRange? range = layoutRange: [null, null];
+                }
+            }
+        }else {
+            if(layout.xAxis){
+                const layoutRange = layout.xAxis.range;
+                layoutRange? range = layoutRange: [null, null];
+            }
+        }
+
+        const tick = getTickData(range);
+        const tickRange = tick.range;
+        
+        const tickRangeStart = tickRange[0], tickRangeEnd = tickRange[1];
+
+        let maxWidth = axisMaxWidth;
+
+        if(isAllNumbers){
+            const tickFormat = axis.tickFormat;
+            const decimalPlaces = tickFormat? tickFormat.decimalPlaces: null;
+            const prefix = tickFormat? tickFormat.prefix || "": "";
+            const suffix = tickFormat? tickFormat.suffix || "": "";
+
+            if( !isNaN(tickRangeStart) && !isNaN(tickRangeEnd) ){
+                const startWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeStart, decimalPlaces) + suffix).width;
+                const endWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeEnd, decimalPlaces) + suffix).width;
+
+                maxWidth = Math.max(startWidth, endWidth);
+            }
+        }
+
+        //set separateNumbers
+        const tickFormat = axis.tickFormat;
+        if(tickFormat){
+            if(!tickFormat.separateNumbers){
+                tickFormat.separateNumbers = !Calc.isYearSeries(tick.range);
+            }
+        }
+
+        
+        axis.maxWidth = maxWidth;
+        axis.range = tick.range;
+        axis.tickData = tick;
+        axis.isAllNumbers = isAllNumbers;
+        axis.tickFormat = {...tickFormat};
+    }
+};
+
+function setPieProperties(pieData){
+    pieData.forEach(pieObject => {
+
+        const labels = pieObject.labels;
+        const values = pieObject.values;
+        
+        const xLayout = pieObject.xLayout;
+        const yLayout = pieObject.yLayout;
+
+        if(xLayout && yLayout){
+            const valueRange = Calc.rangeFromData(values);
+            const valueTick = getTickData(valueRange);
+
+            const valueTickFormat = {...yLayout.tickFormat};
+            if(valueTickFormat){
+                if(!valueTickFormat.separateNumbers){
+                    valueTickFormat.separateNumbers = !Calc.isYearSeries(valueTick.range);
+                }
+            }
+            //set values tickformat
+            pieObject.yLayout.tickFormat = valueTickFormat;
+
+            const labelRange = Calc.rangeFromData(labels);
+            const labelTick = getTickData(labelRange);
+
+            const labelTickFormat = {...xLayout.tickFormat};
+            if(labelTickFormat){
+                if(!labelTickFormat.separateNumbers){
+                    labelTickFormat.separateNumbers = !Calc.isYearSeries(labelTick.range);
+                }
+            }
+
+            //set labels tickformat
+            pieObject.xLayout.tickFormat = labelTickFormat;
+        }
+    });
+}
+
+
+
 export function setUpChart(dv){
 
     const ctx = dv.getCtx();
@@ -208,6 +319,9 @@ export function setUpChart(dv){
     const fontSize = labelStyle.fontSize;
     ctx.font = fontSize+"px "+labelStyle.fontFamily;
 
+    //get scroll data 
+    const scrollData = dv.getScrollData();
+
     //stores the number of bars for each category
     let maxBarPerCategory = 1;
 
@@ -215,6 +329,7 @@ export function setUpChart(dv){
 
     const axisData = [];
     const pieData = [];
+    const tableData = [];
 
     let axisDataCount = 0;
 
@@ -236,6 +351,7 @@ export function setUpChart(dv){
     const axisChartTypes = Global.getAxisChartTypes();
     let hasAxisData = false;
     let hasPieData = false;
+    let hasTableData = false;
     let axisDirection = null;
 
     //dataset names data
@@ -271,7 +387,6 @@ export function setUpChart(dv){
             const values = dataset.values? [...dataset.values]: [];
             const dataType = dataset.type;
             const design = dataset.design || {};
-            const operation = dataset.operation;
 
             //fill empty data
             if(labels.length === 0){
@@ -293,13 +408,16 @@ export function setUpChart(dv){
                 yAxis: dataValueAxis
             };
 
+            //axis dataset
             const newLabels = [];
             const newValues = [];
             const axisBucket = [];
 
+            //pie dataset
             const newPieDataset = {...dataset};
             const newPieLabels = [];
             const newPieValues = [];
+
 
             const labelIsAllNumbers = Calc.isAllNumbers(labels);
             const valueIsAllNumbers = Calc.isAllNumbers(values);
@@ -316,7 +434,9 @@ export function setUpChart(dv){
              const yPrefix = yAxisTickFormat.prefix || "", ySuffix = yAxisTickFormat.suffix || "";
              const yDecimalPlaces = yAxisTickFormat.decimalPlaces;
 
-            if(axisChartTypes.includes(dataType)){
+            if(axisChartTypes.includes(dataType) && !(hasPieData || hasTableData)){
+
+                const operation = dataset.operation;
 
                 const loopEnd = labels.length > 0? labels.length: values.length;
 
@@ -597,7 +717,21 @@ export function setUpChart(dv){
 
                 axisDataCount++;
 
-            }else if(dataType === "pie"){
+                if(xAxis){
+                    //remove all duplicates
+                    xAxis.values = [...new Set(xAxis.values)];
+                    //set axis count
+                    !xAxis.isAllNumbers? xAxis.values.length > (scrollData.labelsCount|| 0)? scrollData.labelsCount = xAxis.values.length: null: null; 
+                }
+
+                if(yAxis){
+                    //remove all duplicates
+                    yAxis.values = [...new Set(yAxis.values)];
+                    //set axis count
+                    !yAxis.isAllNumbers? yAxis.values.length > (scrollData.valuesCount|| 0)? scrollData.valuesCount = yAxis.values.length: null: null;
+                }
+
+            }else if(dataType === "pie" && !(hasAxisData || hasTableData)){
 
                 for(let j = 0; j < values.length; j++){
                     const label = labelIsAllNumbers? labels[j]: labels[j];
@@ -622,28 +756,204 @@ export function setUpChart(dv){
                     }
 
                 }
-
-                 //push pie dataset
-                hasPieData = true;
                 
                 newPieDataset.labels = newPieLabels;
                 newPieDataset.values = newPieValues;
                 newPieDataset.names = newPieLabels;
                 newPieDataset.type = "pie";
 
+                newPieDataset.xLayout = {tickFormat: xAxisTickFormat, isAllNumbers: labelIsAllNumbers};
+                newPieDataset.yLayout = {tickFormat: yAxisTickFormat, isAllNumbers: valueIsAllNumbers};
+
+                //push pie dataset
                 pieData.push(newPieDataset);
 
                 //set dataset name max width and total on pie
                 pieMaxLabelWidth > datasetNameMaxWidth? datasetNameMaxWidth = pieMaxLabelWidth: null;
                 totalDatasetName += newPieLabels.length;
+
+                hasPieData = true;
+            }else if(dataType === "table" && !(hasAxisData || hasPieData)){
+
+                //table dataset
+                const newTableDataset = {...dataset};
+                const newTableHeaders = []; //tableheaders values
+                const newTableData = []; //tabledata values
+
+                const headerValues = dataset.header? dataset.header.values: [];
+                const data = dataset.data? dataset.data.values: [];
+
+                const dataOperation = dataset.data? dataset.data.operation: false;
+
+                let maxValueWidth = 0;
+                let columnCount = data.length > headerValues.length? data.length: headerValues.length;
+                let rowCount = 0;
+
+                if(dataOperation){
+                    let hasCategoricalData = false;
+                    let categoricalDataIndex = 0;
+
+                    const isNumbericColumn = [];
+
+                    for(let index = 0; index < columnCount; index++){
+
+                       //process column data
+                       const column = data[index];
+                       if(column){
+                           const columnIsAllNumbers = Calc.isAllNumbers(column);
+
+                           if(!columnIsAllNumbers){
+                                categoricalDataIndex = index;
+                                hasCategoricalData = true;
+                           }
+
+                           isNumbericColumn.push(columnIsAllNumbers);
+                       }
+                   }
+
+                   const categoricalColumn = hasCategoricalData? data[categoricalDataIndex]: [];
+
+                   const categoricalList = Calc.removeDuplicates(categoricalColumn);
+                   
+
+                   //set rowCount 
+                   rowCount = categoricalList.length || 1;
+
+                   //set column values in the bucket
+                   for(let index = 0; index < columnCount; index++){
+
+                        const columnIsNumber = isNumbericColumn[index];
+
+                        //process header values 
+                        const headerValue = headerValues[index];
+                        if(headerValue){
+                            if(hasCategoricalData && (categoricalDataIndex === index)){
+                                newTableHeaders.unshift(headerValue);
+                            }else {
+                                if(columnIsNumber || (!hasCategoricalData)){
+                                    newTableHeaders.push(headerValue);
+                                }
+                            }
+        
+                            const valueWidth = ctx.measureText(headerValue).width;
+                            if(valueWidth > maxValueWidth){
+                                maxValueWidth = valueWidth;
+                            }
+                        }
+
+                        //process column data
+                        const column = data[index];
+                        const columnMap = new Map();
+
+                        const operation = Array.isArray(dataOperation)? dataOperation[index] || dataOperation[dataOperation.length-1]: dataOperation;
+                         
+                        if(column && columnIsNumber){
+                            
+                            for(let i = 0; i < column.length; i++){
+                                const categoricalValue = categoricalColumn[i];
+                                const value = column[i];
+                                
+                                if(hasCategoricalData){
+
+                                    if(columnMap.has(categoricalValue)){
+                                        columnMap.get(categoricalValue).push(value);
+                                    }else {
+                                        columnMap.set(categoricalValue, [value]);
+                                    }
+                                }
+                            }
+
+
+                            if(hasCategoricalData){
+                                const columnValues = [];
+
+                                for(const [key, bucket] of columnMap){
+                                   
+                                    const newValue = Calc.computeOperation(operation, bucket);
+
+                                    const valueWidth = ctx.measureText(newValue).width;
+                                    if(valueWidth > maxValueWidth){
+                                        maxValueWidth = valueWidth;
+                                    }
+
+                                    columnValues.push(newValue);
+                                }
+
+                                newTableData.push(columnValues);
+                            }else {
+                                
+                                const newValue = Calc.computeOperation(operation, column);
+
+                                const valueWidth = ctx.measureText(newValue).width;
+                                if(valueWidth > maxValueWidth){
+                                    maxValueWidth = valueWidth;
+                                }
+
+                                newTableData.push([newValue]);
+                            }
+                        }
+
+                   }
+
+                   //add newCategoricalList as the first element in newTableData
+                   hasCategoricalData? newTableData.unshift(categoricalList): null;
+
+                }else {
+
+                    for(let index = 0; index < columnCount; index++){
+                         //process header values 
+                        const headerValue = headerValues[index];
+                        if(headerValue){
+                             newTableHeaders.push(headerValue);
+     
+                             const valueWidth = ctx.measureText(headerValue).width;
+                             if(valueWidth > maxValueWidth){
+                                 maxValueWidth = valueWidth;
+                             }
+                        }
+
+                        //process column data
+                        const column = data[index];
+                        if(column){
+                            const newColumn = [];
+                            const len = column.length;
+
+                            len > rowCount? rowCount = len: null;
+                            for(let i = 0; i < len; i++){
+                                const value = column[i];
+                                newColumn.push(value);
+
+                                const valueWidth = ctx.measureText(value).width;
+                                if(valueWidth > maxValueWidth){
+                                    maxValueWidth = valueWidth;
+                                }
+                            }
+
+                            newTableData.push(newColumn);
+                        }
+                    }
+
+                }
+
+                const newColumnCount = Math.max(newTableData.length, newTableHeaders.length);
+
+                newTableDataset.header = {...dataset.header, values: newTableHeaders};
+                newTableDataset.data = {...dataset.data, values: newTableData}
+                newTableDataset.type = "table";
+                newTableDataset.maxValueWidth = maxValueWidth;
+                newTableDataset.columnCount = newColumnCount;
+                newTableDataset.rowCount = (rowCount+1); //plus 1 is adding the header row
+
+                //remove previous table dataset as we only require 1
+                tableData.shift();
+                tableData.push(newTableDataset);
+
+                hasTableData = true;
             }
 
             //remove duplicates from dataset 
             //dataset.values = [...new Set(dataset.values)];
             //dataset.labels = [...new Set(dataset.labels)];
-
-            xAxis? xAxis.values = [...new Set(xAxis.values)]: null;
-            yAxis? yAxis.values = [...new Set(yAxis.values)]: null;
             
         }
 
@@ -657,78 +967,14 @@ export function setUpChart(dv){
 
     }
 
+    //set pie Properties 
+    setPieProperties(pieData);
 
-    const setAxisProperties = (axisObject, type) => {
-        for(let key in axisObject){
-            const axis = axisObject[key];
+    const newData = [...axisData, ...pieData, ...tableData];
 
-            const values = axis.values;
-            const axisMaxWidth = axis.maxWidth;
-
-            const isAllNumbers = Calc.isAllNumbers(values);
-
-            let range = Calc.rangeFromData(values);
-
-            if(type === "values"){
-                if(key === "y2"){
-                    if(layout.y2Axis){
-                        const layoutRange = layout.y2Axis.range;
-                        layoutRange? range = layoutRange: [null, null];
-                    }
-                }else {
-                    if(layout.yAxis){
-                        const layoutRange = layout.yAxis.range;
-                        layoutRange? range = layoutRange: [null, null];
-                    }
-                }
-            }else {
-                if(layout.xAxis){
-                    const layoutRange = layout.xAxis.range;
-                    layoutRange? range = layoutRange: [null, null];
-                }
-            }
-
-            const tick = getTickData(range);
-            const tickRange = tick.range;
-            
-            const tickRangeStart = tickRange[0], tickRangeEnd = tickRange[1];
-
-            let maxWidth = axisMaxWidth;
-
-            if(isAllNumbers){
-                const tickFormat = axis.tickFormat;
-                const decimalPlaces = tickFormat? tickFormat.decimalPlaces: null;
-                const prefix = tickFormat? tickFormat.prefix || "": "";
-                const suffix = tickFormat? tickFormat.suffix || "": "";
-
-                if( !isNaN(tickRangeStart) && !isNaN(tickRangeEnd) ){
-                    const startWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeStart, decimalPlaces) + suffix).width;
-                    const endWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeEnd, decimalPlaces) + suffix).width;
-
-                    maxWidth = Math.max(startWidth, endWidth);
-                }
-            }
-
-            //set separateNumbers
-            const tickFormat = axis.tickFormat;
-            if(tickFormat){
-                if(!tickFormat.separateNumbers){
-                    tickFormat.separateNumbers = !Calc.isYearSeries(tick.range);
-                }
-            }
-            
-            axis.maxWidth = maxWidth;
-            axis.range = tick.range;
-            axis.tickData = tick;
-            axis.isAllNumbers = isAllNumbers;
-            axis.tickFormat = {...tickFormat};
-        }
-    };
-
-    const newData = [...axisData, ...pieData];
-
-    setAxisProperties(axisValues, "values");
-    setAxisProperties(axisLabels);
+    //set axis chart properties
+    setAxisProperties(dv, axisValues, "values");
+    setAxisProperties(dv, axisLabels);
 
     //
     layout.datasetNameData = {
@@ -743,10 +989,14 @@ export function setUpChart(dv){
         values: axisValues,
         direction: axisDirection
     };
+
+    //set table data 
+    layout.tableData = hasTableData? tableData[0]: null;
     
     //set whether for not a particular chart type exists.
     layout.hasAxisData = hasAxisData;
     layout.hasPieData = hasPieData;
+    layout.hasTableData = hasTableData;
 
     //set data to dv
     dv.setData(newData);
@@ -755,16 +1005,19 @@ export function setUpChart(dv){
 
 //get non bar axis chart design
 function setUpAxisChartDesign(dataType, design, count){
-    const newDesign = design? design: {};
+    const newDesign = design;
 
-    //set deign colors
-    const color = customColors.get(count).code;
-    !newDesign.color? newDesign.color = color: null;
+    if(newDesign){
+        //set deign colors
+        const color = customColors.get(count).code;
+        
+        !newDesign.color? newDesign.color = color: null;
 
-    dataType === "line"? Array.isArray(newDesign.color)? newDesign.color = color: null: null;
+        dataType === "line"? Array.isArray(newDesign.color)? newDesign.color = color: null: null;
 
-    //set design size 
-    !newDesign.size? newDesign.size = 3: null;
+        //set design size 
+        !newDesign.size? newDesign.size = 3: null;
+    }
 
-    return newDesign;
+    return newDesign || {};
 }

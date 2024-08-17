@@ -44,21 +44,36 @@ export function angleBetweenPoints(center, point) {
     return angleDeg;
 }
 
+export function getNumbericArray (arr){
+    return arr.filter(element => typeof element === 'number' && !isNaN(element));
+}
 
 //find minimum numbers 
 export function findMinAndMax(arr) {
-    if(arr){
+    if(Array.isArray(arr)){
         // Use filter to remove non-numeric elements
-        const numericArray = arr.filter(element => typeof element === 'number' && !isNaN(element));
+        const numericArray = getNumbericArray(arr);
     
         if (numericArray.length === 0) {
             // Handle the case where there are no valid numbers in the array
             return undefined; // or any other value that makes sense in your context
         }
+
+        let min = numericArray[0];
+        let max = numericArray[0];
+
+        for (let i = 1; i < numericArray.length; i++) {
+            if (numericArray[i] < min) {
+                min = numericArray[i];
+            }
+            if (numericArray[i] > max) {
+                max = numericArray[i];
+            }
+        }
     
         return {
-            min: Math.min(...numericArray),
-            max: Math.max(...numericArray)
+            min: min,
+            max: max
         }
     }else {
         return null;
@@ -84,6 +99,20 @@ export function getClosestToZero(arr){
     }
 
     return closestValue;
+}
+
+export function removeDuplicates(array){ //remove duplicates from array but keep in the same order
+    
+    const seen = new Set();
+    
+    return array.filter(item => {
+        if (seen.has(item)) {
+          return false;
+        } else {
+          seen.add(item);
+          return true;
+        }
+    });
 }
 
 
@@ -123,21 +152,32 @@ export function commaSeparateNumber(number, separateNumbers) {
 
 //find sum of an array of numbers
 export function sum(arr) {
-    return arr.reduce((sum, current) => sum + current, 0);
+    // Filter out non-numeric elements
+    const numericArr = getNumbericArray(arr);
+
+    // Calculate the sum of numeric elements
+    return numericArr.reduce((sum, current) => sum + current, 0);
 }
 
 //find the avarage of an array of numbers
 export function avg(arr) {
-    return arr.reduce((sum, current) => sum + current, 0) / arr.length;
+    // Filter out non-numeric elements
+    const numericArr = getNumbericArray(arr);
+
+    // Calculate the sum of numeric elements
+    const sum = numericArr.reduce((sum, current) => sum + current, 0);
+
+    // Calculate the average
+    return numericArr.length === 0 ? 0 : sum / numericArr.length;
 }
 
 export function computeOperation(operation, arr){
     if(operation === "avg"){
         return avg(arr);
     }else if(operation === "min"){
-        return Math.min(...arr);
+        return Math.min(...getNumbericArray(arr));
     }else if(operation === "max"){
-        return Math.max(...arr);
+        return Math.max(...getNumbericArray(arr));
     }else if(operation === "count"){
         return arr.length;
     }else {
@@ -530,7 +570,7 @@ export function getAxisLabelPosition(dv, label, axisName){
             const index = axisLabels.indexOf(label);
 
             if(index >= 0){
-                const leftIndex = (dv.getAxisScroll().leftIndex);
+                const leftIndex = (dv.getScrollData().leftIndex);
                 label = (graphX+((step*(index-leftIndex))+halfStep));
             }
         }else {
@@ -569,7 +609,7 @@ export function getAxisValuePosition(dv, value, axisName){
             const index = axisValues.indexOf(value);
             
             if(index >= 0){
-                const topIndex = (dv.getAxisScroll().topIndex);
+                const topIndex = (dv.getScrollData().topIndex);
                 value = ((graphY+graphHeight)-((step*(index-topIndex))+halfStep));
             }
         }else {
@@ -592,7 +632,7 @@ export function getArcRadius(width, height){
 
 
 //calculate chart Area
-
+/*
 export function getChartArea(dv, layout){
     const target = dv.getTarget();
 
@@ -620,6 +660,29 @@ export function getChartArea(dv, layout){
             }
         }
     }
+
+    return {
+        width: width,
+        height: height
+    };
+}*/
+
+export function getChartArea(dv, layout){
+    const target = dv.getTarget() || {};
+
+    const layoutWidth = layout.width || target.offsetWidth;
+    const layoutHeight = layout.height || target.offsetHeight;
+
+    let width = layoutWidth || (layoutHeight? (layoutHeight*2): 700), height = layoutHeight || (layoutWidth? (layoutWidth/2): 350);
+
+    const heightTwice = height * 2;
+
+    if(heightTwice > layoutWidth){
+        height = width / 2;
+    }else if(heightTwice < layoutWidth){
+        width = height * 2;
+    }
+    
 
     return {
         width: width,

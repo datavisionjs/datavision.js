@@ -34,8 +34,8 @@
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        //const yArray = [55.1234, "N/A", 44, 20, 15, 20, 49, 40];
-        //const xArray = ["Italy", "France", "Spain", "USA", "Argentina", "USA", "France", "France"];
+        const yArray = [55, 10, 44, 20];
+        const xArray = ["55", "56", "59", "58"];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -100,24 +100,64 @@
         
         // Define Data
 
-        //const xArray = [1, 2, 3, 4];
-        //const yArray = [10, 20, 30, 40];
+        //const xArray = [1, 2];
+        //const yArray = [10, 20];
+    /*
+    const xArray = [2010, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2030];
+    const yArray = [12000, 14000, 16000, 18000, 20000, 22000, 24000, 26000, 28000, 30000, 32000, 34000, 36000, 38000, 40000, 42000, 44000, 46000, 48000, 50000];
 
-        const xArray = [2010, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2030];
-        const yArray = [12000, 14000, 16000, 18000, 20000, 22000, 24000, 26000, 28000, 30000, 32000, 34000, 36000, 38000, 40000, 42000, 44000, 46000, 48000, 50000];
+    var valu = [
+      ['Salaries', 'Office', 'Merchandise', 'Legal', 'TOTAL'],
+      [1200000, 20000, 80000, 2000, 12120000],
+      [1300000, 20000, 70000, 2000, 130902000],
+      [1300000, 20000, 120000, 2000, 131222000],
+      [1400000, 20000, 90000, 2000, 14102000]];
 
-        
+      var values = [
+      ['Salaries', 'Salaries', 'Salaries', 'Legal', 'Legal'],
+      [1200000, 20000, 80000, 2000, 12120000],
+      [1300000, 20000, 70000, 2000, 130902000],
+      [1300000, 20000, 120000, 2000, 131222000],
+      [0, 0, 0, 0, "NA"]];*/
+
+
+
+
+
         const data = [
+            {
+                type: "bar",
+                labels: xArray,
+                values: yArray,
+            },
+           /*
            {
-                values: yArray, labels: xArray, type: "line",
-            }
-        ]; 
+                columnWidth: [1,2,1],
+                header: {
+                    values: ["EXPENSES", "Q1", "Q2", "Q3", "Q4", "Q5"],
+                    font: {weight: "bold", style: "italic", color: "white"},
+                    line: {width: 1, color: "black"},
+                    fill: {color: "gray"}
+                },
+                
+                data: {
+                    
+                    values: values,
+                    font: {color: [["black","black","black","black","white"], "black"], size: 12},
+                    line: {width: 1},
+                    fill: {color: [["", "#CCC", "", "#CCC", ""]]},
+                    operation: ["sum"]
+                },
+                
+                type: "table",
+            }*/
+        ];
 
         
 
         //Define Layout
         const layout = {
-            title: title, 
+           
             yAxis: {title: "Population", tickFormat: {prefix: "$", decimalPlaces: 2}}, 
             xAxis: {title: "Income", tickFormat: {decimalPlaces: 1}},
         };

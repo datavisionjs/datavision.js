@@ -23,8 +23,6 @@ const DrawTitleLabel = (dv) => {
         const fontSize = titleStyle.fontSize;
         ctx.font = fontSize+"px "+titleStyle.fontFamily;
 
-        ctx.fillStyle = "black";
-
         let x = (canvasWidth/2);
         let y = ((graphY/2)+(fontSize/2));
 
@@ -32,6 +30,8 @@ const DrawTitleLabel = (dv) => {
         if(titleLines.length > 1){
             y = fontSize;
         }
+
+        ctx.fillStyle = "black";
 
         ctx.clearRect(0, 0, (position.x + position.width), position.y);
 

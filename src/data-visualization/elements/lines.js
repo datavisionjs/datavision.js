@@ -1,11 +1,9 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawLines = (dv, dataset, type, size, position, lastPosition, boundPosition, positionIsOut) => {
+const DrawLines = (dv, ctx, dataset, type, size, position, lastPosition, boundPosition, positionIsOut) => {
 
     const mode = dataset.mode;
-
-    const ctx = dv.getCtx();
 
     const layout = dv.getLayout();
     const graphPosition = layout.graphPosition;
@@ -26,6 +24,7 @@ const DrawLines = (dv, dataset, type, size, position, lastPosition, boundPositio
     //draw lines and arc within graph bounds
     if(position){
 
+        /*
         if(position.x > (graphX+graphWidth)){
             const newX = (graphX+graphWidth);
             position.y = Calc.linearInterpolationX(
@@ -76,7 +75,8 @@ const DrawLines = (dv, dataset, type, size, position, lastPosition, boundPositio
 
                 position.y = newY;
             
-        }
+        }*/
+
 
         if(type === "start"){
             ctx.beginPath();
