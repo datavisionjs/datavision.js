@@ -278,12 +278,14 @@ function DataVision(targetId) {
                 event.stopPropagation();
                 const mousePosition = Global.getMousePosition(event);
                 DisplayToolTip(event, dv, mousePosition);
-
-            }, "");
+            }, "touchend");
 
             Global.on(document, "click", function (){
-                dv.updateTargetCanvas();
-            }, "touchend");
+                //if not touch screen, update target canvas
+                if(!(navigator.maxTouchPoints > 0)){
+                    dv.updateTargetCanvas();
+                }
+            }, "");
 
             //add canvas to target
             target.appendChild(canvas);

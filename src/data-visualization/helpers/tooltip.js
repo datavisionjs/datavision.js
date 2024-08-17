@@ -186,6 +186,7 @@ const DisplayToolTip = (event, dv, position) => {
                     break;
                 }
             }else {
+
                 if(Global.crashWithCircle(currentRect, data)){
                     DrawToolTip(dv, ctx, {x: x, y: y}, data);
                     closestData = null;
