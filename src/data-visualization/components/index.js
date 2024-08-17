@@ -1,8 +1,8 @@
 import * as Global from '../helpers/global.js';
 
 import AxisChart from './axis-chart.js';
-import Pie from './pie.js';
-
+import PieChart from './pie-chart.js';
+import TableChart from './table-chart.js';
 
 
 const Chart = (dv) => {
@@ -37,7 +37,10 @@ const Chart = (dv) => {
 
             }else if(type === "pie"){
 
-                Pie(dv, dataset);
+                PieChart(dv, dataset);
+            }else if(type === "table") {
+                
+                TableChart(dv, dataset);
             }
         }
 

@@ -1,10 +1,10 @@
 import DrawElements from "../elements";
 
-const Pie = (dv, dataset) => {
+const DrawTableChart = (dv, dataset) => {
     if(dataset){
 
         DrawElements(dv, dataset);
     }
 }
 
-export default Pie;
+export default DrawTableChart;
