@@ -28,7 +28,7 @@ const Chart = (dv) => {
                 if(type === "bar"){
                     const barDataset = dataset.dataset || {};
                     barDataset.length === 1? barDataset[0].name = yAxis.title: null;
-                }else if(type === "scatter" || "bubble"){
+                }else {
                     //
                     data.length === 1? dataset.name = yAxis.title: null;
                 }
@@ -39,7 +39,7 @@ const Chart = (dv) => {
 
                 PieChart(dv, dataset);
             }else if(type === "table") {
-                
+
                 TableChart(dv, dataset);
             }
         }

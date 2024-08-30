@@ -5,8 +5,7 @@ import DrawAxis from "./axis";
 import DrawArc from './arc.js';
 import DrawTable from './table.js';
 
-import DrawTitleLabel from './title-label.js';
-import DrawDatasetNames from './dataset-names.js';
+import DrawTitleLabel from './title.js';
 
 const plotArea = (dv) => {
     const layout = dv.getLayout();

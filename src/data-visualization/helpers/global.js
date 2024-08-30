@@ -29,10 +29,16 @@ export function on(element, event, handler, eventAlt) {
     }
 }
 
+
 //check if the event is already attached
 function hasEvent(element, eventName, handler){
     return element._eventHandlers && element._eventHandlers[eventName] &&
     element._eventHandlers[eventName].includes(handler);
+}
+
+
+export function isObject(element){
+    return typeof element === 'object' && element !== null && !Array.isArray(element);
 }
 
 
@@ -54,13 +60,23 @@ export function getMousePosition(event){
     return null;
 };
 
+export function defaultIfNull(value, alternative) {
+    return value !== undefined && value !== null ? value : alternative;
+}
+
 
 //plit graph title text
 export function splitTitleText(dv, text) {
+    if(text.length === 0){
+        return [];
+    }
+
+    const layout = dv.getLayout();
     const canvas = dv.getCanvas();
     const ctx = dv.getCtx();
 
-    const style = dv.getStyle().title;
+    const design = dv.getDesign();
+    const titleDesign = design.title;
 
     const maxWidth = canvas.width;
 
@@ -68,8 +84,10 @@ export function splitTitleText(dv, text) {
     let lines = [];
     let currentLine = words[0];
 
-    const fontSize = style.fontSize;
-    ctx.font = style.fontWeight+" "+fontSize+"px "+style.fontFamily;
+    const font = titleDesign.font;
+
+    const fontSize = font.size;
+    ctx.font = font.weight+" "+fontSize+"px "+font.family;
 
     for (let i = 1; i < words.length; i++) {
         const testLine = currentLine + ' ' + words[i];
@@ -102,10 +120,11 @@ export function getXSpace(dv, graphWidth){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
+    const design = dv.getDesign();
+    const font = design.font;
 
-    const fontSize = labelStyle.fontSize;
-    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+    const fontSize = font.size;
+    ctx.font = fontSize+"px "+font.family;
 
     //set initial space 
     let space = (fontSize*4);

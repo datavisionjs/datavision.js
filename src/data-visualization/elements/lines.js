@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawLines = (dv, ctx, dataset, type, size, position, lastPosition, boundPosition, positionIsOut) => {
+const DrawLines = (dv, ctx, dataset, type, size, position, positionIsOut) => {
 
     const mode = dataset.mode;
 
@@ -12,9 +12,6 @@ const DrawLines = (dv, ctx, dataset, type, size, position, lastPosition, boundPo
 
     //add style 
     ctx.lineWidth = size;
-
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
    
 
     //draw lines coming from out of bounds points

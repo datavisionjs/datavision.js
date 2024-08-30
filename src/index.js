@@ -2,7 +2,7 @@ import * as dataVis from './data-visualization/index.js'
 
 //import helpers
 import * as Calc from './data-visualization/helpers/math.js';
-import GetStyle from './data-visualization/helpers/style.js';
+import Design from './data-visualization/helpers/design.js';
 import * as Prop from './data-visualization/helpers/properties.js'
 import DisplayToolTip from './data-visualization/helpers/tooltip.js';
 
@@ -10,7 +10,8 @@ import DisplayToolTip from './data-visualization/helpers/tooltip.js';
 import * as Global from './data-visualization/helpers/global.js';
 
 //drawdataset names 
-import DrawDatasetNames from './data-visualization/plot-area/dataset-names.js';
+import DrawLegend from './data-visualization/plot-area/legend.js';
+
 
 
 function DataVision(targetId) {
@@ -19,7 +20,7 @@ function DataVision(targetId) {
     this.data = [];
 
     this.layout = {};
-    this.style = {};
+    this.design = {};
 
     //scrolls
 
@@ -30,8 +31,8 @@ function DataVision(targetId) {
 
     this.scrollData = {topIndex: 0, leftIndex: 0, isScrollY: false, isScrollX: false};
 
-    this.datasetNamesScrollBar = document.createElement("div");
-    this.datasetNamesScrollTop = 0;
+    this.legendScrollBar = document.createElement("div");
+    this.legendScrollTop = 0;
 
 
     this.target = document.getElementById(targetId);
@@ -77,11 +78,17 @@ function DataVision(targetId) {
             //get the data type of the dataset
             //const data = this.getData();
 
-            //const firstDataType = data[0]? data[0].type: null;
+            //set general designs
+            this.setDesign(layout);
 
             //set title text to multiple lines 
-            const titleText = layout.title? layout.title: "";
-            layout.titleLines = Global.splitTitleText(this, titleText);
+            const title = layout.title || "";
+            if(Global.isObject(title)){
+                const titleText = title.text || "";
+                layout.title.titleLines = Global.splitTitleText(this, titleText);
+            }else {
+                layout.title = {titleLines: Global.splitTitleText(this, title)};
+            }
 
             //layout.isBarChart = firstDataType === "bar"? true: false;
             //layout.isPieChart = firstDataType === "pie"? true: false;
@@ -91,18 +98,17 @@ function DataVision(targetId) {
 
             //set layout to new layout
             this.layout = {...layout};
-
         }
     };
     this.getLayout = function (){
         return this.layout;
     };
 
-    this.setStyle = function (){
-        this.style = GetStyle(this);
+    this.setDesign = function (layout){
+        this.design = Design(this, layout);
     };
-    this.getStyle = function (){
-        return this.style;
+    this.getDesign = function (){
+        return this.design;
     };
 
     //canvas
@@ -171,20 +177,20 @@ function DataVision(targetId) {
         };
     };
 
-    this.getDatasetNamesScrollTop = function (){
-        return this.datasetNamesScrollTop;
+    this.getLegendScrollTop = function (){
+        return this.legendScrollTop;
     };
-    this.setDatasetNamesScrollTop = function (value){
-        this.datasetNamesScrollTop = value;
+    this.setLegendScrollTop = function (value){
+        this.legendScrollTop = value;
     };
 
-    this.getDatasetNamesScrollBar = function (){
-        return this.datasetNamesScrollBar;
+    this.getLegendScrollBar = function (){
+        return this.legendScrollBar;
     }
 
-    this.addDatasetNamesScrollBar = function (position, contentHeight){
+    this.addLegendScrollBar = function (position, contentHeight){
         const target = this.getTarget();
-        const bar = this.getDatasetNamesScrollBar();
+        const bar = this.getLegendScrollBar();
         const content = bar.children[0] || document.createElement("div");
 
         if(content){ 
@@ -212,14 +218,14 @@ function DataVision(targetId) {
             const dv = this; //get datavision object
             let timeoutId;
             Global.on(bar, "scroll", function (){
-                dv.setDatasetNamesScrollTop(bar.scrollTop);
+                dv.setLegendScrollTop(bar.scrollTop);
                 
                 // Clear previous timeout, if any
                 clearTimeout(timeoutId);
 
                 // Set a new timeout
                 timeoutId = setTimeout(function() {
-                    DrawDatasetNames(dv);
+                    DrawLegend(dv);
                     dv.updateCanvasCopy();
                 }, 10); // Adjust the delay as needed
 
@@ -309,7 +315,7 @@ DataVision.prototype.update = function (){
     Prop.setGraphPosition(this);
     
     //Draw dataset names
-    DrawDatasetNames(this);
+    DrawLegend(this);
 
     dataVis.DrawPlotArea(this);
 
@@ -329,9 +335,6 @@ DataVision.prototype.plot = function (data, layout){
     const chartArea = Calc.getChartArea(this, layout);
 
     this.setCanvas(chartArea.width, chartArea.height);
-
-    //set styles
-    this.setStyle();
 
     //set data and layout
     //this.setData(data);

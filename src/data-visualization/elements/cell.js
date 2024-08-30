@@ -24,8 +24,6 @@ const getValue = (element, column, row, defaultValue) => {
 };
 
 const DrawCell = (dv, ctx, positions, properties, rect, column, row, columnWidth) => {
-    const labelStyle = dv.getStyle().label;
-
     //
     const align = getValue(properties.align, column, row, "center");
 

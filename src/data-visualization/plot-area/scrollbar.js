@@ -16,8 +16,9 @@ export const getBarSize = function (dv){
 export const setContentSize = function (dv){
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+    const fontSize = font.size;
 
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;
@@ -64,7 +65,7 @@ export const setContentSize = function (dv){
         const tdRowHeight = (tdFontSize+fontSize);
 
         scrollData.contentHeight = (thRowHeight+(tdRowHeight*(rowCount-1)));
-        scrollData.contentWidth = ((maxWidth+(Math.max(tdFontSize, thFontSize)*2))*columnCount)
+        scrollData.contentWidth = 0;
     }
 
     /*
@@ -159,8 +160,9 @@ export const setIndex = function (dv, top, left){
     const layout = dv.getLayout();
     const axisData = layout? layout.axisData: null;
 
-    const labelStyle = dv.getStyle().label || {};
-    const fontSize = labelStyle.fontSize || 0;
+    const design = dv.getDesign();
+    const font = design.font;
+    const fontSize = font.size;
 
     const scrollData = dv.getScrollData();
     const wheelArea = dv.getScrollbar().wheelArea;

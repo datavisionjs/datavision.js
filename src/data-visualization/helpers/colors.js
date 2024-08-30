@@ -26,7 +26,7 @@ const customColors = {
     { name: 'Emerald Green', code: '#50C878' },
     { name: 'Golden Yellow', code: '#FFD700' },
     { name: 'Violet Purple', code: '#8A2BE2' },
-    { "name": "Mint Green", "code": "#98FF98" },
+    { name: "Mint Green", code: "#98FF98" },
     { name: 'Plum Purple', code: '#DDA0DD' },
   ]
 }

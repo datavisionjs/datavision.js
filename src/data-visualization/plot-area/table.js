@@ -8,8 +8,9 @@ const DrawTable = (dv) => {
     
     const scrollData = dv.getScrollData();
 
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+    const fontSize = font.size;
 
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;

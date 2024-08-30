@@ -1,19 +1,20 @@
 import * as Global from '../helpers/global.js';
 import customColors from '../helpers/colors.js';
 
-const DrawDatasetNames = (dv) => {
+const DrawLegend = (dv) => {
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
+    const design = dv.getDesign();
+    const font = design.font;
 
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
-    const fontSize = labelStyle.fontSize;
-    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+    const fontSize = font.size;
+    ctx.font = font.weight + " " + fontSize+"px "+font.family;
 
     let pixelSpace = (fontSize+(fontSize/2));
 
@@ -31,36 +32,33 @@ const DrawDatasetNames = (dv) => {
     //const datasetNameData = layout.datasetNameData;
     //const datasetTotal = datasetNameData.total;
 
-    const datasetData = dv.getData();
+    const legend = layout.legend;
+    const legendData = legend.data;
+    const names = legend.names || Object.keys(legendData);
+
+    //const names = legend.names;
+    //const colors = legend.colors;
+    const size = legend.size;
+    const isDefault = legend.isDefault;
+    const display = legend.display;
+
+    const data = dv.getData();
 
     let hasMultiBarChart = false;
 
-    if(datasetData.length === 1){
-        const dataset = datasetData[0];
-        dataset.type === "bar"? dataset.names.length > 1? hasMultiBarChart = true: null: null; 
+    if(data.length === 1){
+        const dataset = data[0];
+        dataset.type === "bar"? size > 1? hasMultiBarChart = true: null: null; 
     }
-
     
-    if(datasetData.length > 1 || !layout.hasAxisData || hasMultiBarChart){
+    if(((isDefault && data.length > 1) || !layout.hasAxisData || hasMultiBarChart) || display){
 
         let startY = (graphY+(fontSize/2));
 
-        const names = [];
-        const colors = [];
+        const strollTop = dv.getLegendScrollTop();
+        const contentHeight = (size*pixelSpace);
 
-        for (let i = 0; i < datasetData.length; i++) {
-            const dataset = datasetData[i]; // Assuming datasetData is your array of datasets
-            const dataNames = dataset.names || [dataset.name || ""]; // Check if dataset has 'names' property, else fallback to 'name'
-            const dataColors = dataset.colors || (dataset.design? dataset.design.color: "");
-
-           names.push(...dataNames);
-           colors.push(...Array.isArray(dataColors)? dataColors: [dataColors]);
-        }
-
-        const strollTop = dv.getDatasetNamesScrollTop();
-        const contentHeight = (names.length*pixelSpace);
-
-        const scrollIndexDecimal = (strollTop/contentHeight)*names.length;
+        const scrollIndexDecimal = (strollTop/contentHeight)*size;
         const scrollIndex = Math.floor(scrollIndexDecimal);
 
         startY -= (fontSize*(scrollIndexDecimal-scrollIndex));
@@ -69,12 +67,9 @@ const DrawDatasetNames = (dv) => {
         const labelFontX = (labelX-((fontSize/2)+1));
         ctx.clearRect(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
 
-        if(names){
+        if(legendData){
 
-            for (let i = scrollIndex; i < names.length; i++) {
-
-                //set defualtColor
-                const defaultColor = customColors.get(i).code;
+            for (let i = scrollIndex; i < size; i++) {
 
                 let label = names[i];
                 const labelWidth = ctx.measureText(label).width;
@@ -85,23 +80,21 @@ const DrawDatasetNames = (dv) => {
                         label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
                     }
                 }
-                
 
-                const pieColor = colors? colors[i]: null;
+                const pieColor = legendData.get(label);
 
-                const fillColor = pieColor? pieColor: defaultColor;
-                fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
+                const fillColor = pieColor;
 
-            
                 const textPosX = (labelX+fontSize), textPosY = startY;
 
                 ctx.beginPath();
+                fillColor? ctx.fillStyle = fillColor: null;//set bar color if exists
                 ctx.arc(labelX, startY, (fontSize/2), 0, 2*Math.PI);
                 ctx.fill();
 
                 //add text
                 ctx.beginPath();
-                ctx.fillStyle = "black";
+                ctx.fillStyle = font.color;
                 ctx.textAlign = "start";
                 ctx.textBaseline = "middle";
                 ctx.fillText(label, textPosX, textPosY);
@@ -116,8 +109,8 @@ const DrawDatasetNames = (dv) => {
          //clear bottom of dataset names 
         ctx.clearRect(labelFontX, (graphY+graphHeight), (canvasWidth-labelFontX), (canvasHeight-(graphY+graphHeight)));
 
-        dv.addDatasetNamesScrollBar({x: labelFontX, y: graphY, width: (canvasWidth-labelFontX), height: graphHeight}, contentHeight);
+        dv.addLegendScrollBar({x: labelFontX, y: graphY, width: (canvasWidth-labelFontX), height: graphHeight}, contentHeight);
     }
 }
 
-export default DrawDatasetNames;
+export default DrawLegend;

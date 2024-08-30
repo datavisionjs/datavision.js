@@ -23,6 +23,7 @@ const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, valu
     const endAngle = (endDegrees)*degreesToRadians;
 
     ctx.beginPath();
+    ctx.fillStyle = pieColor;
     ctx.strokeStyle = pieColor;
     ctx.lineWidth = 2;
     ctx.lineCap = "round";

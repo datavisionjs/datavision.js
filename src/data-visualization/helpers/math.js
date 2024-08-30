@@ -115,7 +115,106 @@ export function removeDuplicates(array){ //remove duplicates from array but keep
     });
 }
 
+export function axisCustomSort(dv, labels, axisData){
+    const layout = dv.getLayout();
 
+    const firstData = axisData[0] || {};
+    const barDataset = firstData.type? firstData.type === "bar"? firstData.dataset: []: [];
+
+    const sortDataset = [...barDataset, ...axisData.slice(1)].filter(dataset => 
+        dataset.isSortBy
+    );
+    console.log("myLab: ", labels, axisData, sortDataset);
+
+    
+    const sort = layout.sort || {};
+    const order = sort.order;
+    
+    if(order){
+        const xAxis = labels["x1"];
+        
+
+        if(sortDataset.length){
+            const dataset = sortDataset[0];
+            let combined = xAxis.values.map((label, index) => [label, dataset.dataPoints.get(label)]);
+
+            // Step 2: Sort the combined array based on the number
+            combined = customSort(combined, order, 1);
+
+            // Step 3: Extract the sorted numbers and strings if needed
+            const sortedXAxisValues = combined.map(item => item[0]);
+
+            xAxis.values = sortedXAxisValues;
+        }else {
+            xAxis.values = customSort(xAxis.values, order);
+        }
+    }
+}
+
+export function pieCustomSort(dv, dataset){
+    const layout = dv.getLayout();
+
+    const sort = layout.sort || {};
+    const order = sort.order;
+
+    if(order){
+        const key = sort.key || "labels";
+        const labels = dataset.labels;
+        const values = dataset.values;
+
+        if(key === "values"){
+            let combined = labels.map((label, index) => [label, values[index]]);
+
+            // Step 2: Sort the combined array based on the number
+            combined = customSort(combined, order, 1);
+
+            // Step 3: Extract the sorted numbers and strings if needed
+            const sortedLabels = combined.map(item => item[0]);
+
+            dataset.sortedLabels = sortedLabels;
+        }else {
+            dataset.sortedLabels = customSort(labels, order);
+        }
+    }
+}
+
+export function customSort(values, order = "asc", index = 0){
+    let newValues = values.slice(); //a copy to avoid mutation
+
+    const isAscending = order === "asc";
+
+    function sortNumerically(a, b) {
+        return Number(a) - Number(b);
+    }
+
+    function sortLexicographically(a, b) {
+        return a.localeCompare(b);
+    }
+
+    newValues.sort((a, b) => {
+        a = typeof(a) === "object"? a[index]: a;
+        b = typeof(b) === "object"? b[index]: b;
+
+        const isANumeric = !isNaN(a);
+        const isBNumeric = !isNaN(b);
+
+        if (isANumeric && isBNumeric) {
+            // Both are numbers
+            return isAscending? sortNumerically(a, b) : sortNumerically(b, a);
+        } else if (!isANumeric && !isBNumeric) {
+            // Both are non-numeric strings
+            return isAscending? sortLexicographically(a, b) : sortLexicographically(b, a);
+        } else if (isANumeric) {
+            // a is numeric, b is non-numeric
+            return isAscending? -1 : 1; // Numbers before strings for ascending, reverse for descending
+        } else {
+            // a is non-numeric, b is numeric
+            return isAscending? 1 : -1; // Strings after numbers for ascending, reverse for descending
+        }
+    });
+
+    return newValues;
+}
 
 export function getNumberInRange(number, range){
     const rangeMin = Math.min(...range);
@@ -172,6 +271,10 @@ export function avg(arr) {
 }
 
 export function computeOperation(operation, arr){
+    if(arr.length === 0){
+        return 0; //making sure that we do not get -infinity when array length is 0
+    }
+
     if(operation === "avg"){
         return avg(arr);
     }else if(operation === "min"){
@@ -300,7 +403,7 @@ export function toFixedIfNeeded(number, decimalPlaces) {
                 result = parsedNumber.toFixed(newDecimalPlaces);
             }
         } else {
-            result = parseFloatparsedNumber; // Return original value if no decimal part
+            result = parsedNumber; // Return original value if no decimal part
         }
     }
 
@@ -486,8 +589,6 @@ export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
 
             //const value = getNumberInRange(y, range);
 
-            //console.log("y: ", y, value);
-
             const perc = ((y - rangeStart)/rangeDiff);
             const pos = ((chartY+chartHeight)-(perc*chartHeight));
                 
@@ -547,8 +648,10 @@ export function getAxisLabelPosition(dv, label, axisName){
 
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+
+    const fontSize = font.size;
 
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x;
@@ -586,8 +689,10 @@ export function getAxisLabelPosition(dv, label, axisName){
 export function getAxisValuePosition(dv, value, axisName){
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+
+    const fontSize = font.size;
 
     const graphPosition = layout.graphPosition;
     const graphY = graphPosition.y;

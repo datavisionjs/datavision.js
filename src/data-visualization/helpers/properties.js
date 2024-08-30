@@ -10,17 +10,21 @@ export function setGraphPosition(dv){
 
     //layout 
     const layout = dv.getLayout();
-
+    
     //styling 
-    const style = dv.getStyle();
-    const titleFontSize = style.title.fontSize;
-    const labelFontSize = style.label.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+    const titleDesign = design.title;
+
+    const titleFont = titleDesign.font;
+    const titleFontSize = titleFont.size;
+
+    const fontSize = font.size;
 
 
     //set title space from top;
-    const titleLines = dv.getLayout().titleLines;
-    let titleTop = 0;
-    titleLines.length > 0? titleTop = ((titleLines.length+1)*titleFontSize): null;
+    const titleLines = dv.getLayout().title.titleLines;
+    let titleTop = titleLines.length > 0? (((titleLines.length+1)*titleFontSize)+fontSize): fontSize;
     
 
 
@@ -28,7 +32,7 @@ export function setGraphPosition(dv){
     const axisData = layout.axisData;
     const labelObject = axisData.labels;
     const valueObject = axisData.values;
-    const axisTitleSpace = (labelFontSize*2);
+    const axisTitleSpace = (fontSize*2);
 
     //set y axis space from left and right
     const yMaxLabelWidth = (canvasWidth*0.15);
@@ -52,25 +56,27 @@ export function setGraphPosition(dv){
     y2MaxWidth < yAxisRight? y2MaxWidth === 0? yAxisRight = 0: yAxisRight = (y2MaxWidth+axisTitleSpace): null;
 
     const y2Title = layout.y2Axis? layout.y2Axis.title: null;
-    y2Title && (y2MaxWidth > 0)? yAxisRight += (labelFontSize*2): null;
+    y2Title && (y2MaxWidth > 0)? yAxisRight += (fontSize*2): null;
 
 
 
     //dataset labels 
     let datasetSpace = (canvasWidth*0.15);
 
-    const datasetNameData = layout.datasetNameData;
-    const isDatasetName = datasetNameData.isDatasetName;
-    const datasetMaxWidth = datasetNameData.maxNameWidth;
+    const legend = layout.legend;
+    const legendIsDefault = legend.isDefault;
+    const legendSize = legend.size;
 
-    if(isDatasetName){
-        datasetMaxWidth < datasetSpace? datasetSpace = (datasetMaxWidth+axisTitleSpace): datasetSpace = (canvasWidth*0.2);
+    const legendMaxWidth = legend.maxWidth;
+
+    if((legendIsDefault && legendSize > 1) || legend.display){
+        legendMaxWidth < datasetSpace? datasetSpace = (legendMaxWidth+axisTitleSpace): datasetSpace = (canvasWidth*0.2);
     }else {
         datasetSpace = 0;
     }
 
     //set x axis space from bottom
-    let xAxisBottom = ((axisTitleSpace)+labelFontSize);
+    let xAxisBottom = ((axisTitleSpace)+fontSize);
     let xAxisRight = 0;
 
     const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
@@ -83,9 +89,9 @@ export function setGraphPosition(dv){
     //give space to the right of the x axis using x1MaxWidth
     xAxisRight = x1.isAllNumbers? x1MaxWidth: 0;
 
-    if(!x1.isAllNumbers && ((labelStep/labelFontSize) < 4)){
+    if(!x1.isAllNumbers && ((labelStep/fontSize) < 4)){
         const thirdHeight = (canvasHeight*0.3);
-        xAxisBottom += x1MaxWidth > thirdHeight? thirdHeight: (labelFontSize*2);
+        xAxisBottom += x1MaxWidth > thirdHeight? thirdHeight: x1MaxWidth;
     }
 
     const x1Title = layout.xAxis? layout.xAxis.title: null;
@@ -205,16 +211,22 @@ function setAxisProperties(dv, axisObject, type){
 
         const isAllNumbers = Calc.isAllNumbers(values);
 
+        const design = dv.getDesign();
+        let font = design.xAxis.font;
+
         let targetAxis = {};
         if(type === "values"){
             if(key === "y2"){
                 layout.y2Axis? targetAxis = layout.y2Axis: null;
             }else {
                 layout.yAxis? targetAxis = layout.yAxis: null;
+                font = design.yAxis.font;
             }
         }else {
             layout.xAxis? targetAxis = layout.xAxis: null;
         }
+
+        ctx.font = font.weight + " " + font.size + "px " + font.family;
 
         let range = targetAxis.range || Calc.rangeFromData(values);
         const title = targetAxis.title || "";
@@ -305,12 +317,11 @@ export function setUpChart(dv){
     const data = dv.getData();
 
     
+    const design = dv.getDesign();
+    const font = design.font;
 
-    const style = dv.getStyle();
-    const labelStyle = style.label;
-
-    const fontSize = labelStyle.fontSize;
-    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+    const fontSize = font.size;
+    ctx.font = font.weight + " " + fontSize+"px "+ font.family;
 
     //get scroll data 
     const scrollData = dv.getScrollData();
@@ -323,6 +334,12 @@ export function setUpChart(dv){
     const axisData = [];
     const pieData = [];
     const tableData = [];
+
+    const legendData = {
+        data: new Map(),
+        names: [],
+        maxWidth: 0
+    };
 
     let axisDataCount = 0;
 
@@ -347,9 +364,10 @@ export function setUpChart(dv){
     let hasTableData = false;
     let axisDirection = null;
 
-    //dataset names data
-    let datasetNameMaxWidth = 0;
-    let totalDatasetName = 0;
+
+    //sort 
+    const sort = layout.sort || {};
+    const sortIndex = sort.index;
 
     //get range from data 
     if(data){
@@ -361,6 +379,7 @@ export function setUpChart(dv){
 
         const barDataset = {type: "bar", dataset: [], attributeIsSet: false};
         const barStackTrackValues = new Map(); //track and add values of stacked bars for range
+
         const barDatasetNames = [];
         const barDatasetColors = [];
         let hasBarDataset = false;
@@ -396,20 +415,16 @@ export function setUpChart(dv){
             let maxValueWidth = 0;
 
             const barData = {
-                values: new Map(),  
+                dataPoints: new Map(),  
                 xAxis: dataLabelAxis, 
                 yAxis: dataValueAxis
             };
 
             //axis dataset
+            const dataPoints = new Map();
             const newLabels = [];
             const newValues = [];
             const axisBucket = [];
-
-            //pie dataset
-            const newPieDataset = {...dataset};
-            const newPieLabels = [];
-            const newPieValues = [];
 
 
             const labelIsAllNumbers = Calc.isAllNumbers(labels);
@@ -487,9 +502,9 @@ export function setUpChart(dv){
 
                         let labelValues = [newValue];
     
-                        if(barData.values.has(newLabel)){
+                        if(barData.dataPoints.has(newLabel)){
 
-                            labelValues = barData.values.get(newLabel);
+                            labelValues = barData.dataPoints.get(newLabel);
 
                             if(newValueIsAllNumbers){
 
@@ -508,7 +523,7 @@ export function setUpChart(dv){
                             //set maxBarPerCategory if labelValues is more then the current value.
                             labelValues.length > maxBarPerCategory? maxBarPerCategory = labelValues.length: null;
 
-                            barData.values.set(newLabel, labelValues);
+                            barData.dataPoints.set(newLabel, labelValues);
         
                             dataset.direction === "hr"? axisDirection = "hr": null;
                             hasBarDataset = true;
@@ -520,7 +535,7 @@ export function setUpChart(dv){
                             const isAllNumbers = isHorizontal? valueIsAllNumbers: labelIsAllNumbers; //check if the base of the bars is all numbers
                             if(isAllNumbers){ 
 
-                                let keysArray = Array.from(barData.values.keys());
+                                let keysArray = Array.from(barData.dataPoints.keys());
                                 keysArray.sort((a, b) => {return a-b; });
 
                                 for(let k = 0; k < keysArray.length; k++){
@@ -539,39 +554,40 @@ export function setUpChart(dv){
                             
                             if(valueIsAllNumbers || labelIsAllNumbers){
 
-                                //loop through barData values bucket and execute the operation
-                                barData.values.forEach((bucket, key) => {
+                                //loop through barData dataPoints bucket and execute the operation
+                                barData.dataPoints.forEach((bucket, key) => {
 
-                                    let newValue = Calc.computeOperation(operation, bucket);
+                                    if(bucket.length > 0){
+                                        let newValue = newValueIsAllNumbers? Calc.computeOperation(operation, bucket): bucket[0];
 
-                                    isNaN(newValue)? newValue = bucket[0]: null;
-                                    const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
+                                        const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
 
-                                    barData.values.set(key, newValue);
+                                        barData.dataPoints.set(key, newValue);
 
-                                    //add stack value to properly show axis range
-                                    if(barDataset.mode === "stack"){
-                                        const lastStack = barStackTrackValues.has(key)? barStackTrackValues.get(key): [0, 0];
-                                        const lastValue = newValue >= 0? (lastStack[0]): (lastStack[1]);
+                                        //add stack value to properly show axis range
+                                        if(barDataset.mode === "stack"){
+                                            const lastStack = barStackTrackValues.has(key)? barStackTrackValues.get(key): [0, 0];
+                                            const lastValue = newValue >= 0? (lastStack[0]): (lastStack[1]);
 
-                                        newValue = (lastValue+newValue);
+                                            newValue = (lastValue+newValue);
 
-                                        const currentStack = newValue >= 0? [newValue, lastStack[1]]: [lastStack[0], newValue];
-                                        barStackTrackValues.set(key, currentStack);
-                                    }
-                                    
-
-                                    if(isHorizontal){
-                                        xAxis.values.push(newValue);
-                                        
-                                        if(newValueWidth > maxLabelWidth){
-                                            maxLabelWidth = newValueWidth;
+                                            const currentStack = newValue >= 0? [newValue, lastStack[1]]: [lastStack[0], newValue];
+                                            barStackTrackValues.set(key, currentStack);
                                         }
-                                    }else {
-                                        yAxis.values.push(newValue);
+                                        
 
-                                        if(newValueWidth > maxValueWidth){
-                                            maxValueWidth = newValueWidth;
+                                        if(isHorizontal){
+                                            xAxis.values.push(newValue);
+                                            
+                                            if(newValueWidth > maxLabelWidth){
+                                                maxLabelWidth = newValueWidth;
+                                            }
+                                        }else {
+                                            yAxis.values.push(newValue);
+
+                                            if(newValueWidth > maxValueWidth){
+                                                maxValueWidth = newValueWidth;
+                                            }
                                         }
                                     }
 
@@ -583,6 +599,7 @@ export function setUpChart(dv){
                         (valueIsAllNumbers && !labelIsAllNumbers && isHorizontal)? yAxis.values.push(value): null;
                     }else {
 
+                        
                         if(newLabels.includes(label) && valueIsAllNumbers){
                             
                             const index = newLabels.indexOf(label);
@@ -619,32 +636,39 @@ export function setUpChart(dv){
                                 labelIsAllNumbers? axisBucket.push([label]): axisBucket.push([]);
                             }
                         }
+                        
 
                         if(j === (loopEnd-1)){ //at the end of the j loop 
                             for(let k = 0; k < axisBucket.length; k++){
                                 const bucket = axisBucket[k];
 
-                                const newValue = Calc.computeOperation(operation, bucket);
-                                if(!isNaN(newValue)){
+                                if(bucket.length > 0){
+                                    const newValue = Calc.computeOperation(operation, bucket);
+                                    if(!isNaN(newValue)){
 
-                                    if(valueIsAllNumbers){
-                                        valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
+                                        if(valueIsAllNumbers){
+                                            valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
 
-                                        newValues[k] = newValue;
-                                        yAxis.values.push(newValue);
 
-                                        if(valueWidth > maxValueWidth){
-                                            maxValueWidth = valueWidth;
-                                        }
-                                    }else {
-                                        if(labelIsAllNumbers){
-                                            labelWidth = ctx.measureText(xPrefix + Calc.toFixedIfNeeded(newValue, xDecimalPlaces) + xSuffix).width;
+                                            //newValues[k] = newValue;
+                                            dataPoints.set(newLabels[k], newValue);
 
-                                            newLabels[k] = newValue;
-                                            xAxis.values.push(newValue);
+                                            yAxis.values.push(newValue);
 
-                                            if(labelWidth > maxLabelWidth){
-                                                maxLabelWidth = labelWidth;
+                                            if(valueWidth > maxValueWidth){
+                                                maxValueWidth = valueWidth;
+                                            }
+                                        }else {
+                                            if(labelIsAllNumbers){
+                                                labelWidth = ctx.measureText(xPrefix + Calc.toFixedIfNeeded(newValue, xDecimalPlaces) + xSuffix).width;
+
+                                                //newLabels[k] = newValue;
+                                                dataPoints.set(newValue, newValues[k]);
+                                                xAxis.values.push(newValue);
+
+                                                if(labelWidth > maxLabelWidth){
+                                                    maxLabelWidth = labelWidth;
+                                                }
                                             }
                                         }
                                     }
@@ -691,40 +715,62 @@ export function setUpChart(dv){
                 const newDataNameWidth = ctx.measureText(newDataName).width;
 
                 if(dataType === "bar"){
-                    barDatasetNames.push(newDataName);
+                    //barDatasetNames.push(newDataName);
                     barData.name = newDataName;
+                    barData.type = "bar";
                     barData.design = setUpAxisChartDesign(dataType, design, axisDataCount);
                     barData.design.color? barDatasetColors.push(Array.isArray(barData.design.color)? barData.design.color[0]: barData.design.color): null;
+                    barData.isSortBy = i === sortIndex;
                     barDataset.dataset.push(barData);
+
+                    //set legend colors
+                    //legendData.colors.push(barData.design.color);
+                    legendData.data.set(newDataName, barData.design.color);
                 }else {
+                    console.log("mdp: ", )
                     dataset.name = newDataName;
-                    dataset.values = newValues;
-                    dataset.labels = newLabels;
+                    dataset.dataPoints = dataPoints;
                     dataset.design = setUpAxisChartDesign(dataType, design, axisDataCount);
+                    dataset.isSortBy = i === sortIndex;
                     axisData.push(dataset);
+
+                    //set legend colors
+                    //legendData.colors.push(dataset.design.color);
+                    legendData.data.set(newDataName, dataset.design.color);
                 }
 
+                legendData.names.push(newDataName);
+
                 //set dataset name max width and total on axis charts
-                newDataNameWidth > datasetNameMaxWidth? datasetNameMaxWidth = newDataNameWidth: null;
-                totalDatasetName += 1;
+                newDataNameWidth > legendData.maxWidth? legendData.maxWidth = newDataNameWidth: null;
 
                 axisDataCount++;
 
                 if(xAxis){
                     //remove all duplicates
-                    xAxis.values = [...new Set(xAxis.values)];
-                    //set axis count
-                    !xAxis.isAllNumbers? xAxis.values.length > (scrollData.labelsCount|| 0)? scrollData.labelsCount = xAxis.values.length: null: null; 
+                    if(!xAxis.isAllNumbers){
+                        xAxis.values = [...new Set(xAxis.values)];
+                        //set axis count
+                        xAxis.values.length > (scrollData.labelsCount|| 0)? scrollData.labelsCount = xAxis.values.length: null;
+                    } 
                 }
 
                 if(yAxis){
-                    //remove all duplicates
-                    yAxis.values = [...new Set(yAxis.values)];
-                    //set axis count
-                    !yAxis.isAllNumbers? yAxis.values.length > (scrollData.valuesCount|| 0)? scrollData.valuesCount = yAxis.values.length: null: null;
+                    if(!yAxis.isAllNumbers){
+                        //remove all duplicates
+                        yAxis.values = [...new Set(yAxis.values)];
+                        //set axis count
+                        yAxis.values.length > (scrollData.valuesCount|| 0)? scrollData.valuesCount = yAxis.values.length: null;
+                    }
                 }
 
             }else if(dataType === "pie" && !(hasAxisData || hasTableData)){
+
+                const operation = dataset.operation;
+                const colors = Array.isArray(dataset.colors)? dataset.colors: null;
+                
+                const pieLabels = [];
+                const valueBuckets = [];
 
                 for(let j = 0; j < values.length; j++){
                     const label = labelIsAllNumbers? labels[j]: labels[j];
@@ -735,13 +781,12 @@ export function setUpChart(dv){
                         const labelWidth = ctx.measureText(label).width;
 
                         //set new pie dataset labels and values 
-                        if(newPieLabels.includes(label)){
-                            const index = newPieLabels.indexOf(label);
-
-                            newPieValues[index].push(value);
+                        const index = pieLabels.indexOf(label);
+                        if(index > -1){
+                            valueBuckets[index].push(value);
                         }else {
-                            newPieLabels.push(label);
-                            newPieValues.push([value]);
+                            pieLabels.push(label);
+                            valueBuckets.push([value]);
                         }
 
                         //set max width of axis labels and values for pie charts
@@ -749,21 +794,50 @@ export function setUpChart(dv){
                     }
 
                 }
-                
-                newPieDataset.labels = newPieLabels;
-                newPieDataset.values = newPieValues;
-                newPieDataset.names = newPieLabels;
-                newPieDataset.type = "pie";
 
-                newPieDataset.xLayout = {tickFormat: xAxisTickFormat, isAllNumbers: labelIsAllNumbers};
-                newPieDataset.yLayout = {tickFormat: yAxisTickFormat, isAllNumbers: valueIsAllNumbers};
+                 //pie dataset
+                 const newDataset = {
+                    ...dataset,
+                    data: new Map(),
+                    labels: pieLabels,
+                    values: [],
+                    colors: [],
+                    sumOfValues: 0
+                };
 
-                //push pie dataset
-                pieData.push(newPieDataset);
+
+                //calculate operations and set values;
+                const pieValues = [];
+                valueBuckets.forEach((bucket, index) => {
+                    const label = pieLabels[index];
+                    const value = Calc.computeOperation(operation, bucket);
+                    //
+                    const defaultColor = customColors.get(index).code;
+                    const pieColor = colors? colors[index]: defaultColor;
+
+                    newDataset.data.set(label, {value: value, color: pieColor});
+                    pieValues.push(value);
+                    newDataset.sumOfValues = (newDataset.sumOfValues + value);
+
+                    //set legend data
+                    legendData.data.set(label, pieColor);
+                });
+
+                newDataset.values = pieValues;
+                newDataset.type = "pie";
+
+                newDataset.xLayout = {tickFormat: xAxisTickFormat, isAllNumbers: labelIsAllNumbers};
+                newDataset.yLayout = {tickFormat: yAxisTickFormat, isAllNumbers: valueIsAllNumbers};
+
+                //sorting
+                Calc.pieCustomSort(dv, newDataset);
+                legendData.names = {...newDataset.sortedLabels};
+
+                //add to pieData 
+                pieData.push(newDataset);
 
                 //set dataset name max width and total on pie
-                pieMaxLabelWidth > datasetNameMaxWidth? datasetNameMaxWidth = pieMaxLabelWidth: null;
-                totalDatasetName += newPieLabels.length;
+                pieMaxLabelWidth > legendData.maxWidth? legendData.maxWidth = pieMaxLabelWidth: null;
 
                 hasPieData = true;
             }else if(dataType === "table" && !(hasAxisData || hasPieData)){
@@ -785,6 +859,7 @@ export function setUpChart(dv){
                 if(dataOperation){
                     let hasCategoricalData = false;
                     let categoricalDataIndex = 0;
+                    let categoricalDataLength = 0;
 
                     const isNumbericColumn = [];
 
@@ -796,8 +871,19 @@ export function setUpChart(dv){
                            const columnIsAllNumbers = Calc.isAllNumbers(column);
 
                            if(!columnIsAllNumbers){
-                                categoricalDataIndex = index;
-                                hasCategoricalData = true;
+                                const columnUniqueValues = Array.from(new Set(column));
+                                if(hasCategoricalData){
+                                    if(columnUniqueValues.length > categoricalDataLength){
+                                        categoricalDataIndex = index;
+                                        categoricalDataLength = columnUniqueValues.length;
+                                        rowCount = columnUniqueValues.length || 1;
+                                    }
+                                }else {
+                                    categoricalDataIndex = index;
+                                    hasCategoricalData = true;
+                                    categoricalDataLength = columnUniqueValues.length;
+                                    rowCount = columnUniqueValues.length || 1;
+                                }
                            }
 
                            isNumbericColumn.push(columnIsAllNumbers);
@@ -806,11 +892,7 @@ export function setUpChart(dv){
 
                    const categoricalColumn = hasCategoricalData? data[categoricalDataIndex]: [];
 
-                   const categoricalList = Calc.removeDuplicates(categoricalColumn);
-                   
-
-                   //set rowCount 
-                   rowCount = categoricalList.length || 1;
+                   //const categoricalList = Calc.removeDuplicates(categoricalColumn);
 
                    //set column values in the bucket
                    for(let index = 0; index < columnCount; index++){
@@ -820,13 +902,15 @@ export function setUpChart(dv){
                         //process header values 
                         const headerValue = headerValues[index];
                         if(headerValue){
+                            /*
                             if(hasCategoricalData && (categoricalDataIndex === index)){
                                 newTableHeaders.unshift(headerValue);
                             }else {
                                 if(columnIsNumber || (!hasCategoricalData)){
                                     newTableHeaders.push(headerValue);
                                 }
-                            }
+                            }*/
+                            newTableHeaders.push(headerValue);
         
                             const valueWidth = ctx.measureText(headerValue).width;
                             if(valueWidth > maxValueWidth){
@@ -839,57 +923,77 @@ export function setUpChart(dv){
                         const columnMap = new Map();
 
                         const operation = Array.isArray(dataOperation)? dataOperation[index] || dataOperation[dataOperation.length-1]: dataOperation;
-                         
-                        if(column && columnIsNumber){
-                            
-                            for(let i = 0; i < column.length; i++){
-                                const categoricalValue = categoricalColumn[i];
-                                const value = column[i];
+                        
+                        if(column){
+                            if(columnIsNumber){
                                 
-                                if(hasCategoricalData){
+                                for(let i = 0; i < column.length; i++){
+                                    const categoricalValue = categoricalColumn[i];
+                                    const value = column[i];
+                                    
+                                    if(hasCategoricalData){
 
-                                    if(columnMap.has(categoricalValue)){
-                                        columnMap.get(categoricalValue).push(value);
-                                    }else {
-                                        columnMap.set(categoricalValue, [value]);
+                                        if(columnMap.has(categoricalValue)){
+                                            columnMap.get(categoricalValue).push(value);
+                                        }else {
+                                            columnMap.set(categoricalValue, [value]);
+                                        }
                                     }
                                 }
-                            }
 
 
-                            if(hasCategoricalData){
-                                const columnValues = [];
+                                if(hasCategoricalData){
+                                    const columnValues = [];
 
-                                for(const [key, bucket] of columnMap){
-                                   
-                                    const newValue = Calc.computeOperation(operation, bucket);
+                                    for(const [key, bucket] of columnMap){
+                                    
+                                        const newValue = Calc.computeOperation(operation, bucket);
+
+                                        const valueWidth = ctx.measureText(newValue).width;
+                                        if(valueWidth > maxValueWidth){
+                                            maxValueWidth = valueWidth;
+                                        }
+
+                                        columnValues.push(newValue);
+                                    }
+
+                                    newTableData.push(columnValues);
+                                }else {
+                                    
+                                    const newValue = Calc.computeOperation(operation, column);
 
                                     const valueWidth = ctx.measureText(newValue).width;
                                     if(valueWidth > maxValueWidth){
                                         maxValueWidth = valueWidth;
                                     }
 
-                                    columnValues.push(newValue);
+                                    newTableData.push([newValue]);
                                 }
-
-                                newTableData.push(columnValues);
                             }else {
-                                
-                                const newValue = Calc.computeOperation(operation, column);
+                                const uniqueCategoricalValues = new Map();
+                                const columnValues = [];
 
-                                const valueWidth = ctx.measureText(newValue).width;
-                                if(valueWidth > maxValueWidth){
-                                    maxValueWidth = valueWidth;
+                                if(hasCategoricalData){
+                                    for(let i = 0; i < column.length; i++){
+                                        const categoricalValue = categoricalColumn[i];
+                                        const value = column[i];
+
+                                        if(!uniqueCategoricalValues.has(categoricalValue)){
+                                            uniqueCategoricalValues.set(categoricalValue, "");
+                                            columnValues.push(value);
+                                        }
+                                    }
+
+                                    newTableData.push(columnValues);
                                 }
 
-                                newTableData.push([newValue]);
                             }
                         }
 
                    }
 
                    //add newCategoricalList as the first element in newTableData
-                   hasCategoricalData? newTableData.unshift(categoricalList): null;
+                   //hasCategoricalData? newTableData.unshift(categoricalList): null;
 
                 }else {
 
@@ -969,14 +1073,21 @@ export function setUpChart(dv){
     setAxisProperties(dv, axisValues, "values");
     setAxisProperties(dv, axisLabels);
 
-    //
-    layout.datasetNameData = {
-        isDatasetName: totalDatasetName > 1,
-        maxNameWidth: datasetNameMaxWidth,
-        total: totalDatasetName
-    };
+    //sorting axisCharts
+    hasAxisData? Calc.axisCustomSort(dv, axisLabels, axisData): null;
+
+    //set legend
+    const isDisplayLegend = layout.legend? layout.legend.display: null;
+    const isLegendDisplayBool = typeof isDisplayLegend === "boolean";
+    layout.legend = {
+        ...legendData,
+        isDefault: isLegendDisplayBool? isDisplayLegend: true,
+        display: isDisplayLegend,
+        size: legendData.data.size,
+    }
 
     //set axis data 
+
     layout.axisData = {
         labels: axisLabels,
         values: axisValues,
@@ -1007,9 +1118,6 @@ function setUpAxisChartDesign(dataType, design, count){
         !newDesign.color? newDesign.color = color: null;
 
         dataType === "line"? Array.isArray(newDesign.color)? newDesign.color = color: null: null;
-
-        //set design size 
-        !newDesign.size? newDesign.size = 3: null;
     }
 
     return newDesign || {};

@@ -85,8 +85,10 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     //draw hover
     DrawHover(dv, ctx, data);
 
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+
+    const fontSize = font.size;
     const halfFontSize = fontSize/2;
 
     const label = GetText(data, ctx, "label", fontSize);
@@ -129,12 +131,14 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     ctx.fillStyle = tooltipBorderColor;
     ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight); // Border
 
+    ctx.beginPath();
     ctx.fillStyle = tooltipFillColor;
     ctx.fillRect(tooltipX + tooltipBorderWidth, tooltipY + tooltipBorderWidth, tooltipWidth - 2 * tooltipBorderWidth, tooltipHeight - 2 * tooltipBorderWidth); // Fill
 
     // Draw text (tooltip)
-    ctx.fillStyle = '#000';
-    ctx.font = fontSize+'px Arial';
+    ctx.beginPath();
+    ctx.fillStyle = font.color;
+    ctx.font = font.weight + " " + fontSize+'px ' + font.family;
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
     //ctx.fillText(text, (tooltipX+(textWidth/2)), tooltipY+(textHeight/2));

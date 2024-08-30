@@ -10,7 +10,8 @@ function drawLabels(dv, position){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
+    const design = dv.getDesign();
+    const font = design.font;
 
     const canvas = ctx.canvas;
     const canvasHeight = canvas.height;
@@ -34,8 +35,8 @@ function drawLabels(dv, position){
     ctx.textAlign = 'center'; 
 
     //set fontsize for yAxis and xAxis texts 
-    const fontSize = labelStyle.fontSize;
-    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+    const fontSize = font.size;
+    ctx.font = font.weight + " " + fontSize+ "px "+ font.family;
 
     if(yAxis){
 
@@ -43,6 +44,7 @@ function drawLabels(dv, position){
 
         if(title){
             ctx.beginPath();
+            ctx.fillStyle = font.color;
 
             let angleInRadians = (-90 * (Math.PI/180));
 
@@ -69,6 +71,7 @@ function drawLabels(dv, position){
 
         if(title){
             ctx.beginPath();
+            ctx.fillStyle = font.color;
 
             let angleInRadians = (-90 * (Math.PI/180));
 
@@ -94,6 +97,7 @@ function drawLabels(dv, position){
 
         if(title){
             ctx.beginPath();
+            ctx.fillStyle = font.color;
             
             ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize/2)+scrollBarSize.hrHeight)));
         }
@@ -109,7 +113,11 @@ function drawYAxis(dv, position){
 
     const layout = dv.getLayout();
 
-    const labelStyle = dv.getStyle().label;
+    const design = dv.getDesign();
+    const yAxisDesign = design.yAxis;
+    const font = yAxisDesign.font;
+    const gridDesign = yAxisDesign.grid;
+    const gridTick0Design = gridDesign.tick0;
 
     const graphWidth = position.width;
     const graphHeight = position.height;
@@ -125,8 +133,8 @@ function drawYAxis(dv, position){
     //const ranges = layout.ranges;
     //let range = ranges.yRange;
     
-    const fontSize = labelStyle.fontSize;
-    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+    const fontSize = font.size;
+    ctx.font = font.weight + " " + fontSize+"px "+font.family;
 
     let axisX = graphX;
     let axisY = graphY+graphHeight;
@@ -186,9 +194,11 @@ function drawYAxis(dv, position){
                     const textPosX = "y2" === key? ((axisX+graphWidth)+fontSize): ((axisX-textWidth)-(fontSize));
                     const textPosY = (axisY+Math.floor(fontSize/2));
 
-                    //draw lines 
+                    //draw grid
                     ctx.beginPath();
-                    ctx.strokeStyle = value === "0"? "black":"#b5b5b5";
+                    ctx.strokeStyle = value === "0"? gridTick0Design.color: gridDesign.color;
+                    ctx.lineWidth = value === "0"? gridTick0Design.width: gridDesign.width;
+
                     if("y2" === key){
                         ctx.moveTo((graphX+graphWidth), axisY);
                         ctx.lineTo(((graphX+graphWidth)+(fontSize/2)), (axisY));
@@ -197,10 +207,13 @@ function drawYAxis(dv, position){
                         ctx.lineTo((graphX-(fontSize/2)), (axisY));
                     }
                     ctx.stroke();
+                    ctx.closePath();
                     
                     //add xAxis range labels
                     ctx.beginPath();
-                    ctx.fillText(value, textPosX, textPosY);
+                    ctx.fillStyle = font.color;
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(value, textPosX, axisY);
 
                 }
             }
@@ -243,6 +256,7 @@ function drawYAxis(dv, position){
 
                 //add xAxis range labels
                 ctx.beginPath();
+                ctx.fillStyle = font.color;
                 ctx.textAlign = "y2" === key? "start":"end";
                 ctx.textBaseline = "middle";
     
@@ -270,7 +284,11 @@ function drawXAxis(dv, position){
     const canvas = dv.getCanvas();
     const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
-    const labelStyle = dv.getStyle().label;
+    const design = dv.getDesign();
+    const xAxisDesign = design.xAxis;
+    const font = xAxisDesign.font;
+    const gridDesign = xAxisDesign.grid;
+    const gridTick0Design = gridDesign.tick0;
 
     const graphWidth = position.width;
     const graphHeight = position.height;
@@ -283,8 +301,8 @@ function drawXAxis(dv, position){
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
 
-    const fontSize = labelStyle.fontSize;
-    ctx.font = fontSize+"px "+labelStyle.fontFamily;
+    const fontSize = font.size;
+    ctx.font = font.weight + " " +fontSize+"px "+font.family;
 
     ctx.textBaseline = "hanging";
     
@@ -354,17 +372,20 @@ function drawXAxis(dv, position){
                     const textPosX = (axisX);
                     const textPosY = (axisY+(fontSize));
 
-                    //draw lines 
+                    //draw grid 
                     ctx.beginPath();
-                    ctx.strokeStyle = label === "0"? "black":"#b5b5b5";
-                    
+                    ctx.strokeStyle = label === "0"? gridTick0Design.color: gridDesign.color;
+                    ctx.lineWidth = label === "0"? gridTick0Design.width: gridDesign.width;
+
                     ctx.moveTo(axisX, graphY);
                     ctx.lineTo(axisX, ((graphY+graphHeight)+(fontSize/2)));
                     ctx.stroke();
+                    ctx.closePath();
                     
 
                     //add xAxis range labels
                     ctx.beginPath();
+                    ctx.fillStyle = font.color;
                     ctx.fillText(label, textPosX, textPosY);
 
                 }
@@ -401,6 +422,7 @@ function drawXAxis(dv, position){
 
                 //add xAxis range labels
                 ctx.beginPath();
+                ctx.fillStyle = font.color;
                 ctx.textAlign = "center";
                 //ctx.textBaseline = "middle";
 
@@ -465,19 +487,22 @@ const DrawAxis = (dv) => {
     const graphX = graphPosition.x;
     const graphY = graphPosition.y;
 
-    const labelStyle = dv.getStyle().label;
-    const fontSize = labelStyle.fontSize;
+    const design = dv.getDesign();
+    const font = design.font;
+    
+    const fontSize = font.size;
     const halfFontSize = (fontSize/2);
 
     //draw a rectangle representing the graph area
     
+    /*
     ctx.beginPath();
     ctx.fillStyle = "black";
     ctx.strokeStyle = "#b5b5b5";
     ctx.lineWidth = "0.1";
     ctx.rect((graphX+1), graphY, (graphWidth-2), graphHeight);
     ctx.stroke();
-    ctx.lineWidth = "1";
+    */
 
     const position = {x: 0, y: graphY, width: (graphX+graphWidth), height: (graphHeight)};
     
