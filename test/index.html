@@ -33,8 +33,8 @@
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        const xArray = ["Italy","France","Spain","USA","Argentina"];
-        const yArray = [55, 15, 44, 24, 15];
+        //const xArray = ["Italy","France","Spain","USA","Argentina"];
+        //const yArray = [55, 15, 44, 24, 15];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -121,21 +121,19 @@
       [1300000, 20000, 120000, 2000, 131222000],
       [0, 0, 0, 0, "NA"]];
 
+        const xArray = [50,60,70,80,90,100,110,120,130,140,150];
+        const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+
 
 
         const data = [
            {
-            labels: yArray,
-            values: xArray,
+            labels: xArray,
+            values: yArray,
             type: "bar",
-            direction: "hr"
+            direction: "hr",
            },
-           {
-            labels: yArray,
-            values: xArray,
-            type: "line",
-            direction: "hr"
-           },
+           
     
     
             {
@@ -163,6 +161,7 @@
         
 
         //Define Layout
+        /*
         const layout = {
             title: {
                 text: "Pie Chart",
@@ -197,7 +196,13 @@
                 }
             },
             
-        };
+        };*/
+
+        const layout = {
+            xAxis: {range: [40, 160], title: "Square Meters"},
+            yAxis: {range: [5, 16], title: "Price in Millions"},
+            title: "House Prices vs. Size"
+        }
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
 

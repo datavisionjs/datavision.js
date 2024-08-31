@@ -124,7 +124,6 @@ export function axisCustomSort(dv, labels, axisData){
     const sortDataset = [...barDataset, ...axisData.slice(1)].filter(dataset => 
         dataset.isSortBy
     );
-    console.log("myLab: ", labels, axisData, sortDataset);
 
     
     const sort = layout.sort || {};

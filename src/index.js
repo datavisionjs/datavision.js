@@ -39,6 +39,7 @@ function DataVision(targetId) {
     this.targetCanvas = document.createElement("canvas");
 
     this.canvas = document.createElement("canvas");
+    this.canvasSize = {width: 1, height: 1};
     this.canvasCopy = document.createElement("canvas");
 
     this.ctx = null;
@@ -46,6 +47,26 @@ function DataVision(targetId) {
     this.tempCanvas = document.createElement("canvas");
 
     this.toolTipData = [];
+
+    //create canvas for aspect ratio 
+    this.createCanvas = function (canvas, width, height) {
+        const newCanvas = canvas || document.createElement("canvas");
+
+        const ctx = newCanvas.getContext("2d");
+
+        const ratio = window.devicePixelRatio || 1;
+
+        newCanvas.width = width * ratio;
+        newCanvas.height = height * ratio;
+
+        newCanvas.style.width = width + "px";
+        newCanvas.style.height = height + "px";
+
+        ctx.scale(ratio, ratio);
+        ctx.clearRect(0, 0, width, height);
+
+        return newCanvas;
+    }
 
     //clear target
     this.clearTarget = function (){
@@ -113,16 +134,17 @@ function DataVision(targetId) {
 
     //canvas
     this.setCanvas = function (width, height){
-        const canvas = this.getCanvas();
-
-        canvas.width = width;
-        canvas.height = height;
+        const canvas = this.createCanvas(this.getCanvas(), width, height);
 
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.canvasSize = {width: width, height: height};
     };
     this.getCanvas = function (){
         return this.canvas;
+    };
+    this.getCanvasSize = function (){
+        return this.canvasSize;
     };
 
     //tooltip 
@@ -140,14 +162,14 @@ function DataVision(targetId) {
 
     this.updateCanvasCopy = function (){
         const canvas = this.getCanvas();
+       
+        const canvasSize = this.getCanvasSize();
+        const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
-        const canvasCopy = this.getCanvasCopy();
-        canvasCopy.width = canvas.width;
-        canvasCopy.height = canvas.height;
-
+        const canvasCopy = this.createCanvas(null, canvasWidth, canvasHeight);
         const ctx = canvasCopy.getContext("2d");
 
-        ctx.drawImage(canvas, 0, 0);
+        ctx.drawImage(canvas, 0, 0, canvasWidth, canvasHeight);
 
         this.canvasCopy = canvasCopy;
     };
@@ -248,11 +270,14 @@ function DataVision(targetId) {
         const canvasCopy = this.getCanvasCopy();
         //const canvas = this.getTargetCanvas();
 
+        const canvasSize = this.getCanvasSize();
+        const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
+
         const ctx = this.getCtx();
 
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-        ctx.drawImage(canvasCopy, 0, 0);
+        ctx.drawImage(canvasCopy, 0, 0, canvasWidth, canvasHeight);
     };
     this.addCanvasToTarget = function (){
         const target = this.getTarget();

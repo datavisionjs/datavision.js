@@ -3,6 +3,9 @@ import * as Calc from './math.js';
 
 
 const DrawHover = (dv, ctx, data) => {
+
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
     
     ctx.beginPath();
 
@@ -15,7 +18,7 @@ const DrawHover = (dv, ctx, data) => {
         //draw arc line
         ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
 
-        const lineWidth = ctx.canvas.width * 0.0063;
+        const lineWidth = canvasWidth * 0.0063;
         ctx.lineWidth = lineWidth;
         
         ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-2), data.startAngle, data.endAngle);
@@ -31,10 +34,11 @@ const DrawHover = (dv, ctx, data) => {
     ctx.stroke();
 }
 
-const GetText = (data, ctx, type, fontSize) => {
+const GetText = (dv, data, ctx, type, fontSize) => {
     if(!data[type] && data[type] !== 0) return {text: null, width: 0};
 
-    const canvasWidth = ctx.canvas.width;
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     let text = data[type+"Text"];
     let textWidth = data[type+"Width"];
@@ -82,6 +86,9 @@ const GetText = (data, ctx, type, fontSize) => {
 
 const DrawToolTip = (dv, ctx, pos, data) => {
 
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
+
     //draw hover
     DrawHover(dv, ctx, data);
 
@@ -91,9 +98,9 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     const fontSize = font.size;
     const halfFontSize = fontSize/2;
 
-    const label = GetText(data, ctx, "label", fontSize);
-    const value = GetText(data, ctx, "value", fontSize);
-    const size = GetText(data, ctx, "size", fontSize);
+    const label = GetText(dv, data, ctx, "label", fontSize);
+    const value = GetText(dv, data, ctx, "value", fontSize);
+    const size = GetText(dv, data, ctx, "size", fontSize);
 
 
     const textWidth = (Math.max(label.width, value.width, size.width)+(fontSize));
@@ -114,15 +121,15 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     const positionBottom = (tooltipY+tooltipHeight);
 
     //keep tool tip on canvas
-    if(positionRight > ctx.canvas.width){
+    if(positionRight > canvasWidth){
         if(((tooltipWidth+fontSize)+20) < (pos.x)){
             tooltipX = (pos.x) - (tooltipWidth+20);
         }else {
-            tooltipX = (pos.x+20) - ((positionRight-ctx.canvas.width));
+            tooltipX = (pos.x+20) - ((positionRight-canvasWidth));
         }
     }
 
-    if(positionBottom > ctx.canvas.height){
+    if(positionBottom > canvasHeight){
         tooltipY = (pos.y) - (tooltipHeight+20);
     }
 

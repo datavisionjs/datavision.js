@@ -8,9 +8,6 @@ const DrawTitleLabel = (dv) => {
     const design = dv.getDesign();
     const titleDesign = design.title;
 
-    const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width;
-
     const position = layout.graphPosition;
     const graphWidth = position.width;
     const graphX = position.x;

@@ -5,8 +5,9 @@ import customColors from '../helpers/colors.js';
 
 export function setGraphPosition(dv){
     const ctx = dv.getCtx();
-    const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width, canvasHeight = canvas.height;
+   
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     //layout 
     const layout = dv.getLayout();
@@ -595,8 +596,12 @@ export function setUpChart(dv){
                             }
                         }
 
-                        (labelIsAllNumbers && !valueIsAllNumbers && !isHorizontal)? xAxis.values.push(label): null;
-                        (valueIsAllNumbers && !labelIsAllNumbers && isHorizontal)? yAxis.values.push(value): null;
+                        (labelIsAllNumbers && !valueIsAllNumbers && !isHorizontal)? 
+                        !xAxis.values.includes(label)? xAxis.values.push(label): null
+                        : null;
+                        (valueIsAllNumbers && !labelIsAllNumbers && isHorizontal)? 
+                        !yAxis.values.includes(value)? yAxis.values.push(value): null
+                        : null;
                     }else {
 
                         
@@ -663,7 +668,7 @@ export function setUpChart(dv){
                                                 labelWidth = ctx.measureText(xPrefix + Calc.toFixedIfNeeded(newValue, xDecimalPlaces) + xSuffix).width;
 
                                                 //newLabels[k] = newValue;
-                                                dataPoints.set(newValue, newValues[k]);
+                                                dataPoints.set(newValues[k], newValue);
                                                 xAxis.values.push(newValue);
 
                                                 if(labelWidth > maxLabelWidth){
@@ -693,8 +698,12 @@ export function setUpChart(dv){
                     //(!labelIsAllNumbers? label.length > 0:true)? xAxis.values.push(label): null;
                     //(!valueIsAllNumbers? value.length > 0:true)? yAxis.values.push(value): null;
 
-                    (!labelIsAllNumbers || valueIsAllNumbers)? xAxis.values.push(label): null;
-                    (!valueIsAllNumbers || labelIsAllNumbers)? yAxis.values.push(value): null;
+                    (!labelIsAllNumbers || valueIsAllNumbers)? 
+                    !xAxis.values.includes(label)? xAxis.values.push(label): null
+                    : null;
+                    (!valueIsAllNumbers || labelIsAllNumbers)? 
+                    !yAxis.values.includes(value)? yAxis.values.push(value): null
+                    : null;
                     
 
                 }
@@ -727,7 +736,6 @@ export function setUpChart(dv){
                     //legendData.colors.push(barData.design.color);
                     legendData.data.set(newDataName, barData.design.color);
                 }else {
-                    console.log("mdp: ", )
                     dataset.name = newDataName;
                     dataset.dataPoints = dataPoints;
                     dataset.design = setUpAxisChartDesign(dataType, design, axisDataCount);

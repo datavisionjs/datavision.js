@@ -9,9 +9,8 @@ const DrawLegend = (dv) => {
     const design = dv.getDesign();
     const font = design.font;
 
-    const canvas = ctx.canvas;
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     const fontSize = font.size;
     ctx.font = font.weight + " " + fontSize+"px "+font.family;

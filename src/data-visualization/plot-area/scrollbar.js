@@ -20,8 +20,8 @@ export const setContentSize = function (dv){
     const font = design.font;
     const fontSize = font.size;
 
-    const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width, canvasHeight = canvas.height;
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     const graphPosition = layout.graphPosition;
     const graphY = graphPosition.y;
@@ -223,8 +223,8 @@ export const addBars = function (dv, position){
 
     const layout = dv.getLayout();
 
-    const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width, canvasHeight = canvas.height;
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;

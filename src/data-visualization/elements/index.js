@@ -17,12 +17,12 @@ const DrawElements = (dv, dataset) => {
     const ctx = dv.getCtx();
 
     const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
-    const tempCanvas = dv.getTempCanvas();
-    tempCanvas.width = canvasWidth;
-    tempCanvas.height = canvasHeight;
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
+
+    const tempCanvas = dv.createCanvas(null, canvasWidth, canvasHeight);
     const tempCtx = tempCanvas.getContext("2d");
 
     const design = dv.getDesign();
@@ -179,12 +179,15 @@ const DrawElements = (dv, dataset) => {
                 tempCtx.strokeStyle = designColor;
     
                 const isAllNumbers = isHorizontal? yAxis.isAllNumbers: xAxis.isAllNumbers;
+                const yAxisIsAllNumbers = yAxis.isAllNumbers;
     
                 //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
                 //const labels = isHorizontal? dataset.values: dataset.labels;
                 const dataPoints = dataset.dataPoints;
                 const labels = isHorizontal? yAxis.values: xAxis.values;
                 const values = isHorizontal? xAxis.values: yAxis.values? yAxis.values: [];
+
+    
                 //const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
                 
                 let darwEndedHere = false;
@@ -200,15 +203,20 @@ const DrawElements = (dv, dataset) => {
                     
                     for(var i = loopStart; i < loopEnd; i++){
     
-                        let label = labels[i];
-                        let value = Global.defaultIfNull(dataPoints.get(label), values[i]);
+                        const tempLabel = labels[i];
+                        const tempValue = Global.defaultIfNull(dataPoints.get(tempLabel), values[i]);
+
+                        let value = yAxisIsAllNumbers? tempValue: tempLabel;
+                        let label = yAxisIsAllNumbers? tempLabel: tempValue;
+
+
     
                         const prevI = (i-1);
-                        let prevLabel = Global.defaultIfNull(labels[prevI], label);
+                        let prevLabel = Global.defaultIfNull(labels[prevI], tempLabel);
                         let prevValue = Global.defaultIfNull(dataPoints.get(prevLabel), value);
     
                         const nextI = (i+1);
-                        let nextLabel = Global.defaultIfNull(labels[nextI], label);
+                        let nextLabel = Global.defaultIfNull(labels[nextI], tempLabel);
                         let nextValue = Global.defaultIfNull(dataPoints.get(nextLabel), value);
     
                         const color = Array.isArray(designColor)? designColor[i]? designColor[i]: designColor[0]: designColor;
@@ -226,8 +234,6 @@ const DrawElements = (dv, dataset) => {
                             let positionIsOut = false;
     
                             if(type === "line"){
-
-                                console.log("labe: ", label, value, position);
     
                                 //const boundPosition = Calc.findAxisBoundPositions(dv, i, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted, loopStart, loopEnd);
                                 
@@ -301,7 +307,7 @@ const DrawElements = (dv, dataset) => {
         tempCtx.clearRect(0, (graphY+graphHeight), canvasWidth, canvasHeight); //clear bottom
 
 
-        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 
     }else if(type === "pie"){
 
@@ -399,7 +405,7 @@ const DrawElements = (dv, dataset) => {
         tempCtx.fill();
         tempCtx.globalCompositeOperation = 'source-over';
 
-        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
         
     }else if(type === "table"){
 
@@ -552,7 +558,7 @@ const DrawElements = (dv, dataset) => {
             tempCtx.stroke();
         }
 
-        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
     
     }
 }

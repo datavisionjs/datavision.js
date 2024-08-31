@@ -13,8 +13,8 @@ function drawLabels(dv, position){
     const design = dv.getDesign();
     const font = design.font;
 
-    const canvas = ctx.canvas;
-    const canvasHeight = canvas.height;
+    const canvasSize = dv.getCanvasSize();
+    const canvasHeight = canvasSize.height;
 
     const graphWidth = position.width;
     const graphHeight = position.height;
@@ -106,8 +106,6 @@ function drawLabels(dv, position){
 
 function drawYAxis(dv, position){
     const ctx = dv.getCtx();
-    const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
     const scrollData = dv.getScrollData();
 
@@ -281,8 +279,6 @@ function drawXAxis(dv, position){
 
     const scrollData = dv.getScrollData();
 
-    const canvas = dv.getCanvas();
-    const canvasWidth = canvas.width, canvasHeight = canvas.height;
 
     const design = dv.getDesign();
     const xAxisDesign = design.xAxis;
@@ -475,8 +471,8 @@ function drawXAxis(dv, position){
 const DrawAxis = (dv) => {
     const ctx = dv.getCtx();
 
-    const canvas = ctx.canvas;
-    const canvasHeight = canvas.height;
+    const canvasSize = dv.getCanvasSize();
+    const canvasHeight = canvasSize.height;
 
     const layout = dv.getLayout();
 
