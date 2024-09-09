@@ -7,6 +7,7 @@ const DrawTitleLabel = (dv) => {
 
     const design = dv.getDesign();
     const titleDesign = design.title;
+    const genFont = design.font;
 
     const position = layout.graphPosition;
     const graphWidth = position.width;
@@ -25,18 +26,22 @@ const DrawTitleLabel = (dv) => {
         
         const fontSize = font.size;
         const fontFamily = font.family;
+        const fontWeight = font.weight;
+        const fontStyle = font.style;
         const fontColor = font.color;
         const align  = titleDesign.align;
+
+        const titleHeight = (graphY-genFont.size);
         
-        let y = ((graphY/2)+(fontSize/2));
+        let y = ((titleHeight/2)+(fontSize/2));
         if(titleLines.length > 1){
             y = fontSize;
         }
 
-        ctx.font = fontSize+"px "+ fontFamily;
+        ctx.font = fontWeight + " " + fontStyle + " " + fontSize+"px "+ fontFamily;
         ctx.fillStyle = fontColor;
 
-        ctx.clearRect(0, 0, (position.x + position.width), position.y);
+        ctx.clearRect(0, 0, (position.x + position.width), titleHeight);
 
         for(let i = 0; i < titleLines.length; i++){
             const title = titleLines[i];
@@ -52,7 +57,7 @@ const DrawTitleLabel = (dv) => {
             }
             //draw Title
             ctx.beginPath();
-            ctx.fillText(title, x, y);
+            ctx.fillText(title, x, (y));
             ctx.closePath();
 
             y += (fontSize);

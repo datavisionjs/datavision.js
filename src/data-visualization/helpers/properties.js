@@ -4,8 +4,6 @@ import * as Global from './global.js';
 import customColors from '../helpers/colors.js';
 
 export function setGraphPosition(dv){
-    const ctx = dv.getCtx();
-   
     const canvasSize = dv.getCanvasSize();
     const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
@@ -22,12 +20,26 @@ export function setGraphPosition(dv){
 
     const fontSize = font.size;
 
+    //maxLabel Width 
+    const yLabelMaxWidth = canvasWidth * 0.30;
+    const xLabelMaxWidth = canvasHeight * 0.30;
+
+    const getWidth = (hasTitle, textMaxWidth, maxLabelWidth) => {
+        const twiceFontSize = fontSize * 2;
+        
+        let width = maxLabelWidth;
+        if(textMaxWidth < width){
+            width = textMaxWidth + twiceFontSize;
+        }
+
+        hasTitle? width += twiceFontSize: null;
+        return width;
+    }
+
 
     //set title space from top;
     const titleLines = dv.getLayout().title.titleLines;
     let titleTop = titleLines.length > 0? (((titleLines.length+1)*titleFontSize)+fontSize): fontSize;
-    
-
 
 
     const axisData = layout.axisData;
@@ -35,34 +47,25 @@ export function setGraphPosition(dv){
     const valueObject = axisData.values;
     const axisTitleSpace = (fontSize*2);
 
-    //set y axis space from left and right
-    const yMaxLabelWidth = (canvasWidth*0.15);
-    let yAxisLeft = yMaxLabelWidth, yAxisRight = yMaxLabelWidth;
-
 
     //y1
     const y1 = valueObject.y1;
     const y1MaxWidth = y1.maxWidth;
-
-    y1MaxWidth < yAxisLeft? yAxisLeft = (y1MaxWidth+axisTitleSpace): null;
-
     const y1Title = layout.yAxis? layout.yAxis.title: null;
-    y1Title? yAxisLeft += axisTitleSpace: null;
+    let yAxisLeft = getWidth(y1Title, y1MaxWidth, yLabelMaxWidth);
     
 
     //y2
     const y2 = valueObject.y2;
     const y2MaxWidth = y2.maxWidth;
-
-    y2MaxWidth < yAxisRight? y2MaxWidth === 0? yAxisRight = 0: yAxisRight = (y2MaxWidth+axisTitleSpace): null;
-
     const y2Title = layout.y2Axis? layout.y2Axis.title: null;
-    y2Title && (y2MaxWidth > 0)? yAxisRight += (fontSize*2): null;
+    let yAxisRight = getWidth((y2Title && (y2MaxWidth>0)), y2MaxWidth, yLabelMaxWidth);
+
 
 
 
     //dataset labels 
-    let datasetSpace = (canvasWidth*0.15);
+    let datasetSpace = yLabelMaxWidth;
 
     const legend = layout.legend;
     const legendIsDefault = legend.isDefault;
@@ -76,13 +79,11 @@ export function setGraphPosition(dv){
         datasetSpace = 0;
     }
 
+    //x1
     //set x axis space from bottom
-    let xAxisBottom = ((axisTitleSpace)+fontSize);
     let xAxisRight = 0;
-
     const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
 
-    //x1 
     const x1 = labelObject.x1;
     const x1MaxWidth = x1.maxWidth;
     const labelStep = (tempGraphWidth/x1.values.length);
@@ -90,13 +91,11 @@ export function setGraphPosition(dv){
     //give space to the right of the x axis using x1MaxWidth
     xAxisRight = x1.isAllNumbers? x1MaxWidth: 0;
 
-    if(!x1.isAllNumbers && ((labelStep/fontSize) < 4)){
-        const thirdHeight = (canvasHeight*0.3);
-        xAxisBottom += x1MaxWidth > thirdHeight? thirdHeight: x1MaxWidth;
-    }
-
     const x1Title = layout.xAxis? layout.xAxis.title: null;
-    x1Title? xAxisBottom += axisTitleSpace: null;
+    let xAxisBottom = getWidth(x1Title, fontSize, xLabelMaxWidth);
+    if(!x1.isAllNumbers && ((labelStep/fontSize) < 4)){
+        xAxisBottom = getWidth(x1Title, x1MaxWidth, xLabelMaxWidth);
+    }
 
 
     const graphX = (yAxisLeft), graphY = (titleTop);
@@ -109,7 +108,11 @@ export function setGraphPosition(dv){
         width: graphWidth,
         height: graphHeight,
         yAxisRight: yAxisRight,
-        maxLabelWidth: yMaxLabelWidth
+        maxLabelWidth: {
+            x1: xLabelMaxWidth,
+            y1: yLabelMaxWidth,
+            y2: yLabelMaxWidth,
+        }
     }
 
 
@@ -365,10 +368,6 @@ export function setUpChart(dv){
     let hasTableData = false;
     let axisDirection = null;
 
-
-    //sort 
-    const sort = layout.sort || {};
-    const sortIndex = sort.index;
 
     //get range from data 
     if(data){
@@ -721,7 +720,7 @@ export function setUpChart(dv){
 
                 //if not a bar dataset push the dataset to newData 
                 const newDataName = dataName? dataName: "Dataset " + axisDataCount;
-                const newDataNameWidth = ctx.measureText(newDataName).width;
+                const newDataNameWidth = Global.measureLegendText(dv, newDataName).width;
 
                 if(dataType === "bar"){
                     //barDatasetNames.push(newDataName);
@@ -729,7 +728,7 @@ export function setUpChart(dv){
                     barData.type = "bar";
                     barData.design = setUpAxisChartDesign(dataType, design, axisDataCount);
                     barData.design.color? barDatasetColors.push(Array.isArray(barData.design.color)? barData.design.color[0]: barData.design.color): null;
-                    barData.isSortBy = i === sortIndex;
+                    dataset.sort? barData.sort = dataset.sort: null;
                     barDataset.dataset.push(barData);
 
                     //set legend colors
@@ -739,7 +738,6 @@ export function setUpChart(dv){
                     dataset.name = newDataName;
                     dataset.dataPoints = dataPoints;
                     dataset.design = setUpAxisChartDesign(dataType, design, axisDataCount);
-                    dataset.isSortBy = i === sortIndex;
                     axisData.push(dataset);
 
                     //set legend colors
@@ -786,7 +784,7 @@ export function setUpChart(dv){
                     
                     if(value >= 0 && label){
                         //set maxTextlength
-                        const labelWidth = ctx.measureText(label).width;
+                        const labelWidth = Global.measureLegendText(dv, label).width;
 
                         //set new pie dataset labels and values 
                         const index = pieLabels.indexOf(label);

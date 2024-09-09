@@ -9,9 +9,6 @@ import DrawTitleLabel from './title.js';
 
 const plotArea = (dv) => {
     const layout = dv.getLayout();
-
-    //draw title
-    DrawTitleLabel(dv);
     
     //draw axis 
     layout.hasAxisData? DrawAxis(dv): null;
@@ -21,6 +18,9 @@ const plotArea = (dv) => {
 
     //draw table
     layout.hasTableData? DrawTable(dv): null;
+
+    //draw title
+    DrawTitleLabel(dv);
 };
 
 export default plotArea;

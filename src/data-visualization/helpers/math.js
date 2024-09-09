@@ -119,22 +119,21 @@ export function axisCustomSort(dv, labels, axisData){
     const layout = dv.getLayout();
 
     const firstData = axisData[0] || {};
-    const barDataset = firstData.type? firstData.type === "bar"? firstData.dataset: []: [];
+    const firstDataset = firstData.type? firstData.type === "bar"? firstData.dataset: [firstData]: [firstData];
 
-    const sortDataset = [...barDataset, ...axisData.slice(1)].filter(dataset => 
-        dataset.isSortBy
+    const sortDataset = [...firstDataset, ...axisData.slice(1)].filter(dataset => 
+        dataset.sort
     );
 
-    
-    const sort = layout.sort || {};
-    const order = sort.order;
-    
-    if(order){
+    if(sortDataset.length){
         const xAxis = labels["x1"];
-        
 
-        if(sortDataset.length){
-            const dataset = sortDataset[0];
+        const dataset = sortDataset[0];
+        const sort = dataset.sort;
+        const order = sort.order || "asc";
+        const key = sort.key || "labels";
+
+        if(key === "values"){
             let combined = xAxis.values.map((label, index) => [label, dataset.dataPoints.get(label)]);
 
             // Step 2: Sort the combined array based on the number
@@ -148,12 +147,14 @@ export function axisCustomSort(dv, labels, axisData){
             xAxis.values = customSort(xAxis.values, order);
         }
     }
+
+
 }
 
 export function pieCustomSort(dv, dataset){
     const layout = dv.getLayout();
 
-    const sort = layout.sort || {};
+    const sort = dataset.sort || {};
     const order = sort.order;
 
     if(order){
@@ -174,6 +175,8 @@ export function pieCustomSort(dv, dataset){
         }else {
             dataset.sortedLabels = customSort(labels, order);
         }
+    }else {
+        dataset.sortedLabels = [...dataset.labels];
     }
 }
 
@@ -773,50 +776,47 @@ export function getChartArea(dv, layout){
     };
 }*/
 
-export function getChartArea(dv, layout){
+function roundToEven(number){
+    const rounded = Math.round(number);
+    const numberHalf = rounded / 2;
+    const roundedHalf = Math.round(numberHalf);
+
+    // Check if rounding up or down depending on decimal part
+    if (Math.abs(numberHalf - roundedHalf) === 0.5) {
+        return rounded % 2 === 0 ? rounded : rounded - 1;
+    }
+    return rounded;
+}
+
+
+
+export function getChartArea(dv, layout) {
     const target = dv.getTarget() || {};
+    const canvas = dv.getCanvas();
 
-    const layoutWidth = layout.width || target.offsetWidth;
-    const layoutHeight = layout.height || target.offsetHeight;
+    canvas? canvas.style.display = "none": null;
+    const offsetWidth = target.offsetWidth;
+    const offsetHeight = target.offsetHeight;
+    canvas? canvas.style.display = "": null;
 
-    let width = layoutWidth || (layoutHeight? (layoutHeight*2): 700), height = layoutHeight || (layoutWidth? (layoutWidth/2): 350);
 
-    const heightTwice = height * 2;
+    // Determine layout dimensions, falling back to target's dimensions if not specified
+    let layoutWidth = layout.width;
+    let layoutHeight = layout.height;
 
-    if(heightTwice > layoutWidth){
-        height = width / 2;
-    }else if(heightTwice < layoutWidth){
-        width = height * 2;
+    if(!layoutWidth || !layoutHeight){
+        layoutWidth = offsetWidth;
+        layoutHeight = (layoutWidth/2);
+
+        if(offsetHeight){
+            layoutHeight = offsetHeight;
+        }
     }
-    
 
-    return {
-        width: width,
-        height: height
-    };
+    // Set initial width and height with default fallbacks
+    let width = roundToEven(layoutWidth) || 800;
+    let height = roundToEven(layoutHeight) || 400;
+
+
+    return { width, height };
 }
-
-/*export function getChartArea(dv, layout){
-    const target = dv.getTarget();
-
-    const layoutWidth = layout.width;
-    const layoutHeight = layout.height;
-
-    let width = 0, height = 0;
-    if(target){
-        width = Math.max(target.offsetWidth, target.offsetHeight);
-        height = (width*0.6);
-    }
-
-    
-    if(layoutWidth || layoutHeight){
-        width = layoutWidth;
-        height = layoutHeight;
-    }
-
-    return {
-        width: width,
-        height: height
-    };
-}
-*/

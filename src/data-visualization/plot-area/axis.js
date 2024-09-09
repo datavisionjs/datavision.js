@@ -6,8 +6,7 @@ import * as Scroll from './scrollbar.js';
 
 
 
-function drawLabels(dv, position){
-    const ctx = dv.getCtx();
+function drawLabels(dv, ctx, position){
     const layout = dv.getLayout();
 
     const design = dv.getDesign();
@@ -36,7 +35,7 @@ function drawLabels(dv, position){
 
     //set fontsize for yAxis and xAxis texts 
     const fontSize = font.size;
-    ctx.font = font.weight + " " + fontSize+ "px "+ font.family;
+    ctx.font = font.weight + " " + font.style + " " + fontSize+ "px "+ font.family;
 
     if(yAxis){
 
@@ -99,13 +98,12 @@ function drawLabels(dv, position){
             ctx.beginPath();
             ctx.fillStyle = font.color;
             
-            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize/2)+scrollBarSize.hrHeight)));
+            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize))));
         }
     }
 }
 
-function drawYAxis(dv, position){
-    const ctx = dv.getCtx();
+function drawYAxis(dv, ctx, position){
 
     const scrollData = dv.getScrollData();
 
@@ -122,8 +120,6 @@ function drawYAxis(dv, position){
 
     const graphX = position.x;
     const graphY = position.y;
-    
-    const yMaxLabelWidth = position.maxLabelWidth;
 
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
@@ -132,7 +128,7 @@ function drawYAxis(dv, position){
     //let range = ranges.yRange;
     
     const fontSize = font.size;
-    ctx.font = font.weight + " " + fontSize+"px "+font.family;
+    ctx.font = font.weight + " " + font.style + " " + fontSize+ "px "+ font.family;
 
     let axisX = graphX;
     let axisY = graphY+graphHeight;
@@ -143,6 +139,8 @@ function drawYAxis(dv, position){
     const axisValues = axisData.values;
 
     for(let key in axisValues){
+        const maxLabelWidth = position.maxLabelWidth[key];
+
         const axis = axisValues[key];
         const values = axis.values;
 
@@ -245,8 +243,8 @@ function drawYAxis(dv, position){
                 const valueWidth = ctx.measureText(value).width;
                 const valueCharSize = (valueWidth/value.length);
 
-                if(maxValueWidth > (yMaxLabelWidth-fontSize)){
-                    value = Global.shortenText(value, ((yMaxLabelWidth-fontSize)/valueCharSize));
+                if(maxValueWidth > (maxLabelWidth-fontSize)){
+                    value = Global.shortenText(value, ((maxLabelWidth-fontSize)/valueCharSize));
                 }
 
                 const textPosX = "y2" === key? ((axisX+graphWidth)+fontSize): (axisX-(fontSize));
@@ -272,9 +270,8 @@ function drawYAxis(dv, position){
 
 }
 
-function drawXAxis(dv, position){
+function drawXAxis(dv, ctx, position){
 
-    const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
     const scrollData = dv.getScrollData();
@@ -292,13 +289,11 @@ function drawXAxis(dv, position){
     const graphX = position.x;
     const graphY = position.y;
 
-    const maxLabelWidth = position.maxLabelWidth;
-
     //get the data type of the dataset
     //const firstDataType = layout.firstDataType;
 
     const fontSize = font.size;
-    ctx.font = font.weight + " " +fontSize+"px "+font.family;
+    ctx.font = font.weight + " " + font.style + " " + fontSize+ "px "+ font.family;
 
     ctx.textBaseline = "hanging";
     
@@ -314,6 +309,7 @@ function drawXAxis(dv, position){
     
 
     for(let key in labels){
+        const maxLabelWidth = position.maxLabelWidth[key];
 
         const axis = labels[key];
         const values = axis.values;
@@ -472,7 +468,7 @@ const DrawAxis = (dv) => {
     const ctx = dv.getCtx();
 
     const canvasSize = dv.getCanvasSize();
-    const canvasHeight = canvasSize.height;
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     const layout = dv.getLayout();
 
@@ -482,6 +478,7 @@ const DrawAxis = (dv) => {
     const graphHeight = graphPosition.height;
     const graphX = graphPosition.x;
     const graphY = graphPosition.y;
+    const xAxisMaxLabelWidth = graphPosition.maxLabelWidth["x1"];
 
     const design = dv.getDesign();
     const font = design.font;
@@ -503,7 +500,8 @@ const DrawAxis = (dv) => {
     const position = {x: 0, y: graphY, width: (graphX+graphWidth), height: (graphHeight)};
     
     //clear axis area
-    ctx.clearRect(position.x, position.y, (position.width+halfFontSize), ((canvasHeight-graphY)+halfFontSize));
+    //ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), ((canvasHeight-graphY)+halfFontSize));
+    ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), canvasHeight);
     
     //set scroll content width and height
     Scroll.setContentSize(dv);
@@ -511,26 +509,34 @@ const DrawAxis = (dv) => {
     //add axis scroll bar
     const scrollData = dv.getScrollData();
     Scroll.addBars(dv, position);
+
+    const tempCanvas = dv.createCanvas(null, canvasWidth, canvasHeight);
+    const tempCtx = tempCanvas.getContext("2d");
     
     //Draw Y-axis, X-axis around the graph area
-    drawXAxis(dv, graphPosition);
-    drawYAxis(dv, graphPosition);
+    drawXAxis(dv, tempCtx, graphPosition);
+    drawYAxis(dv, tempCtx, graphPosition);
 
     //labels around the graph area
-    drawLabels(dv, graphPosition);
+    drawLabels(dv, tempCtx, graphPosition);
 
-    ctx.beginPath();
+    let yEdge = scrollData.isScrollY? fontSize: 0;
+    let xEdge = scrollData.isScrollX? fontSize: 0;
+
+    //ctx.beginPath();
     //left edge clear
-
+    
     if(scrollData.isScrollX){
-        ctx.clearRect(position.x, (graphY+graphHeight+fontSize), (graphX), (canvasHeight-(graphY+graphHeight)));
-        ctx.clearRect((graphX+graphWidth), (graphY+graphHeight), fontSize, (canvasHeight-(graphY+graphHeight)));
+        tempCtx.clearRect(position.x, (graphY+graphHeight+fontSize), (graphX), (xAxisMaxLabelWidth+fontSize));
+        tempCtx.clearRect((graphX+graphWidth), (graphY+graphHeight), fontSize, (xAxisMaxLabelWidth+fontSize));
     }
 
     if(scrollData.isScrollY){
-        ctx.clearRect(0, (graphY-fontSize), graphX, fontSize);
-        ctx.clearRect(0, (graphY+graphHeight), graphX, fontSize)
+        tempCtx.clearRect(0, (graphY-fontSize), graphX, fontSize);
+        tempCtx.clearRect(0, (graphY+graphHeight), graphX, fontSize)
     }
+
+    ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 }
 
 export default DrawAxis;

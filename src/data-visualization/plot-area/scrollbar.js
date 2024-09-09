@@ -41,8 +41,10 @@ export const setContentSize = function (dv){
         const valuesCount = scrollData.valuesCount;
         const labelsCount = scrollData.labelsCount;
 
-        scrollData.contentHeight = ((valuesCount*fontSize)+(canvasHeight-(graphY+graphHeight))) || 0;
-        scrollData.contentWidth = ((fontSize*labelsCount)+graphX);
+        scrollData.wheelHeight = ((valuesCount*fontSize)+(canvasHeight-(graphY+graphHeight))) || 0;
+        scrollData.wheelWidth = ((fontSize*labelsCount)+graphX);
+        scrollData.contentHeight = ((valuesCount*fontSize)) || 0;
+        scrollData.contentWidth = ((fontSize*labelsCount));
     }else if(layout.hasTableData){
         const tableData = layout.tableData;
         //const columnWidth = tableData.columnWidth || [];
@@ -66,6 +68,9 @@ export const setContentSize = function (dv){
 
         scrollData.contentHeight = (thRowHeight+(tdRowHeight*(rowCount-1)));
         scrollData.contentWidth = 0;
+
+        scrollData.wheelHeight = scrollData.contentHeight;
+        scrollData.wheelWidth = 0;
     }
 
     /*
@@ -243,12 +248,12 @@ export const addBars = function (dv, position){
     const scrollData = dv.getScrollData();
 
     const contentWidth = scrollData.contentWidth || 0, contentHeight = scrollData.contentHeight || 0;
-
+    const wheelWidth = scrollData.wheelWidth, wheelHeight = scrollData.wheelHeight;
     const barHasParent = bar.parentElement? true: false;
 
     if(content){
-        content.style.width = (contentWidth||1) + "px";
-        content.style.height = (contentHeight||1) + "px";
+        content.style.width = (wheelWidth||1) + "px";
+        content.style.height = (wheelHeight||1) + "px";
         content.style.border = "0px";
         content.style.margin = "0px";
         content.style.padding = "0px";
@@ -360,8 +365,10 @@ export const addBars = function (dv, position){
         target.appendChild(wheelArea);
 
         //add horizontal scrollbar
-        if(contentWidth > position.width){
+        if(contentWidth > graphWidth){
             const newContent = content.cloneNode(true);
+            //set width 
+            newContent.style.width = contentWidth + "px";
             hrBar.appendChild(newContent);
             target.appendChild(hrBar);
 
@@ -370,8 +377,10 @@ export const addBars = function (dv, position){
         }
         
         //add vertical scrollbar
-        if(contentHeight > position.height){
+        if(contentHeight > graphHeight){
             const newContent = content.cloneNode(true);
+            //set height 
+            newContent.style.height = contentHeight + "px";
             vrBar.appendChild(newContent);
             target.appendChild(vrBar);
 

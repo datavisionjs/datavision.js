@@ -9,7 +9,7 @@
     
     <script src="../dist/datavision.min.js"></script>
 
-    <div id="my-chart" style="width:100%; max-width: 800px"></div>
+    <div id="my-chart" style="width:100%; max-width: 800px; height: 400px"></div>
 
     <div id="my-chart2" style="width:100%;max-width:800px"></div>
 
@@ -33,8 +33,8 @@
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        //const xArray = ["Italy","France","Spain","USA","Argentina"];
-        //const yArray = [55, 15, 44, 24, 15];
+        const xArray = ["Italy","France","Spain","USA","Argentina"];
+        const yArray = [55, 15, 44, 24, 15];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -121,8 +121,8 @@
       [1300000, 20000, 120000, 2000, 131222000],
       [0, 0, 0, 0, "NA"]];
 
-        const xArray = [50,60,70,80,90,100,110,120,130,140,150];
-        const yArray = [7,8,8,9,9,9,10,11,14,14,15];
+        //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
+        //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
 
 
 
@@ -130,8 +130,24 @@
            {
             labels: xArray,
             values: yArray,
+            type: "line",
+            mode: "scatter",
+            hole: .6,
+            sort: {
+                order: "asc",
+                key: "values"
+            }
+           },
+
+           {
+            labels: xArray,
+            values: [20, 30, 40, 50, 60],
             type: "bar",
-            direction: "hr",
+            hole: .6,
+            sort: {
+                order: "desc",
+                key: "values"
+            }
            },
            
     
@@ -200,8 +216,27 @@
 
         const layout = {
             xAxis: {range: [40, 160], title: "Square Meters"},
-            yAxis: {range: [5, 16], title: "Price in Millions"},
-            title: "House Prices vs. Size"
+            yAxis: { title: "Price "},
+            title: {
+                text: "Hello World",
+                align: "left",
+                font: {
+                    family: "tacoma",
+                    color: "red",
+                }
+            },
+            legend: {
+                display: true,
+                font: {
+                    family: "cursive",
+                    weight: "bold",
+                }
+            },
+            font: {
+                weight: "bold",
+                style: "italic",
+            },
+            height: 400,
         }
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);

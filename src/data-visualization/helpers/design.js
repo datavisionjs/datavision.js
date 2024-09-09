@@ -9,6 +9,7 @@ const Design = (dv, layout) => {
     const newFont = {
         family: font.family || "Helvetica Neue, Helvetica, 'Arial, sans-serif",
         weight: font.weight || "normal",
+        style: font.style || "normal",
         size: font.size || 14,
         color: font.color || "black"
     }
@@ -33,6 +34,7 @@ const Design = (dv, layout) => {
         font: {
             family: titleFont.family || newFont.family, 
             weight: titleFont.weight || newFont.weight,
+            style: titleFont.style || newFont.style,
             size: titleFont.size || 20,
             color: titleFont.color || newFont.color,
         }, 
@@ -50,6 +52,7 @@ const Design = (dv, layout) => {
         font: {
             family: newFont.family, 
             weight: newFont.weight,
+            style: newFont.style,
             size: newFont.size,
             color: newFont.color,
         }, 
@@ -71,6 +74,7 @@ const Design = (dv, layout) => {
         font: {
             family: newFont.family, 
             weight: newFont.weight,
+            style: newFont.style,
             size: newFont.size,
             color: newFont.color,
         },  
@@ -84,12 +88,26 @@ const Design = (dv, layout) => {
         }
     }
 
+    //specific
+    const legend = layout.legend || {};
+    const legendFont = legend.font || {}
+
+    const newLegendFont = {
+        family: legendFont.family || newFont.family, 
+        weight: legendFont.weight || newFont.weight,
+        style: legendFont.style || newFont.style,
+        size: legendFont.size || newFont.size,
+        color: legendFont.color || newFont.color, 
+    };
+
+
     
     return {
         font: newFont,
         title: titleDesign,
         xAxis: xAxisDesign,
-        yAxis: yAxisDesign
+        yAxis: yAxisDesign,
+        legendFont: newLegendFont
     };
 
 }

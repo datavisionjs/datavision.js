@@ -241,3 +241,16 @@ export function crashWithAngle(rect, target){
         return false;
     }
 }
+
+
+//measure legend
+export function measureLegendText(dv, text){
+    const ctx = dv.getCtx();
+
+    const design = dv.getDesign();
+    const font = design.legendFont;
+
+    ctx.font = font.weight + " " + font.style + " " + font.size+"px "+font.family;
+
+    return ctx.measureText(text);
+}

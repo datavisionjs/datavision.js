@@ -56,8 +56,11 @@ function DataVision(targetId) {
 
         const ratio = window.devicePixelRatio || 1;
 
-        newCanvas.width = width * ratio;
-        newCanvas.height = height * ratio;
+        const ratioWidth = width * ratio;
+        const ratioHeight = height * ratio;
+
+        newCanvas.width = ratioWidth;
+        newCanvas.height = ratioHeight;
 
         newCanvas.style.width = width + "px";
         newCanvas.style.height = height + "px";
@@ -140,6 +143,7 @@ function DataVision(targetId) {
         this.ctx = canvas.getContext("2d");
         this.canvasSize = {width: width, height: height};
     };
+
     this.getCanvas = function (){
         return this.canvas;
     };
@@ -162,7 +166,8 @@ function DataVision(targetId) {
 
     this.updateCanvasCopy = function (){
         const canvas = this.getCanvas();
-       
+        
+        
         const canvasSize = this.getCanvasSize();
         const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
@@ -268,7 +273,6 @@ function DataVision(targetId) {
     };
     this.updateTargetCanvas = function (){
         const canvasCopy = this.getCanvasCopy();
-        //const canvas = this.getTargetCanvas();
 
         const canvasSize = this.getCanvasSize();
         const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
@@ -309,6 +313,7 @@ function DataVision(targetId) {
                 event.stopPropagation();
                 const mousePosition = Global.getMousePosition(event);
                 DisplayToolTip(event, dv, mousePosition);
+
             }, "touchend");
 
             Global.on(document, "click", function (){
@@ -329,6 +334,8 @@ function DataVision(targetId) {
 }
 
 DataVision.prototype.update = function (){
+    const ctx = this.getCtx();
+    
     //clear tooltipData 
     this.clearToolTipData();
 
@@ -338,13 +345,16 @@ DataVision.prototype.update = function (){
     //set chart properties
     Prop.setUpChart(this);
     Prop.setGraphPosition(this);
-    
-    //Draw dataset names
-    DrawLegend(this);
+
+    //clear rect
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     dataVis.DrawPlotArea(this);
 
     dataVis.Chart(this);
+
+    //Draw dataset names
+    DrawLegend(this);
 
     //update date canvas copy with main canvas
     this.updateCanvasCopy();
@@ -354,11 +364,14 @@ DataVision.prototype.update = function (){
 };
 
 DataVision.prototype.plot = function (data, layout){
+    //create copy of data and layout
+    data = [...data];
+    layout = {...layout};
+
     //clear tooltipData 
     this.clearToolTipData();
-
+    
     const chartArea = Calc.getChartArea(this, layout);
-
     this.setCanvas(chartArea.width, chartArea.height);
 
     //set data and layout

@@ -7,7 +7,7 @@ const DrawLegend = (dv) => {
     const layout = dv.getLayout();
 
     const design = dv.getDesign();
-    const font = design.font;
+    const font = design.legendFont;
 
     const canvasSize = dv.getCanvasSize();
     const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
@@ -71,6 +71,8 @@ const DrawLegend = (dv) => {
             for (let i = scrollIndex; i < size; i++) {
 
                 let label = names[i];
+                const pieColor = legendData.get(names[i]);
+
                 const labelWidth = ctx.measureText(label).width;
 
                 if((labelWidth+pixelSpace) > labelAreaWidth){
@@ -79,8 +81,6 @@ const DrawLegend = (dv) => {
                         label = Global.shortenText(label, Math.floor((labelAreaWidth-(fontSize*2))/estSizePerChar));
                     }
                 }
-
-                const pieColor = legendData.get(label);
 
                 const fillColor = pieColor;
 
