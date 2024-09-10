@@ -332,39 +332,6 @@ const DrawElements = (dv, dataset) => {
         const hole = dataset.hole? dataset.hole: 0;
         const holeRadius = (hole*radius);
 
-        /*
-        if(values){
-
-            let degrees = -90;
-
-            let startDegrees = degrees;
-            
-            for(var i = 0; i < values.length; i++){
-                const pieColor = colors[i];
-
-                //set fillColor
-                pieColor? tempCtx.fillStyle = pieColor: null;//set bar color if exists
-
-                const value = values[i];
-                const label= dataset.labels[i];
-
-                if(!isNaN(value)){
-
-                    const valDecimal = (value/totalValues);
-                    degrees += (valDecimal*360);
-
-                    const endDegrees = degrees;
-
-                    const percent = Calc.toFixedIfNeeded(valDecimal*100);
-
-                    DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, pieColor);
-
-                    startDegrees = endDegrees;
-                }
-                
-            }
-        }*/
-
         let degrees = -90;
         let startDegrees = degrees;
 
@@ -396,12 +363,15 @@ const DrawElements = (dv, dataset) => {
         });
 
         //draw hole in pie to create a daughnut chart
-        const halfWidth = graphWidth/2, halfHeight = graphHeight/2;
+        const newRadius = Calc.getArcRadius(graphWidth, graphHeight);
+        const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+newRadius);
+
+        //const halfWidth = graphWidth/2, halfHeight = graphHeight/2;
 
         tempCtx.globalCompositeOperation = "destination-out";
         tempCtx.globalAlpha = 1;
         tempCtx.beginPath();
-        tempCtx.arc((graphX+halfWidth), (graphY+halfHeight), holeRadius, 0, 2 * Math.PI);
+        tempCtx.arc(arcCenterX, arcCenterY, holeRadius, 0, 2 * Math.PI);
         tempCtx.fill();
         tempCtx.globalCompositeOperation = 'source-over';
 

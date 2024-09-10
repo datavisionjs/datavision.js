@@ -16,25 +16,46 @@
     <script>
     
         
-        /*
-        //let exp = "Math.cos(x)";
-        let exp = "x + 17";
-        // Generate values
         
+        //let exp = "Math.cos(x)";
+        //let exp = "x + 17";
+        // Generate values
+        /*
         const xArray = [];
         const yArray = [];
-        for (let x = 0; x <= 10; x += 1) {
+        for (let x = 0; x <= 10; x += 0.2) {
             yArray.push(eval(exp));
             xArray.push(x);
         }*/
+
+        let exp1 = "x";
+        let exp2 = "1.5*x";
+        let exp3 = "1.5*x + 7";
+
+        // Generate values
+        const x1Values = [];
+        const x2Values = [];
+        const x3Values = [];
+        const y1Values = [];
+        const y2Values = [];
+        const y3Values = [];
+
+        for (let x = 0; x <= 10; x += 1) {
+            x1Values.push(x);
+            x2Values.push(x);
+            x3Values.push(x);
+            y1Values.push(eval(exp1));
+            y2Values.push(eval(exp2));
+            y3Values.push(eval(exp3));
+        }
         
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        const xArray = ["Italy","France","Spain","USA","Argentina"];
-        const yArray = [55, 15, 44, 24, 15];
+        //const xArray = ["Italy","France","Spain","USA","Argentina"];
+        //const yArray = [55, 49, 44, 24, 15];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -123,22 +144,13 @@
 
         //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
         //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
-
-
-
+        
         const data = [
-           {
-            labels: xArray,
-            values: yArray,
-            type: "line",
-            mode: "scatter",
-            hole: .6,
-            sort: {
-                order: "asc",
-                key: "values"
-            }
-           },
+        {labels: x1Values, values: y1Values, type:"line"},
+        {labels: x2Values, values: y2Values, type:"line"},
+        {labels: x3Values, values: y3Values, type:"line"}
 
+           /*
            {
             labels: xArray,
             values: [20, 30, 40, 50, 60],
@@ -150,7 +162,8 @@
             }
            },
            
-    
+           
+           
     
             {
                 header: {
@@ -172,6 +185,7 @@
         
                 type: "table",
             }
+            */
         ];
 
         
@@ -215,28 +229,7 @@
         };*/
 
         const layout = {
-            xAxis: {range: [40, 160], title: "Square Meters"},
-            yAxis: { title: "Price "},
-            title: {
-                text: "Hello World",
-                align: "left",
-                font: {
-                    family: "tacoma",
-                    color: "red",
-                }
-            },
-            legend: {
-                display: true,
-                font: {
-                    family: "cursive",
-                    weight: "bold",
-                }
-            },
-            font: {
-                weight: "bold",
-                style: "italic",
-            },
-            height: 400,
+            title: "[y=" + exp1 + "] [y=" + exp2 + "] [y=" + exp3 + "]"
         }
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
