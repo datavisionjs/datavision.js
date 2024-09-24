@@ -28,6 +28,7 @@
             xArray.push(x);
         }*/
 
+        /*
         let exp1 = "x";
         let exp2 = "1.5*x";
         let exp3 = "1.5*x + 7";
@@ -47,15 +48,15 @@
             y1Values.push(eval(exp1));
             y2Values.push(eval(exp2));
             y3Values.push(eval(exp3));
-        }
+        }*/
         
         //const xArray = ["Planetarium Creator Ohira Takayuki Kanshuu: HomeStar Portable - 21st Century Star Navigator", "France", "Spain", "USA", "Argentina", "Italy", "Spain", "Spain"];
         //const yArray = [70, 49, 100, 24, 15, 45, 15, 50];
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        //const xArray = ["Italy","France","Spain","USA","Argentina"];
-        //const yArray = [55, 49, 44, 24, 15];
+        const xArray = ["Italy","France","Spain","USA","Argentina"];
+        const yArray = [55, 49, 44, 24, 15];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -135,22 +136,32 @@
       [1400000, 20000, 90000, 2000, 14102000]];*/
 
       var values = [
-      ['Salaries', 'Salaries', 'Salaries', 'Legal', 'Legal'],
-      ['Salaries', 'Salaries', 'Salaries', 'Legal', 'Legal'],
-      ["1200000", "20000", "80000", "2000", "12120000"],
-      [1300000, 20000, 70000, 2000, 130902000],
-      [1300000, 20000, 120000, 2000, 131222000],
-      [0, 0, 0, 0, "NA"]];
+      ['M', 'F', 'M', 'F', 'F'],
+      [130, 200, 700, 200, 120],
+      ['M', 'M', 'S', 'S', 'M'],
+     ];
 
         //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
         //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
         
         const data = [
-        {labels: x1Values, values: y1Values, type:"line"},
-        {labels: x2Values, values: y2Values, type:"line"},
-        {labels: x3Values, values: y3Values, type:"line"}
+        /*
+        {
+            labels: ["Walmart", "Target", "Walmart"], 
+            values: [20, 30, 40],
+            type:"bar", 
+            sort: {
+                key: "values",
+                order: "desc"
 
-           /*
+            },
+            design: {
+                color: ["red","pink"]
+            }
+        },
+
+
+           
            {
             labels: xArray,
             values: [20, 30, 40, 50, 60],
@@ -160,14 +171,16 @@
                 order: "desc",
                 key: "values"
             }
-           },
+           }, 
+           */
+           
            
            
            
     
             {
                 header: {
-                    values: ['EXPENSES', 'Y1', 'Y2', 'Y3', 'Y4'],
+                    values: ['Gender', 'Salary', 'Marital Status'],
                     font: {weight: "normal", style: "normal", color: "black"},
                     line: {width: 0, color: "black"},
                     fill: {color: "lightgray"}
@@ -176,16 +189,19 @@
                 data: {
                     
                     values: values,
-                    //font: {color: [["black","black","black","black","blue"], "black"], size: 12},
+                    font: {color: "white", size: 12},
                     line: {width: 1, color: "lightgray"},
-                    //fill: {color: [["", "#CCC", "", "#CCC", ""]]},
+                    fill: {color: [["white", "gray"]]},
+                    alternatingRowStyle: true,
                     operation: "sum"
                 
                 },
         
                 type: "table",
             }
-            */
+
+            
+            
         ];
 
         
@@ -229,12 +245,19 @@
         };*/
 
         const layout = {
-            title: "[y=" + exp1 + "] [y=" + exp2 + "] [y=" + exp3 + "]"
+            title: "", 
+            yAxis: {range: [4, ""]},
+            legend: {
+                font: {
+                    style: "italic"
+                }
+            },
+            font: {
+                size: 10,
+            }
         }
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);
-
-        
 
         window.addEventListener('resize', function () {
             chart.plot(data, layout);

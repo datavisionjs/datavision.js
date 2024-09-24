@@ -115,6 +115,26 @@ export function shortenText(text, maxLength){
     return text;
 }
 
+//repeat arrays
+export function repeatArrays(array, length){
+    const repeatedArray = [];
+    for (let i = 0; i < length; i++) {
+        repeatedArray.push(array[i % array.length]);
+    }
+    return repeatedArray;
+}
+
+
+export async function generateHash(sentence) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(sentence);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);  // Hashing algorithm (SHA-256)
+    const hashArray = Array.from(new Uint8Array(hashBuffer));  // Convert buffer to byte array
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');  // Convert bytes to hex
+    return hashHex;
+}
+
+
 //get space for charts like line scatter and bar
 export function getXSpace(dv, graphWidth){
     const ctx = dv.getCtx();

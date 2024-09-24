@@ -119,8 +119,8 @@ const DrawElements = (dv, dataset) => {
 
             
                 const barObject = barData.dataPoints;
-                const barValues = Array.from(barObject.values());
-                const keys = Array.from(barObject.keys());
+                //const barValues = Array.from(barObject.values());
+                //const keys = Array.from(barObject.keys());
 
                 const labels = isHorizontal? yAxis.values: xAxis.values;
 

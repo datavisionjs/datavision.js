@@ -13,7 +13,7 @@ const DrawLegend = (dv) => {
     const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
     const fontSize = font.size;
-    ctx.font = font.weight + " " + fontSize+"px "+font.family;
+    ctx.font = font.weight + " " + font.style + " " + fontSize+"px "+font.family;
 
     let pixelSpace = (fontSize+(fontSize/2));
 

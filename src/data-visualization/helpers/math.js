@@ -125,6 +125,8 @@ export function axisCustomSort(dv, labels, axisData){
         dataset.sort
     );
 
+    
+
     if(sortDataset.length){
         const xAxis = labels["x1"];
 
@@ -447,15 +449,21 @@ export function getTicksInterval(intervalSize, isReverse){
 }
 
 //get the minimun and max from a data of all numbers and return as range
-export function rangeFromData(arr){
-    if(isAllNumbers(arr)){
-        const minAndMax = findMinAndMax(arr);
-
-        if(minAndMax){
-            return [minAndMax.min, minAndMax.max];
-        }
+export function rangeFromData(dataArray, preferredRange = [null, null]) {
+    if (!dataArray.length || !isAllNumbers(dataArray)) {
+        return [null, null]; // Return early if array is empty or invalid
     }
-    return [null, null];
+
+    const { min: actualMin, max: actualMax } = findMinAndMax(dataArray);
+
+    const [preferredMin, preferredMax] = preferredRange;
+
+    const finalMin = (preferredMin !== null && preferredMin !== '' && !isNaN(preferredMin)) 
+        ? preferredMin : actualMin;
+    const finalMax = (preferredMax !== null && preferredMax !== '' && !isNaN(preferredMax)) 
+        ? preferredMax : actualMax;
+
+    return [finalMin, finalMax];
 }
 
 
