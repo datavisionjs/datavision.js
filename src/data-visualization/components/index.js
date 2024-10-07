@@ -22,7 +22,7 @@ const Chart = (dv) => {
             if(axisChartTypes.includes(type)){
 
                 const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
-                const yAxis = axisData.values[valueAxisName];
+                const yAxis = axisData.yData[valueAxisName];
 
                 //reset dataset name
                 if(type === "bar"){

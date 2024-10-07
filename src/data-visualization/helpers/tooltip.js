@@ -12,28 +12,34 @@ const DrawHover = (dv, ctx, data) => {
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 1;
 
-    if(data.type === "bar"){
-        ctx.rect(data.x, data.y, data.width, data.height); // Fill
-    }else if(data.type === "pie"){
+    const type = data.type;
+    const point = data.point;
+
+    if(type === "bar"){
+        ctx.rect(point.x, point.y, point.width, point.height); // Fill
+    }else if(type === "pie"){
         //draw arc line
         ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
 
         const lineWidth = canvasWidth * 0.0063;
         ctx.lineWidth = lineWidth;
         
-        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius-2), data.startAngle, data.endAngle);
-    }else if(data.type === "line"){
-        ctx.strokeStyle = data.color || "#000";
-        ctx.fillStyle = data.color || "transparent";
-        ctx.arc(data.midPoint.x, data.midPoint.y, (data.radius+1), 0, 2 * Math.PI);
+        ctx.arc(point.midPoint.x, point.midPoint.y, (point.radius-2), point.startAngle, point.endAngle);
+    }else if(type === "line"){
+        const hover = data.hover || {};
+        
+        ctx.strokeStyle = hover.color || "#000";
+        ctx.fillStyle = hover.color || "transparent";
+        ctx.arc(point.midPoint.x, point.midPoint.y, (point.radius+1), 0, 2 * Math.PI);
         ctx.fill();
     }else {
-        ctx.arc(data.midPoint.x, data.midPoint.y, data.radius, 0, 2 * Math.PI);
+        ctx.arc(point.midPoint.x, point.midPoint.y, point.radius, 0, 2 * Math.PI);
     }
 
     ctx.stroke();
 }
 
+/*
 const GetText = (dv, data, ctx, type, fontSize) => {
     if(!data[type] && data[type] !== 0) return {text: null, width: 0};
 
@@ -83,6 +89,7 @@ const GetText = (dv, data, ctx, type, fontSize) => {
 
     return {text: text, width: textWidth};
 }
+
 
 const DrawToolTip = (dv, ctx, pos, data) => {
 
@@ -158,13 +165,133 @@ const DrawToolTip = (dv, ctx, pos, data) => {
 
     //draw size text
     size.text? ctx.fillText(size.text, (tooltipX+halfFontSize), tooltipY+(fontSize*3)+(halfFontSize)): null;
+} */
+
+const ShowToolTipNot = (dv, ctx, pos, data) => {
+
+    //draw hover
+    DrawHover(dv, ctx, data);
+
+    const design = dv.getDesign();
+    const font = design.font;
+
+    const fontSize = font.size;
+    const halfFontSize = fontSize/2;
+
+    const target = dv.getTarget();
+    const toolTipCard = target.getElementById("dv_tooltip");
+
+    if(!toolTipCard){
+        toolTipCard = document.createElement("div");
+        toolTipCard.setAttribute("id", "dv_tooltip");
+        toolTipCard.setAttribute("style", 
+        "position: absolute, padding: 10px, background-color: white; display: block, font-size: " + fontSize);
+    }
+
+    data.text.map((textObj) => {
+        const container = document.createElement("div");
+        const nameEl = document.createElement("span");
+        const valueEl = document.createElement("span");
+
+        nameEl.appendChild(textObj.name);
+        valueEl.appendChild(textObj.valaue);
+
+        //add to container
+        container.appendChild(nameEl);
+        container.appendChild(valueEl);
+
+        //add to toolTipCard 
+        toolTipCard.appendChild(container);
+    });
+
+    
+    
 }
+
+const ShowToolTip = (dv, ctx, pos, data) => {
+    // Draw hover effect
+    DrawHover(dv, ctx, data);
+
+    const design = dv.getDesign();
+    const fontSize = design.font.size;
+    const target = dv.getTarget();
+    
+    let toolTipCard = target.querySelector("#dv_tooltip");
+
+    // Create tooltip if it doesn't exist
+    if (!toolTipCard) {
+        toolTipCard = document.createElement("div");
+        toolTipCard.setAttribute("id", "dv_tooltip");
+        toolTipCard.setAttribute("style", `
+            position: absolute;
+            padding: 10px;
+            background-color: white;
+            display: block;
+            font-size: ${fontSize}px;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            pointer-events: none;  /* Makes tooltip non-interactable */
+            z-index: 1000;
+        `);
+        target.appendChild(toolTipCard);  // Append to document
+    }
+
+    // Clear previous content
+    toolTipCard.innerHTML = '';
+
+    // Add content to tooltip
+    data.text.forEach((textObj) => {
+        const container = document.createElement("div");
+        const nameEl = document.createElement("span");
+        const valueEl = document.createElement("span");
+
+        nameEl.textContent = textObj.name; // Create text content
+        valueEl.textContent = textObj.value;
+
+        // Style name and value elements
+        nameEl.style.fontWeight = "bold";
+        valueEl.style.marginLeft = "5px";
+
+        // Add to container
+        container.appendChild(nameEl);
+        container.appendChild(valueEl);
+
+        // Add to tooltip
+        toolTipCard.appendChild(container);
+    });
+
+    // Adjust tooltip position to ensure it's within the viewport
+    const tooltipWidth = toolTipCard.offsetWidth;
+    const tooltipHeight = toolTipCard.offsetHeight;
+
+    // Set initial position based on `pos`
+    let tooltipX = pos.x + 10;  // Offset by 10 pixels
+    let tooltipY = pos.y + 10;  // Offset by 10 pixels
+
+    // Ensure the tooltip doesn't overflow horizontally
+    if (tooltipX + tooltipWidth > window.innerWidth) {
+        tooltipX = pos.x - tooltipWidth - 10;  // Flip to the left side
+    }
+
+    // Ensure the tooltip doesn't overflow vertically
+    if (tooltipY + tooltipHeight > window.innerHeight) {
+        tooltipY = pos.y - tooltipHeight - 10;  // Move upwards
+    }
+
+    // Apply final tooltip position
+    toolTipCard.style.left = `${tooltipX}px`;
+    toolTipCard.style.top = `${tooltipY}px`;
+
+    // Show the tooltip
+    toolTipCard.style.display = 'block';
+};
+
 
 
 const DisplayToolTip = (event, dv, position) => {
     if(dv && position){
         const ctx = dv.getCtx();
-
+        const target = dv.getTarget();
         
         var rect = ctx.canvas.getBoundingClientRect();
         var x = event.clientX - rect.left;
@@ -178,40 +305,43 @@ const DisplayToolTip = (event, dv, position) => {
 
         let closestData = null;
 
+        //hide tooltip 
+        let toolTipCard = target.querySelector("#dv_tooltip");
+        toolTipCard? toolTipCard.style.display = "none": null;
+
         for (let i = 0; i < toolTipData.length; i++) {
             const data = toolTipData[i];
 
             const type = data.type;
 
             if(type === "bar"){
-
-                if(Global.crashWithRect(currentRect, data)){
-                    DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                if(Global.crashWithRect(currentRect, data.point)){
+                    ShowToolTip(dv, ctx, {x: x, y: y}, data);
                     closestData = null;
                     break;
                 }
             }else if(type === "pie"){
-                if(Global.crashWithAngle(currentRect, data)){
-                    DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                if(Global.crashWithAngle(currentRect, data.point)){
+                    ShowToolTip(dv, ctx, {x: x, y: y}, data);
                     closestData = null;
                     break;
                 }
             }else {
 
-                if(Global.crashWithCircle(currentRect, data)){
-                    DrawToolTip(dv, ctx, {x: x, y: y}, data);
+                if(Global.crashWithCircle(currentRect, data.point)){
+                    ShowToolTip(dv, ctx, {x: x, y: y}, data);
                     closestData = null;
                     break;
                 }else {
 
-                    const newClosestData = Global.crashWithDistance(currentRect, data, 22);
-                    if(newClosestData){
+                    const newPoint = Global.crashWithDistance(currentRect, data.point, 22);
+                    if(newPoint){
                         if(closestData){
-                            if(closestData.dist > newClosestData.dist){
-                                closestData = newClosestData;
+                            if(closestData.point.dist > newPoint.dist){
+                                closestData = {...data, point: {...newPoint}};
                             }
                         }else {
-                            closestData = newClosestData;
+                            closestData = {...data, point: {...newPoint}};
                         }
                     }
 
@@ -221,7 +351,7 @@ const DisplayToolTip = (event, dv, position) => {
         }
 
         if(closestData){
-            DrawToolTip(dv, ctx, {x: x, y: y}, closestData.data);
+            ShowToolTip(dv, ctx, {x: x, y: y}, closestData);
         }
 
     }

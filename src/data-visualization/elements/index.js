@@ -32,6 +32,7 @@ const DrawElements = (dv, dataset) => {
 
     const type = dataset.type;
     const mode = dataset.mode;
+    const customData = dataset.custom;
     const isHorizontal = dataset.direction === "hr";
 
     const graphPosition = layout.graphPosition;
@@ -56,9 +57,8 @@ const DrawElements = (dv, dataset) => {
     tempCtx.lineCap = "round";
     tempCtx.lineJoin = "round";
 
-
     if(axisChartTypes.includes(type)){
-        const isLoopLeftAxis = (scrollData.isScrollX || !axisData.labels["x1"].isAllNumbers) && ((leftIndexDiff > topIndexDiff) || axisData.values["y1"].isAllNumbers);
+        const isLoopLeftAxis = (scrollData.isScrollX || !axisData.xData["x1"].isAllNumbers) && ((leftIndexDiff > topIndexDiff) || axisData.yData["y1"].isAllNumbers);
 
         const scrollIndex = isLoopLeftAxis? leftIndex: topIndex;
         const scrollIndexEnd = isLoopLeftAxis? leftIndexEnd: topIndexEnd;
@@ -79,12 +79,14 @@ const DrawElements = (dv, dataset) => {
                 //set barData direction 
                 barData.direction = dataset.direction;
 
-                const yAxis = axisData.values[barData.yAxis];
-                const xAxis = axisData.labels[barData.xAxis];
+                const yAxis = axisData.yData[barData.yAxis];
+                const xAxis = axisData.xData[barData.xAxis];
+
+                const baseAxis = isHorizontal? yAxis: xAxis;
 
                 const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
 
-                const labelCount = xAxis.values.length;
+                const labelCount = baseAxis.values.length;
 
                 let step = (graphLength/labelCount);
                 step < fontSize? step = fontSize: null;
@@ -93,7 +95,6 @@ const DrawElements = (dv, dataset) => {
                 let barSize = isStack? step: (step/(maxBarPerLabel));
 
                 //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
-                const baseAxis = isHorizontal? yAxis: xAxis;
                 
                 if(baseAxis.isAllNumbers){
                     const range = baseAxis.range;
@@ -149,9 +150,9 @@ const DrawElements = (dv, dataset) => {
                         const currentStack = value >= 0? [value, lastStack[1]]: [lastStack[0], currentValue];
                         stackLastValues.set(key, currentStack);
 
-                        Bars.Stack(dv, tempCtx, barData, newBarSize, key, lastValue, value, currentValue, tickFormat);
+                        Bars.Stack(dv, tempCtx, barData, newBarSize, key, lastValue, value, currentValue, customData, tickFormat);
                     }else {
-                        Bars.Group(dv, tempCtx, barData, i, key, value, newBarSize, maxBarPerLabel, tickFormat);
+                        Bars.Group(dv, tempCtx, barData, i, key, value, newBarSize, maxBarPerLabel, customData, tickFormat);
                     }
 
                 }
@@ -164,8 +165,8 @@ const DrawElements = (dv, dataset) => {
                 const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
                 const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
     
-                const xAxis = axisData.labels[labelAxisName];
-                const yAxis = axisData.values[valueAxisName];
+                const xAxis = axisData.xData[labelAxisName];
+                const yAxis = axisData.yData[valueAxisName];
     
                 const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
     
@@ -178,14 +179,18 @@ const DrawElements = (dv, dataset) => {
                 tempCtx.fillStyle = designColor;
                 tempCtx.strokeStyle = designColor;
     
-                const isAllNumbers = isHorizontal? yAxis.isAllNumbers: xAxis.isAllNumbers;
+                const xAxisIsAllNumbers = xAxis.isAllNumbers;
                 const yAxisIsAllNumbers = yAxis.isAllNumbers;
+
+                const xAxisIsLabel = (!xAxisIsAllNumbers || yAxisIsAllNumbers);
     
                 //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
                 //const labels = isHorizontal? dataset.values: dataset.labels;
                 const dataPoints = dataset.dataPoints;
-                const labels = isHorizontal? yAxis.values: xAxis.values;
-                const values = isHorizontal? xAxis.values: yAxis.values? yAxis.values: [];
+                const labels = xAxisIsLabel? xAxis.values: yAxis.values;
+                const values = xAxisIsLabel? yAxis.values: xAxis.values;
+
+                const labelIsAllNumbers = xAxisIsLabel? xAxisIsAllNumbers: yAxisIsAllNumbers;
 
     
                 //const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
@@ -199,7 +204,7 @@ const DrawElements = (dv, dataset) => {
                     //const loopStart = (Math.floor(scrollIndex) - (Math.floor(scrollIndex) > 0? 1: 0));
     
                     const loopStart = (scrollIndex);
-                    const loopEnd = isAllNumbers? labels.length: scrollIndexEnd < labels.length? scrollIndexEnd: labels.length;
+                    const loopEnd = labelIsAllNumbers? labels.length: scrollIndexEnd < labels.length? scrollIndexEnd: labels.length;
                     
                     for(var i = loopStart; i < loopEnd; i++){
     
@@ -208,8 +213,6 @@ const DrawElements = (dv, dataset) => {
 
                         let value = yAxisIsAllNumbers? tempValue: tempLabel;
                         let label = yAxisIsAllNumbers? tempLabel: tempValue;
-
-
     
                         const prevI = (i-1);
                         let prevLabel = Global.defaultIfNull(labels[prevI], tempLabel);
@@ -281,9 +284,28 @@ const DrawElements = (dv, dataset) => {
     
                             
                             //set tooltip
+                            const customDataPoints = dataset.customDataPoints;
                             const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
-    
-                            !positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelName: labelTitle, valueName: datasetName, size: type === "bubble"? size: null, sizeName: text, color: color, tickFormat: tickFormat}): null;
+                            
+                            if(!positionIsOut){
+                                dv.setToolTipData({
+                                    type: type,
+                                    point: { radius: size, midPoint: position },
+                                    text: [
+                                        { name: labelTitle, value: label },
+                                        { name: datasetName, value: value },
+                                        ...(type === "bubble" ? [{ name: text, value: size }] : []),  // Conditionally add for "bubble"
+                                        ...customDataPoints.get(label).map((value, index) => {
+                                            return {name: customData[index].name || "", value: value};
+                                        })
+                                    ],
+                                    hover: {
+                                        color: color
+                                    },
+                                    format: tickFormat,
+                                });
+                            }
+                            //!positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelName: labelTitle, valueName: datasetName, size: type === "bubble"? size: null, sizeName: text, color: color, tickFormat: tickFormat}): null;
                             
     
                         }else {
@@ -311,23 +333,14 @@ const DrawElements = (dv, dataset) => {
 
     }else if(type === "pie"){
 
-        const tickFormat = {label: dataset.xLayout.tickFormat, value: dataset.yLayout.tickFormat};
+        const tickFormat = {label: dataset.labelLayout.tickFormat, value: dataset.valueLayout.tickFormat};
 
         const radius = (Math.min(graphWidth, graphHeight)/2);
 
         const pieData = dataset.data;
         const sortedLabels = dataset.sortedLabels;
 
-        
-        
-        //const labels = dataset.labels;
-        const dataValues = dataset.values? dataset.values: [];
-        const colors = dataset.colors;
-
-        const operation = dataset.operation;
-
         let sumOfValues = dataset.sumOfValues;
-        const values = [];
 
         const hole = dataset.hole? dataset.hole: 0;
         const holeRadius = (hole*radius);
@@ -358,15 +371,9 @@ const DrawElements = (dv, dataset) => {
             }
         }
 
-        sortedLabels.forEach((obj, key) => {
-            
-        });
-
         //draw hole in pie to create a daughnut chart
         const newRadius = Calc.getArcRadius(graphWidth, graphHeight);
         const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+newRadius);
-
-        //const halfWidth = graphWidth/2, halfHeight = graphHeight/2;
 
         tempCtx.globalCompositeOperation = "destination-out";
         tempCtx.globalAlpha = 1;

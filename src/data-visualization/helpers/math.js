@@ -115,9 +115,7 @@ export function removeDuplicates(array){ //remove duplicates from array but keep
     });
 }
 
-export function axisCustomSort(dv, labels, axisData){
-    const layout = dv.getLayout();
-
+export function axisCustomSort(axisLabel, axisData){
     const firstData = axisData[0] || {};
     const firstDataset = firstData.type? firstData.type === "bar"? firstData.dataset: [firstData]: [firstData];
 
@@ -125,31 +123,28 @@ export function axisCustomSort(dv, labels, axisData){
         dataset.sort
     );
 
-    
-
     if(sortDataset.length){
-        const xAxis = labels["x1"];
-
         const dataset = sortDataset[0];
         const sort = dataset.sort;
         const order = sort.order || "asc";
         const key = sort.key || "labels";
 
         if(key === "values"){
-            let combined = xAxis.values.map((label, index) => [label, dataset.dataPoints.get(label)]);
+            let combined = axisLabel.values.map((label, index) => [label, dataset.dataPoints.get(label)]);
 
+
+            console.log("comb: ", combined, axisLabel);
             // Step 2: Sort the combined array based on the number
             combined = customSort(combined, order, 1);
 
             // Step 3: Extract the sorted numbers and strings if needed
-            const sortedXAxisValues = combined.map(item => item[0]);
+            const sortedAxisValues = combined.map(item => item[0]);
 
-            xAxis.values = sortedXAxisValues;
+            axisLabel.values = sortedAxisValues;
         }else {
-            xAxis.values = customSort(xAxis.values, order);
+            axisLabel.values = customSort(axisLabel.values, order);
         }
     }
-
 
 }
 
@@ -513,8 +508,8 @@ export function posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName){
 
     const axisData = layout.axisData;
 
-    const labelAxis = axisData.labels[labelAxisName];
-    const valueAxis = axisData.values[valueAxisName];
+    const labelAxis = axisData.xData[labelAxisName];
+    const valueAxis = axisData.yData[valueAxisName];
 
     let labelIsOut = false;
     let valueIsOut = false;
@@ -580,7 +575,7 @@ export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
     const axisData = layout.axisData;
 
     !yAxisName? yAxisName = "y1": null;
-    const yAxis = axisData.values[yAxisName];
+    const yAxis = axisData.yData[yAxisName];
 
     //!xAxisName? xAxisName = "x1": null;
     //const xAxis = axisData.labels[xAxisName];
@@ -621,7 +616,7 @@ export function posOnGraphXAxis(dv, x, axisName){
     const axisData = layout.axisData;
 
     !axisName? axisName = "x1": null;
-    const axis = axisData.labels[axisName];
+    const axis = axisData.xData[axisName];
 
     if(axis){
         const range = axis.range;
@@ -670,7 +665,7 @@ export function getAxisLabelPosition(dv, label, axisName){
     const axisData = layout.axisData;
 
     !axisName? axisName = "x1": null;
-    const axis = axisData.labels[axisName];
+    const axis = axisData.xData[axisName];
 
     if(axis){
         const labelIsAllNumbers = axis.isAllNumbers;
@@ -711,7 +706,7 @@ export function getAxisValuePosition(dv, value, axisName){
     const axisData = layout.axisData;
 
     !axisName? axisName = "y1": null;
-    const axis = axisData.values[axisName];
+    const axis = axisData.yData[axisName];
 
     if(axis){
         const valueIsAllNumbers = axis.isAllNumbers;
@@ -784,7 +779,7 @@ export function getChartArea(dv, layout){
     };
 }*/
 
-function roundToEven(number){
+export function roundToEven(number){
     const rounded = Math.round(number);
     const numberHalf = rounded / 2;
     const roundedHalf = Math.round(numberHalf);

@@ -233,7 +233,7 @@ export function crashWithDistance(rect, target, tolerace){
     const distance = Calc.distance(rect, target.midPoint);
 
     if(crashWithCircle(rect, newTarget)){
-        return {dist: distance, data: target};
+        return {...target, dist: distance};
     }else {
         return false;
     }

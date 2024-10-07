@@ -136,7 +136,7 @@ function drawYAxis(dv, ctx, position){
     //set axisData
     const axisData = layout.axisData;
 
-    const axisValues = axisData.values;
+    const axisValues = axisData.yData;
 
     for(let key in axisValues){
         const maxLabelWidth = position.maxLabelWidth[key];
@@ -305,7 +305,7 @@ function drawXAxis(dv, ctx, position){
     const axisData = layout.axisData;
     //const isHorizontal = axisData.direction === "hr";
 
-    const labels = axisData.labels;
+    const labels = axisData.xData;
     
 
     for(let key in labels){
@@ -501,7 +501,8 @@ const DrawAxis = (dv) => {
     
     //clear axis area
     //ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), ((canvasHeight-graphY)+halfFontSize));
-    ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), canvasHeight);
+    //ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), canvasHeight);
+    dv.clearCanvas(position.x, (graphY-fontSize), (position.width+fontSize), canvasHeight);
     
     //set scroll content width and height
     Scroll.setContentSize(dv);

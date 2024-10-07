@@ -21,7 +21,7 @@ const DrawTitleLabel = (dv) => {
     ctx.textAlign = 'center';
     ctx.textBaseline = "alphabetic";
 
-    if(titleLines){
+    if(titleLines.length){
         const font = titleDesign.font;
         
         const fontSize = font.size;
@@ -38,10 +38,10 @@ const DrawTitleLabel = (dv) => {
             y = fontSize;
         }
 
+        dv.clearCanvas(0, 0, (position.x + position.width), titleHeight);
+
         ctx.font = fontWeight + " " + fontStyle + " " + fontSize+"px "+ fontFamily;
         ctx.fillStyle = fontColor;
-
-        ctx.clearRect(0, 0, (position.x + position.width), titleHeight);
 
         for(let i = 0; i < titleLines.length; i++){
             const title = titleLines[i];

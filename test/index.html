@@ -144,23 +144,37 @@
         //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
         //const yArray = [7,8,8,9,9,9,10,11,14,14,15];
         
+        
         const data = [
-        /*
+        
         {
-            labels: ["Walmart", "Target", "Walmart"], 
-            values: [20, 30, 40],
-            type:"bar", 
+            name: "Groceries: ",
+            x: ["Walmart", "Target", "Walmart"], 
+            y: [20, 30, 40],
+            custom: [
+                {
+                    name: "Music: ",
+                    data: [30, 10, 90]
+                },
+                {
+                    name: "Home: ",
+                    data: [7, 10, 80]
+                },
+            ],
+            type:"line", 
+           
+           
             sort: {
                 key: "values",
                 order: "desc"
-
             },
             design: {
-                color: ["red","pink"]
-            }
-        },
+                color: "red"
+            },
+        }
+        
 
-
+            /*
            
            {
             labels: xArray,
@@ -172,7 +186,7 @@
                 key: "values"
             }
            }, 
-           */
+           
            
            
            
@@ -199,6 +213,9 @@
         
                 type: "table",
             }
+
+            */
+                
 
             
             
@@ -245,8 +262,9 @@
         };*/
 
         const layout = {
-            title: "", 
+            title: "How Are You", 
             yAxis: {range: [4, ""]},
+            xAxis: {range: [0, ""]},
             legend: {
                 font: {
                     style: "italic"
@@ -254,7 +272,11 @@
             },
             font: {
                 size: 10,
-            }
+            },
+            legend: {
+                display: true
+            },
+           
         }
         const chart = new DataVision("my-chart");
         chart.plot(data, layout);

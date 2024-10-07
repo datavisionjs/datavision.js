@@ -56,7 +56,7 @@ const DrawTable = (dv) => {
 
 
     //clear axis area
-    ctx.clearRect(0, graphY, canvasWidth, canvasHeight);
+    dv.clearCanvas(0, graphY, canvasWidth, canvasHeight);
     
 
     //set scroll content width and height

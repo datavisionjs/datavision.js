@@ -2,21 +2,23 @@ import * as Calc from '../helpers/math.js'
 import * as Global from '../helpers/global.js';
 
 
-export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLabel, tickFormat) => { //process grouped bars
+export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLabel, customData, tickFormat) => { //process grouped bars
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";
 
     const axisData = layout.axisData;
 
-    const yAxis = axisData.values[barData.yAxis];
-    const xAxis = axisData.labels[barData.xAxis];
+    const yAxis = axisData.yData[barData.yAxis];
+    const xAxis = axisData.xData[barData.xAxis];
 
     const yAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
     
     const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
     const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
     const datasetName = barData.name || "";
+
+    const customDataPoints = barData.customDataPoints;
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -63,7 +65,24 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
             ctx.fill();
 
             //set tooltip
-            dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
+            //dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
+            dv.setToolTipData(
+                { 
+                    type: "bar",
+                    point: {
+                        x, y,
+                        width, height
+                    },
+                    text: [
+                        {name: datasetName, value: key},
+                        {name: valueTitle, value: value},
+                        ...customDataPoints.get(key).map((value, index) => {
+                            return {name: customData[index].name || "", value: value};
+                        })
+                    ],
+                    format: tickFormat
+                }
+            );
         }
     }else {
         
@@ -104,27 +123,47 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
 
 
             //set tooltip
-            dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: labelTitle, valueName: datasetName, tickFormat: tickFormat});
+            //dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: labelTitle, valueName: datasetName, tickFormat: tickFormat});
+            dv.setToolTipData(
+                { 
+                    type: "bar",
+                    point: {
+                        x, y,
+                        width, height
+                    },
+                    text: [
+                        {name: labelTitle, value: key},
+                        {name: datasetName, value: value},
+                        ...customDataPoints.get(key).map((value, index) => {
+                            return {name: customData[index].name || "", value: value};
+                        })
+                    ],
+                    format: tickFormat
+                }
+            );
+        
         }
 
     }
 
 };
 
-export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentValue, tickFormat) => {
+export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentValue, customData, tickFormat) => {
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";
 
     const axisData = layout.axisData;
 
-    const yAxis = axisData.values[barData.yAxis];
-    const xAxis = axisData.labels[barData.xAxis];
+    const yAxis = axisData.yData[barData.yAxis];
+    const xAxis = axisData.xData[barData.xAxis];
 
     const yAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
     const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
     const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
     const datasetName = barData.name || "";
+
+    const customDataPoints = barData.customDataPoints;
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -166,7 +205,24 @@ export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentV
         ctx.fill();
 
         //set tooltip
-        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
+        //dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
+        //set tooltip
+        dv.setToolTipData(
+            { 
+                type: "bar",
+                point: {
+                    x: x, y: y, width: width, height: height
+                },
+                text: [
+                    {name: labelTitle, value: key},
+                    {name: datasetName, value: currentValue},
+                    ...customDataPoints.get(key).map((value, index) => {
+                        return {name: customData[index].name || "", value: value};
+                    })
+                ],
+                format: tickFormat
+            }
+        );
     }else {
         
         const labelPositionX = Calc.getAxisLabelPosition(dv, key);
@@ -194,6 +250,21 @@ export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentV
         ctx.fill();
 
         //set tooltip
-        dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: currentValue, labelName: labelTitle, valueName: datasetName, tickFormat: tickFormat});
+        dv.setToolTipData(
+            { 
+                type: "bar",
+                point: {
+                    x: x, y: y, width: width, height: height
+                },
+                text: [
+                    {name: labelTitle, value: key},
+                    {name: datasetName, value: currentValue},
+                    ...customDataPoints.get(key).map((value, index) => {
+                        return {name: customData[index].name || "", value: value};
+                    })
+                ],
+                format: tickFormat
+            }
+        );
     }
 }

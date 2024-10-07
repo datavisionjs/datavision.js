@@ -136,9 +136,12 @@ function DataVision(targetId) {
     };
 
     //canvas
-    this.setCanvas = function (width, height){
-        const canvas = this.createCanvas(this.getCanvas(), width, height);
+    this.setCanvas = function (layout){
+        const chartArea = Calc.getChartArea(this, layout);
+        const width = chartArea.width, height = chartArea.height;
 
+        const canvas = this.createCanvas(this.getCanvas(), width, height);
+        
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.canvasSize = {width: width, height: height};
@@ -146,6 +149,29 @@ function DataVision(targetId) {
 
     this.getCanvas = function (){
         return this.canvas;
+    };
+    this.clearCanvas = function (x, y, width, height){
+        const ctx = this.getCtx();
+        const layout = this.getLayout();
+
+        const canvasSize = this.getCanvasSize();
+
+        if(ctx){
+            const newX = (x || 0), newY = (y || 0);
+            const newWidth = (width || canvasSize.width),  newHeight = (height || canvasSize.height);
+           
+            //set bg color 
+            const bgColor = layout.backgroundColor || "transparent";
+            const newCanvas = this.createCanvas(null, newWidth, newHeight);
+            const newCtx = newCanvas.getContext("2d");
+            newCtx.fillStyle = bgColor;
+            newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+            
+            ctx.beginPath();
+            ctx.clearRect(newX, newY, newWidth, newHeight);
+            ctx.drawImage(newCanvas, newX, newY, newWidth, newHeight);
+           
+        }
     };
     this.getCanvasSize = function (){
         return this.canvasSize;
@@ -279,8 +305,8 @@ function DataVision(targetId) {
 
         const ctx = this.getCtx();
 
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
+        //ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        this.clearCanvas();
         ctx.drawImage(canvasCopy, 0, 0, canvasWidth, canvasHeight);
     };
     this.addCanvasToTarget = function (){
@@ -347,11 +373,12 @@ DataVision.prototype.update = function (){
     Prop.setGraphPosition(this);
 
     //clear rect
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    this.clearCanvas();
 
     dataVis.DrawPlotArea(this);
 
     dataVis.Chart(this);
+
 
     //Draw dataset names
     DrawLegend(this);
@@ -371,8 +398,7 @@ DataVision.prototype.plot = function (data, layout){
     //clear tooltipData 
     this.clearToolTipData();
     
-    const chartArea = Calc.getChartArea(this, layout);
-    this.setCanvas(chartArea.width, chartArea.height);
+    this.setCanvas(layout);
 
     //set data and layout
     //this.setData(data);

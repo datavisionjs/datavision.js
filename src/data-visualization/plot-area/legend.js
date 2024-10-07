@@ -64,7 +64,7 @@ const DrawLegend = (dv) => {
 
         //clear dataset area names
         const labelFontX = (labelX-((fontSize/2)+1));
-        ctx.clearRect(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
+        dv.clearCanvas(labelFontX, graphY, (canvasWidth-labelFontX), graphHeight);
 
         if(legendData){
 
@@ -82,7 +82,7 @@ const DrawLegend = (dv) => {
                     }
                 }
 
-                const fillColor = pieColor;
+                const fillColor = Array.isArray(pieColor)? pieColor[0]: pieColor;
 
                 const textPosX = (labelX+fontSize), textPosY = startY;
 
@@ -104,9 +104,9 @@ const DrawLegend = (dv) => {
         }
 
         //clear top of dataset names 
-        ctx.clearRect(labelFontX, 0, (canvasWidth-labelFontX), graphY);
+        dv.clearCanvas(labelFontX, 0, (canvasWidth-labelFontX), graphY);
          //clear bottom of dataset names 
-        ctx.clearRect(labelFontX, (graphY+graphHeight), (canvasWidth-labelFontX), (canvasHeight-(graphY+graphHeight)));
+        dv.clearCanvas(labelFontX, (graphY+graphHeight), (canvasWidth-labelFontX), (canvasHeight-(graphY+graphHeight)));
 
         dv.addLegendScrollBar({x: labelFontX, y: graphY, width: (canvasWidth-labelFontX), height: graphHeight}, contentHeight);
     }
