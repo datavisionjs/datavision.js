@@ -2,7 +2,7 @@ import * as Calc from '../helpers/math.js'
 import * as Global from '../helpers/global.js';
 
 
-export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLabel, customData, tickFormat) => { //process grouped bars
+export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, maxBarPerLabel, customData, tickFormat) => { //process grouped bars
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";
@@ -19,6 +19,7 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
     const datasetName = barData.name || "";
 
     const customDataPoints = barData.customDataPoints;
+    const customDataValues = customDataPoints.get(key) || [];
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -65,7 +66,6 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
             ctx.fill();
 
             //set tooltip
-            //dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: datasetName, valueName: valueTitle, tickFormat: tickFormat});
             dv.setToolTipData(
                 { 
                     type: "bar",
@@ -74,13 +74,14 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
                         width, height
                     },
                     text: [
-                        {name: datasetName, value: key},
+                        {name: datasetName, value: key, xIsLabel},
                         {name: valueTitle, value: value},
-                        ...customDataPoints.get(key).map((value, index) => {
-                            return {name: customData[index].name || "", value: value};
+                        ...customDataValues.map((value, index) => {
+                            const data = customData[index] || {};
+                            return {name: data.name || "", value: value};
                         })
                     ],
-                    format: tickFormat
+                    tickFormat
                 }
             );
         }
@@ -121,7 +122,6 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
             ctx.rect(x, y, width, height);
             ctx.fill();
 
-
             //set tooltip
             //dv.setToolTipData({type: "bar", x: x, y: y, width: width, height: height, label: key, value: value, labelName: labelTitle, valueName: datasetName, tickFormat: tickFormat});
             dv.setToolTipData(
@@ -132,13 +132,14 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
                         width, height
                     },
                     text: [
-                        {name: labelTitle, value: key},
+                        {name: labelTitle, value: key, xIsLabel},
                         {name: datasetName, value: value},
-                        ...customDataPoints.get(key).map((value, index) => {
-                            return {name: customData[index].name || "", value: value};
+                        ...customDataValues.map((value, index) => {
+                            const data = customData[index] || {};
+                            return {name: data.name || "", value: value};
                         })
                     ],
-                    format: tickFormat
+                    tickFormat
                 }
             );
         
@@ -148,7 +149,7 @@ export const Group = (dv, ctx, barData, index, key, value, barSize, maxBarPerLab
 
 };
 
-export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentValue, customData, tickFormat) => {
+export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value, currentValue, customData, tickFormat) => {
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";
@@ -164,6 +165,7 @@ export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentV
     const datasetName = barData.name || "";
 
     const customDataPoints = barData.customDataPoints;
+    const customDataValues = customDataPoints.get(key) || [];
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
@@ -171,6 +173,8 @@ export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentV
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
     let range = isHorizontal? xAxis.range: yAxis.range;
+
+    lastValue = Calc.getNumberInRange(lastValue, range); //keep lastValue in range;
 
     //find the starting position of the bar on the y-axis
         
@@ -214,13 +218,14 @@ export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentV
                     x: x, y: y, width: width, height: height
                 },
                 text: [
-                    {name: labelTitle, value: key},
+                    {name: labelTitle, value: key, xIsLabel},
                     {name: datasetName, value: currentValue},
-                    ...customDataPoints.get(key).map((value, index) => {
-                        return {name: customData[index].name || "", value: value};
+                    ...customDataValues.map((value, index) => {
+                        const data = customData[index] || {};
+                        return {name: data.name || "", value: value};
                     })
                 ],
-                format: tickFormat
+                tickFormat
             }
         );
     }else {
@@ -257,13 +262,14 @@ export const Stack = (dv, ctx, barData, barSize, key, lastValue, value, currentV
                     x: x, y: y, width: width, height: height
                 },
                 text: [
-                    {name: labelTitle, value: key},
+                    {name: labelTitle, value: key, xIsLabel},
                     {name: datasetName, value: currentValue},
-                    ...customDataPoints.get(key).map((value, index) => {
-                        return {name: customData[index].name || "", value: value};
+                    ...customDataValues.map((value, index) => {
+                        const data = customData[index] || {};
+                        return {name: data.name || "", value: value};
                     })
                 ],
-                format: tickFormat
+                tickFormat
             }
         );
     }

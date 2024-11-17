@@ -115,6 +115,18 @@ export function shortenText(text, maxLength){
     return text;
 }
 
+
+export function numberFormat(number, format){
+    if(!isNaN(number)){
+        const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+        const separateNumbers = format.separateNumbers;
+        
+        return prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(number, format.decimalPlaces), separateNumbers) + suffix;
+    }
+
+    return number;
+}
+
 //repeat arrays
 export function repeatArrays(array, length){
     const repeatedArray = [];

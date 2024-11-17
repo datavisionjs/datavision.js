@@ -159,8 +159,8 @@ function drawYAxis(dv, ctx, position){
             if(range){
 
                 const format = axis.tickFormat || {};
-                const prefix = (format.prefix || ""), suffix = (format.suffix || "");
-                const separateNumbers = format.separateNumbers;
+                //const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+                //const separateNumbers = format.separateNumbers;
 
                 const rangeStart = range[0];
 
@@ -180,8 +180,8 @@ function drawYAxis(dv, ctx, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
-
+                    //value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
+                    value = Global.numberFormat((rangeStart)+(step*i), format);
                     axisY = ((graphY+graphHeight)-(pixelStep*i));
 
                     //set text width
@@ -324,8 +324,8 @@ function drawXAxis(dv, ctx, position){
             if(range){
 
                 const format = axis.tickFormat || {};
-                const prefix = (format.prefix || ""), suffix = (format.suffix || "");
-                const separateNumbers = format.separateNumbers;
+                //const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+                //const separateNumbers = format.separateNumbers;
 
                 const rangeStart = range[0];
                 const rangeEnd = range[1];
@@ -352,7 +352,8 @@ function drawXAxis(dv, ctx, position){
 
                 for(let i = 0; i <= dist; i += iterator){
 
-                    label = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
+                    //label = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
+                    label = Global.numberFormat((rangeStart)+(step*i), format);
 
                     //label = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
                     axisX = (graphX+(pixelStep*i));

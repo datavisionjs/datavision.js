@@ -44,24 +44,48 @@ export function angleBetweenPoints(center, point) {
     return angleDeg;
 }
 
-export function getNumbericArray (arr){
-    return arr.filter(element => typeof element === 'number' && !isNaN(element));
+export function toNumber(value) {
+    if (value == null) return NaN; // Explicitly handle null or undefined
+
+    // Remove any commas from the string
+    let cleanValue = value.toString().replace(/,/g, '');
+
+    // Regular expression to check valid numeric formats (integer, decimal, scientific notation)
+    const validNumberPattern = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+
+    // Test if the cleaned string matches the valid number pattern
+    if (validNumberPattern.test(cleanValue)) {
+        return Number(cleanValue); // Convert to a number if valid
+    }
+
+    return NaN; // Return NaN for invalid numeric formats
 }
+
+
+export function getNumericArray(arr) {
+    return arr
+        .filter(element => toNumber(element)) // Keep elements that can be converted to numbers
+        .map((element) => {
+            return toNumber(element);
+        }); // Convert numeric strings to numbers
+}
+
 
 //find minimum numbers 
 export function findMinAndMax(arr) {
     if(Array.isArray(arr)){
         // Use filter to remove non-numeric elements
-        const numericArray = getNumbericArray(arr);
+        const numericArray = getNumericArray(arr);
     
         if (numericArray.length === 0) {
             // Handle the case where there are no valid numbers in the array
             return undefined; // or any other value that makes sense in your context
         }
 
-        let min = numericArray[0];
-        let max = numericArray[0];
+        let min = Math.min(...numericArray);
+        let max = Math.max(...numericArray);
 
+        /*
         for (let i = 1; i < numericArray.length; i++) {
             if (numericArray[i] < min) {
                 min = numericArray[i];
@@ -69,7 +93,7 @@ export function findMinAndMax(arr) {
             if (numericArray[i] > max) {
                 max = numericArray[i];
             }
-        }
+        }*/
     
         return {
             min: min,
@@ -115,79 +139,73 @@ export function removeDuplicates(array){ //remove duplicates from array but keep
     });
 }
 
-export function axisCustomSort(axisLabel, axisData){
-    const firstData = axisData[0] || {};
-    const firstDataset = firstData.type? firstData.type === "bar"? firstData.dataset: [firstData]: [firstData];
+export function axisCustomSort(dv, axisLabels, dataToSort){
+    const layout = dv.getLayout();
 
-    const sortDataset = [...firstDataset, ...axisData.slice(1)].filter(dataset => 
-        dataset.sort
-    );
+    const sort = layout.sort || {};
+    const order = sort.order;
+    const target = sort.target;
 
-    if(sortDataset.length){
-        const dataset = sortDataset[0];
-        const sort = dataset.sort;
-        const order = sort.order || "asc";
-        const key = sort.key || "labels";
+    if(axisLabels.values.length){
 
-        if(key === "values"){
-            let combined = axisLabel.values.map((label, index) => [label, dataset.dataPoints.get(label)]);
+        if(target === "y" || target === "custom"){
 
+            const combined = axisLabels.values.map((label) => [label, dataToSort.has(label)? dataToSort.get(label): null]);
 
-            console.log("comb: ", combined, axisLabel);
             // Step 2: Sort the combined array based on the number
-            combined = customSort(combined, order, 1);
+            const combinedSorted = customSort(combined, order, 1);
 
             // Step 3: Extract the sorted numbers and strings if needed
-            const sortedAxisValues = combined.map(item => item[0]);
+            const sortedAxisValues = combinedSorted.map(item => item[0]);
 
-            axisLabel.values = sortedAxisValues;
+            axisLabels.values = sortedAxisValues;
         }else {
-            axisLabel.values = customSort(axisLabel.values, order);
+            axisLabels.values = customSort(axisLabels.values, order);
         }
     }
 
 }
 
-export function pieCustomSort(dv, dataset){
+export function pieCustomSort(dv, dataset, dataToSort){
     const layout = dv.getLayout();
 
-    const sort = dataset.sort || {};
+    const sort = layout.sort || {};
     const order = sort.order;
+    const target = sort.target;
 
-    if(order){
-        const key = sort.key || "labels";
-        const labels = dataset.labels;
-        const values = dataset.values;
+    const labels = dataset.labels;
 
-        if(key === "values"){
-            let combined = labels.map((label, index) => [label, values[index]]);
+    if(target === "values"){
+        let combined = labels.map((label) => [label, dataToSort.has(label)? dataToSort.get(label): null]);
 
-            // Step 2: Sort the combined array based on the number
-            combined = customSort(combined, order, 1);
+        // Step 2: Sort the combined array based on the number
+        combined = customSort(combined, order, 1);
 
-            // Step 3: Extract the sorted numbers and strings if needed
-            const sortedLabels = combined.map(item => item[0]);
+        // Step 3: Extract the sorted numbers and strings if needed
+        const sortedLabels = combined.map(item => item[0]);
 
-            dataset.sortedLabels = sortedLabels;
-        }else {
-            dataset.sortedLabels = customSort(labels, order);
-        }
+        dataset.sortedLabels = sortedLabels;
     }else {
-        dataset.sortedLabels = [...dataset.labels];
+        dataset.sortedLabels = customSort(labels, order);
     }
 }
 
 export function customSort(values, order = "asc", index = 0){
+        
+    
     let newValues = values.slice(); //a copy to avoid mutation
 
     const isAscending = order === "asc";
 
     function sortNumerically(a, b) {
-        return Number(a) - Number(b);
+        return toNumber(a) - toNumber(b);
     }
 
     function sortLexicographically(a, b) {
-        return a.localeCompare(b);
+        const strA = (a != null) ? a.toString() : "";
+        const strB = (b != null) ? b.toString() : "";
+    
+        return strA.localeCompare(strB);
     }
 
     newValues.sort((a, b) => {
@@ -213,7 +231,9 @@ export function customSort(values, order = "asc", index = 0){
     });
 
     return newValues;
+    
 }
+
 
 export function getNumberInRange(number, range){
     const rangeMin = Math.min(...range);
@@ -250,40 +270,54 @@ export function commaSeparateNumber(number, separateNumbers) {
 
 //find sum of an array of numbers
 export function sum(arr) {
-    // Filter out non-numeric elements
-    const numericArr = getNumbericArray(arr);
-
     // Calculate the sum of numeric elements
-    return numericArr.reduce((sum, current) => sum + current, 0);
+    const numericArr = getNumericArray(arr);
+
+    const sum = numericArr.reduce((sum, current) => (toNumber(sum)||0) + (toNumber(current)), (arr[0]? 0: arr[0]) );
+
+    return sum;
 }
 
 //find the avarage of an array of numbers
 export function avg(arr) {
     // Filter out non-numeric elements
-    const numericArr = getNumbericArray(arr);
+    const numericArr = getNumericArray(arr);
 
     // Calculate the sum of numeric elements
-    const sum = numericArr.reduce((sum, current) => sum + current, 0);
+    const sum = numericArr.reduce((sum, current) => (toNumber(sum)||0) + (toNumber(current)), (arr[0]? 0: arr[0]));
 
     // Calculate the average
-    return numericArr.length === 0 ? 0 : sum / numericArr.length;
+    return numericArr.length === 0 ? null : sum / numericArr.length;
 }
 
-export function computeOperation(operation, arr){
+export function computeOperation(arr, operation, isNumeric){
     if(arr.length === 0){
-        return 0; //making sure that we do not get -infinity when array length is 0
+        return null; //making sure that we do not get -infinity when array length is 0
     }
 
-    if(operation === "avg"){
-        return avg(arr);
-    }else if(operation === "min"){
-        return Math.min(...getNumbericArray(arr));
-    }else if(operation === "max"){
-        return Math.max(...getNumbericArray(arr));
-    }else if(operation === "count"){
-        return arr.length;
+    //filter out null and undefined values
+    const newArray = arr.filter(item => item !== null && item !== undefined);
+
+    if(isNumeric){
+        if(operation === "avg"){
+            return avg(newArray);
+        }else if(operation === "min"){
+            return Math.min(...getNumericArray(newArray));
+        }else if(operation === "max"){
+            return Math.max(...getNumericArray(newArray));
+        }else if(operation === "count"){
+            return newArray.length;
+        }else {
+            return sum(newArray); //sum is the default
+        }
     }else {
-        return sum(arr); //sum is the default
+        if(operation === "last"){
+            return newArray[newArray.length-1];
+        }else if(operation === "count"){
+            return newArray.length;
+        }else {
+            return newArray[0];
+        }
     }
 }
 
@@ -779,15 +813,19 @@ export function getChartArea(dv, layout){
     };
 }*/
 
-export function roundToEven(number){
-    const rounded = Math.round(number);
-    const numberHalf = rounded / 2;
-    const roundedHalf = Math.round(numberHalf);
+export function roundToEven(number) {
+    let rounded = Math.round(number);
 
-    // Check if rounding up or down depending on decimal part
-    if (Math.abs(numberHalf - roundedHalf) === 0.5) {
-        return rounded % 2 === 0 ? rounded : rounded - 1;
+    // Ensure the number itself is even
+    if (rounded % 2 !== 0) {
+        rounded += 1;  // If it's odd, add 1 to make it even
     }
+
+    // Ensure half of the number is also even
+    if ((rounded / 2) % 2 !== 0) {
+        rounded += 2;  // If half is odd, add 2 to make it divisible by 4
+    }
+
     return rounded;
 }
 

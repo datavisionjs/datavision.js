@@ -84,6 +84,10 @@ const DrawElements = (dv, dataset) => {
 
                 const baseAxis = isHorizontal? yAxis: xAxis;
 
+                const xAxisIsAllNumbers = xAxis.isAllNumbers, yAxisIsAllNumbers = yAxis.isAllNumbers;
+
+                const xAxisIsLabel = (!xAxisIsAllNumbers || yAxisIsAllNumbers);
+
                 const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
 
                 const labelCount = baseAxis.values.length;
@@ -120,14 +124,16 @@ const DrawElements = (dv, dataset) => {
 
             
                 const barObject = barData.dataPoints;
+                const barCustomData = barData.custom;
                 //const barValues = Array.from(barObject.values());
                 //const keys = Array.from(barObject.keys());
 
-                const labels = isHorizontal? yAxis.values: xAxis.values;
+                const labels =  baseAxis.values;
+
+                const keys = Array.from(barObject.keys());
 
                 //const loopEnd = baseAxis.isAllNumbers?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
                 const loopEnd = scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
-
                 for(let index = scrollIndex; index < loopEnd; index++){
 
                     const key = labels[index];
@@ -141,18 +147,19 @@ const DrawElements = (dv, dataset) => {
                     
                     if(mode === "stack"){
 
-                        const lastStack = stackLastValues.has(key)? stackLastValues.get(key): [rangeStart, rangeStart];
+                        const lastStack = stackLastValues.has(key)? stackLastValues.get(key): [0, 0];
                         const lastValue = value >= 0? (lastStack[0]): (lastStack[1]);
                         
                         const currentValue = value;
+                        
                         value = i === 0? value: (lastValue+value);
 
                         const currentStack = value >= 0? [value, lastStack[1]]: [lastStack[0], currentValue];
                         stackLastValues.set(key, currentStack);
 
-                        Bars.Stack(dv, tempCtx, barData, newBarSize, key, lastValue, value, currentValue, customData, tickFormat);
+                        Bars.Stack(dv, tempCtx, barData, newBarSize, key, xAxisIsLabel, lastValue, value, currentValue, barCustomData, tickFormat);
                     }else {
-                        Bars.Group(dv, tempCtx, barData, i, key, value, newBarSize, maxBarPerLabel, customData, tickFormat);
+                        Bars.Group(dv, tempCtx, barData, i, key, xAxisIsLabel, value, newBarSize, maxBarPerLabel, barCustomData, tickFormat);
                     }
 
                 }
@@ -187,29 +194,27 @@ const DrawElements = (dv, dataset) => {
                 //set xValues to categoryMidPoints if it is a barChart, to be used for mixed charts
                 //const labels = isHorizontal? dataset.values: dataset.labels;
                 const dataPoints = dataset.dataPoints;
-                const labels = xAxisIsLabel? xAxis.values: yAxis.values;
-                const values = xAxisIsLabel? yAxis.values: xAxis.values;
+
+                let labels = xAxisIsLabel? xAxis.values: yAxis.values;
 
                 const labelIsAllNumbers = xAxisIsLabel? xAxisIsAllNumbers: yAxisIsAllNumbers;
-
     
                 //const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
-                
-                let darwEndedHere = false;
                 if(labels){
                     
                     let isDrawStarted = false;
                     let lastPosition = {x: null, y: null}, positionType;
+                    let valueIsNull = false;
     
                     //const loopStart = (Math.floor(scrollIndex) - (Math.floor(scrollIndex) > 0? 1: 0));
     
                     const loopStart = (scrollIndex);
                     const loopEnd = labelIsAllNumbers? labels.length: scrollIndexEnd < labels.length? scrollIndexEnd: labels.length;
-                    
+
                     for(var i = loopStart; i < loopEnd; i++){
     
                         const tempLabel = labels[i];
-                        const tempValue = Global.defaultIfNull(dataPoints.get(tempLabel), values[i]);
+                        const tempValue = dataPoints.get(tempLabel);
 
                         let value = yAxisIsAllNumbers? tempValue: tempLabel;
                         let label = yAxisIsAllNumbers? tempLabel: tempValue;
@@ -226,17 +231,27 @@ const DrawElements = (dv, dataset) => {
                         const size = Array.isArray(designSize)? designSize[i]: designSize;
                         const text = Array.isArray(designText)? designText[i]: designText;
                         
-                        positionType = i === loopStart? "start": i === (loopEnd-1)? "end": "";
                         
                         if(value || value === 0){ //proceed if y is valid
                             
                             const prevPosition = Calc.getAxisPosition(dv, prevLabel, prevValue, valueAxisName, labelAxisName);
                             const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
                             const nextPosition = Calc.getAxisPosition(dv, nextLabel, nextValue, valueAxisName, labelAxisName);
+                            
     
                             let positionIsOut = false;
     
                             if(type === "line"){
+
+                              
+                                if(i === loopStart){
+                                    positionType = "start";
+                                }else if(i === (loopEnd-1)){
+                                    !valueIsNull? positionType = "end": null;
+                                }else {
+                                    !valueIsNull? positionType = "": null;
+                                    valueIsNull = false;
+                                }
     
                                 //const boundPosition = Calc.findAxisBoundPositions(dv, i, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted, loopStart, loopEnd);
                                 
@@ -245,7 +260,6 @@ const DrawElements = (dv, dataset) => {
                                 
                                 if((positionIsOut && isDrawStarted) || (isCurrentPositionOut && (position.x === lastPosition.x || position.y === lastPosition.y))){
                                     tempCtx.stroke();
-                                    tempCtx.closePath();
                                     break;
                                 }else {
                                     
@@ -285,24 +299,27 @@ const DrawElements = (dv, dataset) => {
                             
                             //set tooltip
                             const customDataPoints = dataset.customDataPoints;
+                            const customDataValues = customDataPoints.get(label) || [];
+
                             const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
                             
                             if(!positionIsOut){
+                                console.log("dsetN: ", datasetName);
                                 dv.setToolTipData({
                                     type: type,
                                     point: { radius: size, midPoint: position },
                                     text: [
-                                        { name: labelTitle, value: label },
+                                        { name: labelTitle, value: label, xIsLabel: xAxisIsLabel },
                                         { name: datasetName, value: value },
                                         ...(type === "bubble" ? [{ name: text, value: size }] : []),  // Conditionally add for "bubble"
-                                        ...customDataPoints.get(label).map((value, index) => {
+                                        ...customDataValues.map((value, index) => {
                                             return {name: customData[index].name || "", value: value};
                                         })
                                     ],
                                     hover: {
                                         color: color
                                     },
-                                    format: tickFormat,
+                                    tickFormat,
                                 });
                             }
                             //!positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelName: labelTitle, valueName: datasetName, size: type === "bubble"? size: null, sizeName: text, color: color, tickFormat: tickFormat}): null;
@@ -312,8 +329,9 @@ const DrawElements = (dv, dataset) => {
                             //draw what lines drawn
                             tempCtx.stroke();
     
-                            //close whatever path drawn
-                            tempCtx.closePath();
+                            positionType = "start";
+                            valueIsNull = true;
+                            continue;
                         }
                     }
     
@@ -365,7 +383,7 @@ const DrawElements = (dv, dataset) => {
 
                 const percent = Calc.toFixedIfNeeded(valDecimal*100);
 
-                DrawPieSlice(dv, tempCtx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, color);
+                DrawPieSlice(dv, tempCtx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, color);
 
                 startDegrees = endDegrees;
             }

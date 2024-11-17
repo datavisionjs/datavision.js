@@ -85,12 +85,10 @@ const DrawLines = (dv, ctx, dataset, type, size, position, positionIsOut) => {
 
         if(mode === "scatter" && !positionIsOut){
             ctx.stroke();
-            ctx.closePath();
 
             ctx.beginPath();
             ctx.arc(position.x, position.y, (size/2) || 1, 0, Math.PI * 2)
             ctx.stroke();
-            ctx.closePath();
 
             ctx.beginPath();
             ctx.moveTo(position.x, position.y);
@@ -101,7 +99,6 @@ const DrawLines = (dv, ctx, dataset, type, size, position, positionIsOut) => {
     
     if(type === "end"){
         ctx.stroke();
-        ctx.closePath();
     }
     
 }

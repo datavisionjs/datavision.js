@@ -167,54 +167,18 @@ const DrawToolTip = (dv, ctx, pos, data) => {
     size.text? ctx.fillText(size.text, (tooltipX+halfFontSize), tooltipY+(fontSize*3)+(halfFontSize)): null;
 } */
 
-const ShowToolTipNot = (dv, ctx, pos, data) => {
-
-    //draw hover
-    DrawHover(dv, ctx, data);
-
-    const design = dv.getDesign();
-    const font = design.font;
-
-    const fontSize = font.size;
-    const halfFontSize = fontSize/2;
-
-    const target = dv.getTarget();
-    const toolTipCard = target.getElementById("dv_tooltip");
-
-    if(!toolTipCard){
-        toolTipCard = document.createElement("div");
-        toolTipCard.setAttribute("id", "dv_tooltip");
-        toolTipCard.setAttribute("style", 
-        "position: absolute, padding: 10px, background-color: white; display: block, font-size: " + fontSize);
-    }
-
-    data.text.map((textObj) => {
-        const container = document.createElement("div");
-        const nameEl = document.createElement("span");
-        const valueEl = document.createElement("span");
-
-        nameEl.appendChild(textObj.name);
-        valueEl.appendChild(textObj.valaue);
-
-        //add to container
-        container.appendChild(nameEl);
-        container.appendChild(valueEl);
-
-        //add to toolTipCard 
-        toolTipCard.appendChild(container);
-    });
-
-    
-    
-}
-
 const ShowToolTip = (dv, ctx, pos, data) => {
+
     // Draw hover effect
     DrawHover(dv, ctx, data);
 
     const design = dv.getDesign();
     const fontSize = design.font.size;
     const target = dv.getTarget();
+
+    const layout = dv.getLayout();
+    const tooltip = layout.tooltip || {}
+    const formatter = tooltip.formatter;
     
     let toolTipCard = target.querySelector("#dv_tooltip");
 
@@ -228,6 +192,7 @@ const ShowToolTip = (dv, ctx, pos, data) => {
             background-color: white;
             display: block;
             font-size: ${fontSize}px;
+            white-space: nowrap;
             border: 1px solid #ccc;
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
             pointer-events: none;  /* Makes tooltip non-interactable */
@@ -240,25 +205,44 @@ const ShowToolTip = (dv, ctx, pos, data) => {
     toolTipCard.innerHTML = '';
 
     // Add content to tooltip
-    data.text.forEach((textObj) => {
-        const container = document.createElement("div");
-        const nameEl = document.createElement("span");
-        const valueEl = document.createElement("span");
+    if(formatter){
+        const dataText = data.text;
+        const first = dataText[0], second = dataText[1];
+        const tooltipDataset = {name: second.name};
 
-        nameEl.textContent = textObj.name; // Create text content
-        valueEl.textContent = textObj.value;
+        tooltipDataset.label = first.value;
+        tooltipDataset.value = second.value;
 
-        // Style name and value elements
-        nameEl.style.fontWeight = "bold";
-        valueEl.style.marginLeft = "5px";
+        //set x and y
+        tooltipDataset.x = first.value;
+        tooltipDataset.y = second.value;
+        if(first.hasOwnProperty("xIsLabel") && !first.xIsLabel){
+            tooltipDataset.y = first.value;
+            tooltipDataset.x = second.value;
+        }
 
-        // Add to container
-        container.appendChild(nameEl);
-        container.appendChild(valueEl);
+        //add in the custom data 
+        const custom = dataText.slice(2, dataText.length);
+        custom.length && (tooltipDataset.custom = custom);
 
-        // Add to tooltip
-        toolTipCard.appendChild(container);
-    });
+        toolTipCard.innerHTML = formatter(tooltipDataset) || "";
+    }else {
+        data.text.forEach((textObj) => {
+            const container = document.createElement("div");
+            const text = document.createElement("span");
+
+            text.textContent = Global.numberFormat(textObj.name, data.tickFormat) + ": " + Global.numberFormat(textObj.value, data.tickFormat); // Create text content
+
+            // Add to container
+            container.appendChild(text);
+
+            // Add to tooltip
+            toolTipCard.appendChild(container);
+        });
+    }
+
+    // Show the tooltip
+    toolTipCard.style.display = 'block';
 
     // Adjust tooltip position to ensure it's within the viewport
     const tooltipWidth = toolTipCard.offsetWidth;
@@ -281,9 +265,6 @@ const ShowToolTip = (dv, ctx, pos, data) => {
     // Apply final tooltip position
     toolTipCard.style.left = `${tooltipX}px`;
     toolTipCard.style.top = `${tooltipY}px`;
-
-    // Show the tooltip
-    toolTipCard.style.display = 'block';
 };
 
 

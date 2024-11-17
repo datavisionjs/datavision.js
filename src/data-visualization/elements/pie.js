@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, pieColor) => {
+const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, pieColor) => {
     
     const layout = dv.getLayout();
 
@@ -41,8 +41,32 @@ const DrawPieSlice = (dv, ctx, startDegrees, endDegrees, holeRadius, label, valu
     ctx.closePath();
 
     //set tooltip
-    dv.setToolTipData({type: "pie",  radius: radius, startDegrees: startDegrees, endDegrees: endDegrees, startAngle: startAngle, endAngle: endAngle, midPoint: midPoint, holeRadius: holeRadius, label: label, value: value, percent: percent, tickFormat: tickFormat});
+    const customData = dataset.custom;
+    const customDataPoints = dataset.customDataPoints;
+    const customDataValues = customDataPoints.get(label) || [];
 
+    dv.setToolTipData(
+        { 
+            type: "pie",
+            point: {
+                radius: radius, 
+                startDegrees: startDegrees, 
+                endDegrees: endDegrees,
+                startAngle: startAngle, 
+                endAngle: endAngle, 
+                midPoint: midPoint, 
+                holeRadius: holeRadius,
+            },
+            text: [
+                {name: "", value: label},
+                {name: "", value: value + " (" + percent + "%)"},
+                ...customDataValues.map((value, index) => {
+                    return {name: customData[index].name || "", value: value};
+                })
+            ],
+            tickFormat
+        }
+    );
 }
 
 export default DrawPieSlice;

@@ -183,13 +183,10 @@ function fillData(filledData, toFillData, axisValues){
     if(axisValues.length > 0){
         for(let i = 0; i < axisValues.length; i++){
             const value = axisValues[i];
-
             toFillData.push(value);
         }
     }else {
-        for(var i = 0; i < filledData.length; i++){
-            toFillData.push(i);
-        }
+        toFillData = Array.from({ length: filledData.length }, (_, index) => index);
     }
 }
 
@@ -231,7 +228,6 @@ function setAxisProperties(dv, axisObject, type){
         }
 
         ctx.font = font.weight + " " + font.size + "px " + font.family;
-
         let range = Calc.rangeFromData(values, targetAxis.range);
         const title = targetAxis.title || "";
        
@@ -340,6 +336,14 @@ export function setUpChart(dv){
     const pieData = [];
     const tableData = [];
 
+    //sort objects
+    const layoutSort = layout.sort || {};
+    const sortDatasetIndex = layoutSort.datasetIndex;
+    const sortTarget = layoutSort.target || "";
+    const customIndex = layoutSort.customIndex;
+
+    const dataToSort = new Map();
+
     const legendData = {
         data: new Map(),
         names: [],
@@ -405,15 +409,23 @@ export function setUpChart(dv){
             const axisValueBuckets = new Map();
             const customDataBuckets = new Map();
 
+            const customData = dataset.custom && Array.isArray(dataset.custom)? [...(dataset.custom || [])]: [];
+
+            //custom data is all numbers 
+            if(customData.length){
+                customData.map((innerObj) => {
+                    innerObj? innerObj.isAllNumber = Calc.isAllNumbers(innerObj.data): null;
+                });
+            }
+
 
             if(axisChartTypes.includes(dataType) && !(hasPieData || hasTableData)){
 
                 const yAxis = dataValueAxis === "y2"? axisYData.y2: axisYData.y1;
                 const xAxis = axisXData[dataLabelAxis];
 
-                const xData = [...dataset.x];
-                const yData = [...dataset.y];
-                const customData = dataset.custom? [...dataset.custom]: [];
+                const xData = [...(dataset.x || [])];
+                const yData = [...(dataset.y || [])];
             
                 //fill empty data
                 if(xData.length === 0){
@@ -435,13 +447,6 @@ export function setUpChart(dv){
             
                 const xDataIsAllNumber = Calc.isAllNumbers(xData);
                 const yDataIsAllNumber = Calc.isAllNumbers(yData);
-
-                //custom data is all numbers 
-                if(customData.length){
-                    customData.map((innerObj) => {
-                        innerObj.isAllNumber = Calc.isAllNumbers(innerObj.data);
-                    });
-                }
             
                 //get and set tick format
                 const layoutXAxis = getAxisFromLayout(layout, dataLabelAxis);
@@ -456,14 +461,14 @@ export function setUpChart(dv){
             
                 const operation = dataset.operation;
             
-                const loopEnd = xData.length > 0? xData.length: values.length;
+                const loopEnd = xData.length > 0? xData.length: yData.length;
             
                 let lastMaxValue = "", lastMaxLabel = "";
             
                 for(let j = 0; j < loopEnd; j++){
                     
                     const xValue = xData[j];
-                    const yValue = yDataIsAllNumber? Number(yData[j]): yData[j]? yData[j]: "";
+                    const yValue = yData[j];
                     
                     //set maxTextlength
                     const labelToMeasure = xDataIsAllNumber? xPrefix + Calc.toFixedIfNeeded(xValue, xDecimalPlaces) + xSuffix: xValue + "";
@@ -549,7 +554,7 @@ export function setUpChart(dv){
                             if(customData.length){
                                 barData.customDataPoints.set(newXValue,
                                     customData.map((innerArray) => {
-                                        return [innerArray.data? innerArray.data[j]: null];
+                                        return [(innerArray||{}).data? innerArray.data[j]: null];
                                     })
                                 )
                             }
@@ -586,12 +591,22 @@ export function setUpChart(dv){
                                 //loop through barData dataPoints bucket and execute the operation
                                 barData.dataPoints.forEach((bucket, key) => {
             
-                                    if(bucket.length > 0){
-                                        let newValue = newYDataIsAllNumber? Calc.computeOperation(operation, bucket): bucket[0];
+                                    if(bucket.length > 0){ 
+                                        let newValue = Calc.computeOperation(bucket, operation, newYDataIsAllNumber);
             
                                         const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
             
                                         barData.dataPoints.set(key, newValue);
+                                        //sort 
+                                        if(sortDatasetIndex || sortTarget){
+                                            if(sortTarget === "y"){
+                                                if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
+                                                    const lastSortValue = dataToSort.get(key);
+
+                                                    dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                }
+                                            }
+                                        }
             
                                         //add stack value to properly show axis range
                                         if(barDataset.mode === "stack"){
@@ -626,22 +641,40 @@ export function setUpChart(dv){
                                     if(customBuckets){
                                         customBuckets.map((bucket, index) => {
                                             if(bucket.length > 0){
-                                                const customObj = customData[index];
+                                                const customObj = customData[index] || {};
                                                 const isAllNumber = customObj.isAllNumber;
-                                                let newValue = isAllNumber? Calc.computeOperation(customObj.operation, bucket): bucket[0];
+                                                let newValue = Calc.computeOperation(bucket, customObj.operation, isAllNumber);
+                                                
+                                                //sort
+                                                if(sortDatasetIndex || sortTarget){
+                                                    if(sortTarget === "custom"){
+                                                        if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
+                                                            if(customIndex === index || (index === 0 && !customIndex)){
+                                                                const lastSortValue = dataToSort.get(key);
+                                                                dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                
                                                 customBuckets[index] = newValue;
                                             }
                                         });
                                     }
             
                                 });
+
                             }
                         }
                         
+                    
                         (xDataIsAllNumber && !yDataIsAllNumber && !isHorizontal)? 
                         xAxis.values.add(xValue) : null;
                         (yDataIsAllNumber && !xDataIsAllNumber && isHorizontal)?
                         yAxis.values.add(yValue) : null;
+
+                        
+
                     }else {
             
                         if(axisLabelBuckets.has(xValue) && yDataIsAllNumber){
@@ -713,8 +746,8 @@ export function setUpChart(dv){
 
                                     axisValueBuckets.set(yValue, [xValue]);
 
-                                     //set custom data
-                                     if(customData.length){
+                                    //set custom data
+                                    if(customData.length){
                                         customDataBuckets.set(yValue,
                                             customData.map((innerArray) => {
                                                 return [innerArray.data? innerArray.data[j]: null];
@@ -731,7 +764,17 @@ export function setUpChart(dv){
                             for (let [key, bucket] of bucketMap){
             
                                 if(bucket.length > 0){
-                                    const newValue = Calc.computeOperation(operation, bucket);
+                                    const newValue = Calc.computeOperation(bucket, operation, true);
+
+                                    //sort 
+                                    if(sortDatasetIndex || sortTarget){
+                                        if(sortTarget === "y"){
+                                            if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
+                                                const lastSortValue = dataToSort.get(key);
+                                                dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                            }
+                                        }
+                                    }
                                     
                                     if(!isNaN(newValue)){
             
@@ -766,9 +809,23 @@ export function setUpChart(dv){
                                 if(customBuckets){
                                     customBuckets.map((bucket, index) => {
                                         if(bucket.length > 0){
-                                            const customObj = customData[index];
+
+                                            const customObj = customData[index] || {};
                                             const isAllNumber = customObj.isAllNumber;
-                                            let newValue = isAllNumber? Calc.computeOperation(customObj.operation, bucket): bucket[0];
+                                            let newValue = Calc.computeOperation(bucket, customObj.operation, isAllNumber);
+
+                                            //sort
+                                            if(sortDatasetIndex || sortTarget){
+                                                if(sortTarget === "custom"){
+                                                    if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
+                                                        if(customIndex === index || (index === 0 && !customIndex)){
+                                                            const lastSortValue = dataToSort.get(key);
+                                                            dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                        }
+                                                    }
+                                                }
+                                            }
+
                                             customBuckets[index] = newValue;
                                         }
                                     });
@@ -818,10 +875,10 @@ export function setUpChart(dv){
                     barData.design = setUpAxisChartDesign(dataType, design, axisDataCount);
                     barData.design.color? barDatasetColors.push(Array.isArray(barData.design.color)? barData.design.color[0]: barData.design.color): null;
                     dataset.sort? barData.sort = dataset.sort: null;
-                    barDataset.dataset.push(barData);
-
                     //add custom data 
-                    barDataset.custom = customData;
+                    barData.custom = customData;
+
+                    barDataset.dataset.push(barData);
             
                     //set legend colors
                     //legendData.colors.push(barData.design.color);
@@ -864,8 +921,8 @@ export function setUpChart(dv){
             
             }else if(dataType === "pie" && !(hasAxisData || hasTableData)){
 
-                const labels = [...dataset.labels];
-                const values = [...dataset.values];
+                const labels = [...(dataset.labels || [])];
+                const values = [...(dataset.values || [])];
 
                 //fill empty data
                 if(labels.length === 0){
@@ -900,9 +957,29 @@ export function setUpChart(dv){
                         const index = pieLabels.indexOf(label);
                         if(index > -1){
                             valueBuckets[index].push(value);
+                            
+                            //push custom data
+                            const customBuckets = customDataBuckets.get(label);
+                            if(customBuckets){
+                                customBuckets.map((innerBucket, index) => {
+                                    const customObj = customData[index] || {};
+                                    const cData = customObj.data || [];
+
+                                    innerBucket.push(cData[j]);
+                                });
+                            }
                         }else {
                             pieLabels.push(label);
                             valueBuckets.push([value]);
+
+                            //push custom data
+                            if(customData.length){
+                                customDataBuckets.set(label,
+                                    customData.map((innerArray) => {
+                                        return [innerArray.data? innerArray.data[j]: null];
+                                    })
+                                )
+                            }
                         }
 
                         //set max width of axis labels and values for pie charts
@@ -926,8 +1003,14 @@ export function setUpChart(dv){
                 const pieValues = [];
                 valueBuckets.forEach((bucket, index) => {
                     const label = pieLabels[index];
-                    const value = Calc.computeOperation(operation, bucket);
-                    //
+                    const value = Calc.computeOperation(bucket, operation, true);
+
+                    //set sort values
+                    if(sortTarget === "values"){
+                        const lastSortValue = dataToSort.get(label);
+                        dataToSort.set(label, lastSortValue? (lastSortValue+value): value);
+                    }
+
                     const defaultColor = customColors.get(index).code;
                     const pieColor = colors? colors[index] || defaultColor: defaultColor;
 
@@ -937,16 +1020,42 @@ export function setUpChart(dv){
 
                     //set legend data
                     legendData.data.set(label, pieColor);
+
+                    //custom data 
+                    const customBuckets = customDataBuckets.get(label);
+
+                    if(customBuckets){
+                        customBuckets.map((bucket, index) => {
+                            if(bucket.length > 0){
+                                const customObj = customData[index];
+                                const isAllNumber = customObj.isAllNumber;
+                                let newValue = Calc.computeOperation(bucket, customObj.operation, isAllNumber);
+                                
+                                 //set sort values
+                                if(sortTarget === "custom"){
+                                    if(customIndex === index || (index === 0 && !customIndex)){
+                                        const lastSortValue = dataToSort.get(label);
+                                        dataToSort.set(label, lastSortValue? (lastSortValue+newValue): newValue);
+                                    }
+                                }
+                                
+                                customBuckets[index] = newValue;
+                            }
+                        });
+                    }
+
                 });
 
                 newDataset.values = pieValues;
                 newDataset.type = "pie";
 
+                newDataset.customDataPoints = customDataBuckets;
+
                 newDataset.labelLayout = {tickFormat: getAxisFromLayout(layout, dataLabelAxis), isAllNumbers: labelIsAllNumbers};
                 newDataset.valueLayout = {tickFormat: getAxisFromLayout(layout, dataValueAxis), isAllNumbers: valueIsAllNumbers};
 
                 //sorting
-                Calc.pieCustomSort(dv, newDataset);
+                Calc.pieCustomSort(dv, newDataset, dataToSort);
                 legendData.names = {...newDataset.sortedLabels};
 
                 //add to pieData 
@@ -1050,8 +1159,8 @@ export function setUpChart(dv){
                                     const columnValues = [];
 
                                     for(const [key, bucket] of columnMap){
-                                    
-                                        const newValue = Calc.computeOperation(operation, bucket);
+                                        const newValue = Calc.computeOperation(bucket, operation, true);
+
 
                                         const valueWidth = ctx.measureText(newValue).width;
                                         if(valueWidth > maxValueWidth){
@@ -1063,8 +1172,8 @@ export function setUpChart(dv){
 
                                     newTableData.push(columnValues);
                                 }else {
-                                    
-                                    const newValue = Calc.computeOperation(operation, column);
+                                    const newValue = Calc.computeOperation(column, operation, true);
+
 
                                     const valueWidth = ctx.measureText(newValue).width;
                                     if(valueWidth > maxValueWidth){
@@ -1199,9 +1308,9 @@ export function setUpChart(dv){
     setAxisProperties(dv, axisXData);
 
     //sorting axisCharts
-    const sortAxisLabel = axisXIsKey? axisXData["x1"]: axisYData["y1"];
+    const axisLabels = axisXIsKey? axisXData["x1"]: axisYData["y1"];
 
-    hasAxisData? Calc.axisCustomSort(sortAxisLabel, axisData): null;
+    hasAxisData? Calc.axisCustomSort(dv, axisLabels, dataToSort): null;
 
     //set legend
     const isDisplayLegend = layout.legend? layout.legend.display: null;
