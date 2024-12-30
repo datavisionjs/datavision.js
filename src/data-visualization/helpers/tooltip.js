@@ -169,6 +169,8 @@ const DrawToolTip = (dv, ctx, pos, data) => {
 
 const ShowToolTip = (dv, ctx, pos, data) => {
 
+    const canvas = ctx.canvas;
+
     // Draw hover effect
     DrawHover(dv, ctx, data);
 
@@ -248,18 +250,26 @@ const ShowToolTip = (dv, ctx, pos, data) => {
     const tooltipWidth = toolTipCard.offsetWidth;
     const tooltipHeight = toolTipCard.offsetHeight;
 
+
+    //get canvasRect 
+    const canvasRect = canvas.getBoundingClientRect();
+
     // Set initial position based on `pos`
-    let tooltipX = pos.x + 10;  // Offset by 10 pixels
-    let tooltipY = pos.y + 10;  // Offset by 10 pixels
+    let posX = (canvas.offsetLeft+pos.x); 
+    let posY = (canvas.offsetTop+pos.y); 
+
+    let tooltipX = posX + 10;  // Offset by 10 pixels
+    let tooltipY = posY + 10;  // Offset by 10 pixels
 
     // Ensure the tooltip doesn't overflow horizontally
-    if (tooltipX + tooltipWidth > window.innerWidth) {
-        tooltipX = pos.x - tooltipWidth - 10;  // Flip to the left side
+
+    if ((tooltipX + tooltipWidth + canvasRect.x) > window.innerWidth) {
+        tooltipX = posX - tooltipWidth - 10;  // Flip to the left side
     }
 
     // Ensure the tooltip doesn't overflow vertically
-    if (tooltipY + tooltipHeight > window.innerHeight) {
-        tooltipY = pos.y - tooltipHeight - 10;  // Move upwards
+    if ((tooltipY + tooltipHeight + canvasRect.y) > window.innerHeight) {
+        tooltipY = posY - tooltipHeight - 10;  // Move upwards
     }
 
     // Apply final tooltip position

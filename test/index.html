@@ -8,10 +8,12 @@
 <body>
     
     <script src="../dist/datavision.min.js"></script>
+    <div style="width: 20px; height: 200px;"></div>
+    <div style="display: flex; ">
+        <div style="width: 300px; height: 200px;"></div>
+        <div id="my-chart" style="width:100%; max-width: 800px; height: 400px"></div>
+    </div>
 
-    <div id="my-chart" style="width:100%; max-width: 800px; height: 400px"></div>
-
-    <div id="my-chart2" style="width:100%;max-width:800px"></div>
 
     <script>
     
@@ -156,8 +158,8 @@
         const data = [
         
             {
-                x: xArray,
-                y: yArray,
+                x: dates,
+                y: values[1],
                 type: "line",
                 mode: "scatter",
                 operation: "sum"
@@ -181,7 +183,7 @@
                 size: 16,
             },
             legend: {
-                display: true
+                display: false
             },
             sort: {
                 order: "asc",
