@@ -207,25 +207,35 @@ function isDegreeBetween(degree, minDegree, maxDegree) {
 
 
 //crashing 
-export function crashWithRect(rect, target){
-    const targetX = target.width >= 0? target.x: (target.x+target.width);
-    const targetY = target.height >= 0? target.y: (target.y+target.height);
+export function crashWithRect(rect, target) {
+    const rectX = rect.width >= 0 ? rect.x : (rect.x + rect.width);
+    const rectY = rect.height >= 0 ? rect.y : (rect.y + rect.height);
+
+    const rectWidth = Math.abs(rect.width);
+    const rectHeight = Math.abs(rect.height);
+
+    const targetX = target.width >= 0 ? target.x : (target.x + target.width);
+    const targetY = target.height >= 0 ? target.y : (target.y + target.height);
 
     const targetWidth = Math.abs(target.width);
     const targetHeight = Math.abs(target.height);
 
-    // Check if the rectangles collide
-    if (rect.x < targetX + targetWidth &&
-        rect.x + rect.width > targetX &&
-        rect.y < targetY + targetHeight &&
-        rect.y + rect.height > targetY) {
-        // Collision detected
-        return true;
-    } else {
-        // No collision detected
+    // Return false if either rectangle has zero area
+    if (rectWidth === 0 || rectHeight === 0 || targetWidth === 0 || targetHeight === 0) {
         return false;
     }
+
+    // Check if the rectangles collide
+    if (rectX < targetX + targetWidth &&
+        rectX + rectWidth > targetX &&
+        rectY < targetY + targetHeight &&
+        rectY + rectHeight > targetY) {
+        return true;
+    }
+
+    return false;
 }
+
 
 export function crashWithCircle(rect, target){
     const radius = target.radius;

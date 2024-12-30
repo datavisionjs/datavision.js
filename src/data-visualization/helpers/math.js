@@ -64,16 +64,18 @@ export function toNumber(value) {
 
 export function getNumericArray(arr) {
     return arr
-        .filter(element => toNumber(element)) // Keep elements that can be converted to numbers
+        .filter(element => {
+            const num = toNumber(element)
+            return !isNaN(num);
+        }) // Keep elements that can be converted to numbers
         .map((element) => {
             return toNumber(element);
         }); // Convert numeric strings to numbers
 }
 
 
-//find minimum numbers 
 export function findMinAndMax(arr) {
-    if(Array.isArray(arr)){
+    if (Array.isArray(arr)) {
         // Use filter to remove non-numeric elements
         const numericArray = getNumericArray(arr);
     
@@ -82,27 +84,15 @@ export function findMinAndMax(arr) {
             return undefined; // or any other value that makes sense in your context
         }
 
-        let min = Math.min(...numericArray);
-        let max = Math.max(...numericArray);
-
-        /*
-        for (let i = 1; i < numericArray.length; i++) {
-            if (numericArray[i] < min) {
-                min = numericArray[i];
-            }
-            if (numericArray[i] > max) {
-                max = numericArray[i];
-            }
-        }*/
-    
         return {
-            min: min,
-            max: max
-        }
-    }else {
+            min: Math.min(...numericArray),
+            max: Math.max(...numericArray),
+        };
+    } else {
         return null;
     }
 }
+
 
 export function getClosestToZero(arr){
 
@@ -190,45 +180,48 @@ export function pieCustomSort(dv, dataset, dataToSort){
     }
 }
 
-export function customSort(values, order = "asc", index = 0){
+export function customSort(values, order, index = 0){
         
     
     let newValues = values.slice(); //a copy to avoid mutation
 
-    const isAscending = order === "asc";
+    if(order === "asc" || order === "desc"){
 
-    function sortNumerically(a, b) {
-        return toNumber(a) - toNumber(b);
-    }
+        const isAscending = order === "asc";
 
-    function sortLexicographically(a, b) {
-        const strA = (a != null) ? a.toString() : "";
-        const strB = (b != null) ? b.toString() : "";
-    
-        return strA.localeCompare(strB);
-    }
-
-    newValues.sort((a, b) => {
-        a = typeof(a) === "object"? a[index]: a;
-        b = typeof(b) === "object"? b[index]: b;
-
-        const isANumeric = !isNaN(a);
-        const isBNumeric = !isNaN(b);
-
-        if (isANumeric && isBNumeric) {
-            // Both are numbers
-            return isAscending? sortNumerically(a, b) : sortNumerically(b, a);
-        } else if (!isANumeric && !isBNumeric) {
-            // Both are non-numeric strings
-            return isAscending? sortLexicographically(a, b) : sortLexicographically(b, a);
-        } else if (isANumeric) {
-            // a is numeric, b is non-numeric
-            return isAscending? -1 : 1; // Numbers before strings for ascending, reverse for descending
-        } else {
-            // a is non-numeric, b is numeric
-            return isAscending? 1 : -1; // Strings after numbers for ascending, reverse for descending
+        function sortNumerically(a, b) {
+            return toNumber(a) - toNumber(b);
         }
-    });
+
+        function sortLexicographically(a, b) {
+            const strA = (a != null) ? a.toString() : "";
+            const strB = (b != null) ? b.toString() : "";
+        
+            return strA.localeCompare(strB);
+        }
+
+        newValues.sort((a, b) => {
+            a = typeof(a) === "object"? a[index]: a;
+            b = typeof(b) === "object"? b[index]: b;
+
+            const isANumeric = !isNaN(a);
+            const isBNumeric = !isNaN(b);
+
+            if (isANumeric && isBNumeric) {
+                // Both are numbers
+                return isAscending? sortNumerically(a, b) : sortNumerically(b, a);
+            } else if (!isANumeric && !isBNumeric) {
+                // Both are non-numeric strings
+                return isAscending? sortLexicographically(a, b) : sortLexicographically(b, a);
+            } else if (isANumeric) {
+                // a is numeric, b is non-numeric
+                return isAscending? -1 : 1; // Numbers before strings for ascending, reverse for descending
+            } else {
+                // a is non-numeric, b is numeric
+                return isAscending? 1 : -1; // Strings after numbers for ascending, reverse for descending
+            }
+        });
+    }
 
     return newValues;
     
@@ -307,6 +300,9 @@ export function computeOperation(arr, operation, isNumeric){
             return Math.max(...getNumericArray(newArray));
         }else if(operation === "count"){
             return newArray.length;
+        }else if(operation === "distinct_count"){
+            const set = new Set(newArray);
+            return set.size;
         }else {
             return sum(newArray); //sum is the default
         }
@@ -315,6 +311,9 @@ export function computeOperation(arr, operation, isNumeric){
             return newArray[newArray.length-1];
         }else if(operation === "count"){
             return newArray.length;
+        }else if(operation === "distinct_count"){
+            const set = new Set(newArray);
+            return set.size;
         }else {
             return newArray[0];
         }
@@ -478,12 +477,17 @@ export function getTicksInterval(intervalSize, isReverse){
 }
 
 //get the minimun and max from a data of all numbers and return as range
-export function rangeFromData(dataArray, preferredRange = [null, null]) {
+export function rangeFromData(dataArray, preferredRange = [null, null], altValue) {
     if (!dataArray.length || !isAllNumbers(dataArray)) {
         return [null, null]; // Return early if array is empty or invalid
     }
 
-    const { min: actualMin, max: actualMax } = findMinAndMax(dataArray);
+    let { min: actualMin, max: actualMax } = findMinAndMax(dataArray);
+
+    if(altValue !== null && altValue !== '' && !isNaN(altValue)){
+        actualMin = altValue < actualMin? altValue: actualMin;
+        actualMax = altValue > actualMax? altValue: actualMax;
+    }
 
     const [preferredMin, preferredMax] = preferredRange;
 

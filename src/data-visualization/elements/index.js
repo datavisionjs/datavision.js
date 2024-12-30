@@ -198,7 +198,8 @@ const DrawElements = (dv, dataset) => {
                 let labels = xAxisIsLabel? xAxis.values: yAxis.values;
 
                 const labelIsAllNumbers = xAxisIsLabel? xAxisIsAllNumbers: yAxisIsAllNumbers;
-    
+                
+                const isSingleLinePoint = (type === "line" && dataPoints.size === 1);
                 //const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
                 if(labels){
                     
@@ -241,7 +242,7 @@ const DrawElements = (dv, dataset) => {
     
                             let positionIsOut = false;
     
-                            if(type === "line"){
+                            if(type === "line" && !isSingleLinePoint){
 
                               
                                 if(i === loopStart){
@@ -276,7 +277,7 @@ const DrawElements = (dv, dataset) => {
                                 }
                                 
     
-                            }else if(type === "scatter" || type === "bubble"){
+                            }else if(type === "scatter" || type === "bubble" || isSingleLinePoint){
                                 
                                 positionIsOut = Calc.posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName) || Calc.posIsOutOfBound(dv, position);
                                 
@@ -304,7 +305,6 @@ const DrawElements = (dv, dataset) => {
                             const tickFormat = {label: xAxis.tickFormat, value: yAxis.tickFormat};
                             
                             if(!positionIsOut){
-                                console.log("dsetN: ", datasetName);
                                 dv.setToolTipData({
                                     type: type,
                                     point: { radius: size, midPoint: position },

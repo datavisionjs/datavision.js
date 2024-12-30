@@ -504,6 +504,7 @@ const DrawAxis = (dv) => {
     //ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), ((canvasHeight-graphY)+halfFontSize));
     //ctx.clearRect(position.x, (graphY-fontSize), (position.width+fontSize), canvasHeight);
     dv.clearCanvas(position.x, (graphY-fontSize), (position.width+fontSize), canvasHeight);
+    dv.clearCanvas((position.width), (graphY+graphHeight), (canvasWidth-position.width), (canvasHeight-(graphY+graphHeight)));
     
     //set scroll content width and height
     Scroll.setContentSize(dv);
@@ -535,8 +536,11 @@ const DrawAxis = (dv) => {
 
     if(scrollData.isScrollY){
         tempCtx.clearRect(0, (graphY-fontSize), graphX, fontSize);
-        tempCtx.clearRect(0, (graphY+graphHeight), graphX, fontSize)
+        tempCtx.clearRect(0, (graphY+graphHeight), graphX, fontSize);
+
     }
+
+    
 
     ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 }

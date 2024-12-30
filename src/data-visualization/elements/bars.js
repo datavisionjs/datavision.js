@@ -23,7 +23,7 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
 
     //stores the position and dimensions of the graph area
     const graphPosition = layout.graphPosition;
-    const graphX = graphPosition.x, graphY = graphPosition.y;
+    const graphX = (graphPosition.x), graphY = graphPosition.y;
     const graphHeight = graphPosition.height, graphWidth = graphPosition.width;
 
     let range = isHorizontal? xAxis.range: yAxis.range;

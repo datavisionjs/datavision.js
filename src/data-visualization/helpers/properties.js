@@ -138,16 +138,20 @@ function getTickData(range){
     
     if(!isNaN(rangeStart) && !isNaN(rangeEnd)){
         let intervalSize = 0;
+
+        if(rangeStart === rangeEnd){
+            rangeStart = rangeStart-1;
+            rangeEnd = rangeEnd+1;
+        }
         
         if(rangeStart <= 0 && rangeEnd >= 0){
-            intervalSize = (Math.max(Math.abs(min) + Math.abs(max)) / Math.max(desiredTickCount - 1, 1));
+            intervalSize = (Math.max(Math.abs(rangeStart) + Math.abs(rangeEnd)) / Math.max(desiredTickCount - 1, 1));
         }else {
 
             if(rangeStart <= 0){
-                intervalSize = Math.abs(rangeStart / Math.max(desiredTickCount - 1, 1));
-            
+                //intervalSize = Math.abs(rangeStart / Math.max(desiredTickCount - 1, 1));
+                intervalSize = (rangeEnd-rangeStart) / Math.max(desiredTickCount - 1, 1);
             }else if(rangeStart > 0){
-
                 // Calculate the interval size based on the desired number of ticks
                 intervalSize = (rangeEnd-rangeStart) / Math.max(desiredTickCount - 1, 1);
             }
@@ -200,7 +204,7 @@ function getAxisFromLayout(layout, key){
 }
 
 
-function setAxisProperties(dv, axisObject, type){
+function setAxisProperties(dv, hasBarDataset, axisObject, type){
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
 
@@ -228,7 +232,7 @@ function setAxisProperties(dv, axisObject, type){
         }
 
         ctx.font = font.weight + " " + font.size + "px " + font.family;
-        let range = Calc.rangeFromData(values, targetAxis.range);
+        let range = Calc.rangeFromData(values, targetAxis.range, (hasBarDataset? 0:null));
         const title = targetAxis.title || "";
        
         const tick = getTickData(range);
@@ -369,7 +373,10 @@ export function setUpChart(dv){
 
 
     const axisChartTypes = Global.getAxisChartTypes();
+
     let hasAxisData = false;
+    let hasBarDataset = false;
+
     let hasPieData = false;
     let hasTableData = false;
     let axisDirection = null;
@@ -377,7 +384,7 @@ export function setUpChart(dv){
 
     //get range from data 
     if(data){
-        
+    
         //loop through data and set xRange and yRange
         const tempData = data;
         const tempDataLength = tempData.length;
@@ -388,7 +395,6 @@ export function setUpChart(dv){
 
         const barDatasetNames = [];
         const barDatasetColors = [];
-        let hasBarDataset = false;
 
         for(let i = 0; i < tempDataLength; i++){
             const dataset = {...tempData[i]};
@@ -461,7 +467,8 @@ export function setUpChart(dv){
             
                 const operation = dataset.operation;
             
-                const loopEnd = xData.length > 0? xData.length: yData.length;
+                //const loopEnd = xData.length > 0? xData.length: yData.length;
+                const loopEnd = Math.min(xData.length, yData.length);
             
                 let lastMaxValue = "", lastMaxLabel = "";
             
@@ -586,7 +593,8 @@ export function setUpChart(dv){
                                 }
                             }
                             
-                            if(yDataIsAllNumber || xDataIsAllNumber){
+                            //if(yDataIsAllNumber || xDataIsAllNumber){
+                            if(barData.dataPoints.size > 0){
             
                                 //loop through barData dataPoints bucket and execute the operation
                                 barData.dataPoints.forEach((bucket, key) => {
@@ -667,16 +675,25 @@ export function setUpChart(dv){
                             }
                         }
                         
-                    
+                        /*
                         (xDataIsAllNumber && !yDataIsAllNumber && !isHorizontal)? 
                         xAxis.values.add(xValue) : null;
                         (yDataIsAllNumber && !xDataIsAllNumber && isHorizontal)?
-                        yAxis.values.add(yValue) : null;
+                        yAxis.values.add(yValue) : null;*/
+
+                        if(isHorizontal){
+                            (!yDataIsAllNumber || xDataIsAllNumber)? 
+                            yAxis.values.add(yValue) : null;
+                        }else {
+                            (!xDataIsAllNumber || yDataIsAllNumber)? 
+                            xAxis.values.add(xValue) : null;
+                        }
 
                         
 
                     }else {
-            
+                        
+                        /*
                         if(axisLabelBuckets.has(xValue) && yDataIsAllNumber){
                             const bucket = axisLabelBuckets.get(xValue);
                             const customBuckets = customDataBuckets.get(xValue);
@@ -756,15 +773,45 @@ export function setUpChart(dv){
                                     }
                                 }
                             }
+                        }*/
+
+                        if(axisLabelBuckets.has(xValue)){
+                            const bucket = axisLabelBuckets.get(xValue);
+                            const customBuckets = customDataBuckets.get(xValue);
+
+                            
+                            bucket.push(yValue);
+
+                            //push custom data
+                            if(customBuckets){
+                                customBuckets.map((innerBucket, index) => {
+                                    const customObj = customData[index] || {};
+                                    const cData = customObj.data || [];
+
+                                    innerBucket.push(cData[j]);
+                                });
+                            }
+                        }else {
+                            axisLabelBuckets.set(xValue, [yValue]);
+
+                            //set custom data
+                            if(customData.length){
+                                customDataBuckets.set(xValue,
+                                    customData.map((innerArray) => {
+                                        return [innerArray.data? innerArray.data[j]: null];
+                                    })
+                                )
+                            }
                         }
             
                         if(j === (loopEnd-1)){ //at the end of the j loop 
-                            const bucketMap = yDataIsAllNumber? axisLabelBuckets: axisValueBuckets;
+                            //const bucketMap = yDataIsAllNumber? axisLabelBuckets: axisValueBuckets;
+                            const bucketMap = axisLabelBuckets;
                             
                             for (let [key, bucket] of bucketMap){
             
                                 if(bucket.length > 0){
-                                    const newValue = Calc.computeOperation(bucket, operation, true);
+                                    const newValue = Calc.computeOperation(bucket, operation, yDataIsAllNumber);
 
                                     //sort 
                                     if(sortDatasetIndex || sortTarget){
@@ -775,9 +822,19 @@ export function setUpChart(dv){
                                             }
                                         }
                                     }
+
+                                    valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
+            
+                                    dataPoints.set(key, newValue);
+            
+                                    yAxis.values.add(newValue);
+            
+                                    if(valueWidth > maxValueWidth){
+                                        maxValueWidth = valueWidth;
+                                    }
                                     
                                     if(!isNaN(newValue)){
-            
+                                        /*
                                         if(yDataIsAllNumber){
                                             valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
             
@@ -800,6 +857,7 @@ export function setUpChart(dv){
                                                 }
                                             }
                                         }
+                                        */
                                     }
                                 }
 
@@ -833,6 +891,9 @@ export function setUpChart(dv){
                             }
             
                         }
+
+                        (!xDataIsAllNumber || yDataIsAllNumber)? 
+                        xAxis.values.add(xValue) : null;
             
                     }
             
@@ -845,11 +906,6 @@ export function setUpChart(dv){
                         maxValueWidth = valueWidth
                         lastMaxValue = yValue;
                     }
-                    
-                    (!xDataIsAllNumber || yDataIsAllNumber)? 
-                    xAxis.values.add(xValue) : null;
-                    (!yDataIsAllNumber || xDataIsAllNumber)? 
-                    yAxis.values.add(yValue) : null;
             
                 }
                 
@@ -1085,7 +1141,7 @@ export function setUpChart(dv){
                 if(dataOperation){
                     let hasCategoricalData = false;
 
-                    const isNumbericColumn = [];
+                    const isNumericColumn = [];
 
                     const catColumns = [];
 
@@ -1101,7 +1157,7 @@ export function setUpChart(dv){
                                 hasCategoricalData = true;
                            }
 
-                           isNumbericColumn.push(columnIsAllNumbers);
+                           isNumericColumn.push(columnIsAllNumbers);
                        }
                    }
 
@@ -1118,7 +1174,7 @@ export function setUpChart(dv){
                    //set column values in the bucket
                    for(let index = 0; index < columnCount; index++){
 
-                        const columnIsNumber = isNumbericColumn[index];
+                        const columnIsNumber = isNumericColumn[index];
 
                         //process header values 
                         const headerValue = headerValues[index];
@@ -1304,8 +1360,8 @@ export function setUpChart(dv){
     const newData = [...axisData, ...pieData, ...tableData];
 
     //set axis chart properties
-    setAxisProperties(dv, axisYData, "values");
-    setAxisProperties(dv, axisXData);
+    setAxisProperties(dv, hasBarDataset, axisYData, "values");
+    setAxisProperties(dv, hasBarDataset, axisXData);
 
     //sorting axisCharts
     const axisLabels = axisXIsKey? axisXData["x1"]: axisYData["y1"];
