@@ -135,6 +135,7 @@ export function axisCustomSort(dv, axisLabels, dataToSort){
     const sort = layout.sort || {};
     const order = sort.order;
     const target = sort.target;
+    const customOrder = sort.customOrder;
 
     if(axisLabels.values.length){
 
@@ -143,14 +144,14 @@ export function axisCustomSort(dv, axisLabels, dataToSort){
             const combined = axisLabels.values.map((label) => [label, dataToSort.has(label)? dataToSort.get(label): null]);
 
             // Step 2: Sort the combined array based on the number
-            const combinedSorted = customSort(combined, order, 1);
+            const combinedSorted = customSort(combined, order, 1, customOrder);
 
             // Step 3: Extract the sorted numbers and strings if needed
             const sortedAxisValues = combinedSorted.map(item => item[0]);
 
             axisLabels.values = sortedAxisValues;
         }else {
-            axisLabels.values = customSort(axisLabels.values, order);
+            axisLabels.values = customSort(axisLabels.values, order, 0, customOrder);
         }
     }
 
@@ -162,6 +163,7 @@ export function pieCustomSort(dv, dataset, dataToSort){
     const sort = layout.sort || {};
     const order = sort.order;
     const target = sort.target;
+    const customOrder = sort.customOrder;
 
     const labels = dataset.labels;
 
@@ -169,20 +171,19 @@ export function pieCustomSort(dv, dataset, dataToSort){
         let combined = labels.map((label) => [label, dataToSort.has(label)? dataToSort.get(label): null]);
 
         // Step 2: Sort the combined array based on the number
-        combined = customSort(combined, order, 1);
+        combined = customSort(combined, order, 1, customOrder);
 
         // Step 3: Extract the sorted numbers and strings if needed
         const sortedLabels = combined.map(item => item[0]);
 
         dataset.sortedLabels = sortedLabels;
     }else {
-        dataset.sortedLabels = customSort(labels, order);
+        dataset.sortedLabels = customSort(labels, order, 0, customOrder);
     }
 }
 
-export function customSort(values, order, index = 0){
+export function customSort(values, order, index = 0, customOrder){
         
-    
     let newValues = values.slice(); //a copy to avoid mutation
 
     if(order === "asc" || order === "desc"){
@@ -220,6 +221,20 @@ export function customSort(values, order, index = 0){
                 // a is non-numeric, b is numeric
                 return isAscending? 1 : -1; // Strings after numbers for ascending, reverse for descending
             }
+        });
+    }else if((order === "custom" || order === "custom-desc") && customOrder){
+        const isAscending = order === "custom";
+        const orderMap = new Map(customOrder.map((item, index) => [item, index]));
+
+        // Sort based on the custom order
+        newValues.sort((a, b) => {
+            const valA = typeof a === "object" ? a[index] : a;
+            const valB = typeof b === "object" ? b[index] : b;
+
+            const indexA = orderMap.get(valA) ?? Infinity; // Use Infinity for values not in customOrder
+            const indexB = orderMap.get(valB) ?? Infinity;
+
+            return isAscending ? indexA - indexB: indexB - indexA;
         });
     }
 

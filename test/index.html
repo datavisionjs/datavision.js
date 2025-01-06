@@ -144,11 +144,11 @@
      ];
 
      const dates = [
-        "Jan 2015",
-        "Dec 2014",
-        "Mar 2016",
-        "Feb 2015",
-        "Nov 2014"
+        "January",
+        "December",
+        "March",
+        "February",
+        "November"
     ];
 
         //const xArray = [50,60,70,80,90,100,110,120,130,140,150];
@@ -186,9 +186,10 @@
                 display: false
             },
             sort: {
-                order: "asc",
+                order: "custom-desc",
                 target: "x",
-                datasetIndex: 0
+                datasetIndex: 0,
+                customOrder: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
             }
            
         }
