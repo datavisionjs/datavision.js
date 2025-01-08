@@ -12,9 +12,7 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
     const radius = Calc.getArcRadius(graphWidth, graphHeight);
     const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+radius);
 
-    const startPoint = Calc.calculatePointOnCircle(startDegrees, radius, {x: arcCenterX, y: arcCenterY});
     const midPoint = {x: arcCenterX, y: arcCenterY};
-    const endPoint = Calc.calculatePointOnCircle(endDegrees, radius, {x: arcCenterX, y: arcCenterY});
 
     const degreesToRadians = Math.PI / 180;
 
@@ -30,15 +28,37 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
     ctx.lineJoin = "round";
     
     //draw arc line
-    ctx.arc(midPoint.x, midPoint.y, radius, startAngle, endAngle);
-
-    ctx.moveTo(startPoint.x, startPoint.y);
-    ctx.lineTo((midPoint.x), (midPoint.y));
-    ctx.lineTo(endPoint.x, endPoint.y);
+    ctx.moveTo(midPoint.x, midPoint.y); // Move to center
+    ctx.arc(midPoint.x, midPoint.y, radius, startAngle, endAngle); // Draw arc
+    ctx.lineTo(midPoint.x, midPoint.y); // Close the slice
 
     ctx.stroke();
     ctx.fill();
     ctx.closePath();
+
+    // Calculate midpoint angle
+    const midAngle = (startAngle + endAngle) / 2;
+
+    // Position for the percentage text
+    const textRadius = radius * 0.8; // Slightly inside the arc
+    const textX = arcCenterX + textRadius * Math.cos(midAngle);
+    const textY = arcCenterY + textRadius * Math.sin(midAngle);
+
+    // Calculate arc length
+    const arcLength = radius * (endAngle - startAngle);
+
+    // Measure the percentage text width
+    ctx.font = "14px Arial"; // Ensure font matches before measuring
+    const percentText = `${percent}%`;
+    const textWidth = ctx.measureText(percentText).width;
+
+    if(textWidth <= arcLength){
+        // Draw the percentage text
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center"; // Center the text horizontally
+        ctx.textBaseline = "middle"; // Center the text vertically
+        ctx.fillText(percentText, textX, textY);
+    }
 
     //set tooltip
     const customData = dataset.custom;

@@ -139,7 +139,7 @@
 
       var values = [
       ['M', 'F', 'M', 'F', 'F'],
-      [130, 200, 700, 200, 120],
+      [130, 200, 2500, 200, 120],
       ['M', 'M', 'S', 'S', 'M'],
      ];
 
@@ -158,9 +158,10 @@
         const data = [
         
             {
-                x: dates,
-                y: values[1],
-                type: "line",
+                labels: dates,
+                values: values[1],
+                type: "pie",
+                hole: 0.4,
                 mode: "scatter",
                 operation: "sum"
             }
