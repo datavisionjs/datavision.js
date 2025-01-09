@@ -997,22 +997,21 @@ export function setUpChart(dv){
                 const operation = dataset.operation;
                 const design = dataset.design || {};
                 const colors = Array.isArray(design.colors)? design.colors: null;
-                
-                const pieLabels = [];
-                const valueBuckets = [];
+            
+                const valueBuckets = new Map();
 
-                for(let j = 0; j < values.length; j++){
-                    const label = labelIsAllNumbers? labels[j]: labels[j];
-                    const value = valueIsAllNumbers? values[j]: values[j];
+                for(let j = 0; j < labels.length; j++){
+                    const label = labels[j];
+                    const value = values[j];
                     
-                    if(value >= 0 && label){
+                    if(label && value){
                         //set maxTextlength
                         const labelWidth = Global.measureLegendText(dv, label).width;
 
                         //set new pie dataset labels and values 
-                        const index = pieLabels.indexOf(label);
-                        if(index > -1){
-                            valueBuckets[index].push(value);
+                        const isLabel = valueBuckets.has(label);
+                        if(isLabel){
+                            valueBuckets.get(label).push(value);
                             
                             //push custom data
                             const customBuckets = customDataBuckets.get(label);
@@ -1025,8 +1024,7 @@ export function setUpChart(dv){
                                 });
                             }
                         }else {
-                            pieLabels.push(label);
-                            valueBuckets.push([value]);
+                            valueBuckets.set(label, [value]);
 
                             //push custom data
                             if(customData.length){
@@ -1048,7 +1046,7 @@ export function setUpChart(dv){
                  const newDataset = {
                     ...dataset,
                     data: new Map(),
-                    labels: pieLabels,
+                    labels: [],
                     values: [],
                     colors: [],
                     sumOfValues: 0
@@ -1056,9 +1054,10 @@ export function setUpChart(dv){
 
 
                 //calculate operations and set values;
+                const pieLabels = [];
                 const pieValues = [];
-                valueBuckets.forEach((bucket, index) => {
-                    const label = pieLabels[index];
+                let index = 0;
+                valueBuckets.forEach((bucket, label) => {
                     const value = Calc.computeOperation(bucket, operation, true);
 
                     //set sort values
@@ -1071,6 +1070,7 @@ export function setUpChart(dv){
                     const pieColor = colors? colors[index] || defaultColor: defaultColor;
 
                     newDataset.data.set(label, {value: value, color: pieColor});
+                    pieLabels.push(label);
                     pieValues.push(value);
                     newDataset.sumOfValues = (newDataset.sumOfValues + value);
 
@@ -1100,8 +1100,11 @@ export function setUpChart(dv){
                         });
                     }
 
+                    index++;
+
                 });
 
+                newDataset.labels = pieLabels;
                 newDataset.values = pieValues;
                 newDataset.type = "pie";
 

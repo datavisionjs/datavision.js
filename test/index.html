@@ -57,8 +57,8 @@
 
         //const yArray = [0.055, 0.049, 1, 0.024, 0.015, 0.045, 0.015, 0.050];
 
-        const xArray = ["Italy","Spain","Liberia","US","Italy"];
-        const yArray = [10, 20];
+        const xArray = ["Italy","Spain","Spain","US","Italy", "Italy"];
+        const yArray = [10, 20, 40, 50, 70, 40];
 
         //const yArray = [55000.3, 49000, 44000, 24000, 15000];
         //const yArray2 = [54000.3, 47000, 48000, 24000, 15000];
@@ -158,8 +158,8 @@
         const data = [
         
             {
-                labels: dates,
-                values: values[1],
+                labels: xArray,
+                values: yArray,
                 type: "pie",
                 hole: 0.4,
                 mode: "scatter",

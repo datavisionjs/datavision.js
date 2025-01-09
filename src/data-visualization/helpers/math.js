@@ -430,7 +430,7 @@ export function toFixedIfNeeded(number, decimalPlaces) {
         return number; // Return original value if not a valid number
     }
 
-    const parsedNumber = parseFloat(number);
+    const parsedNumber = number;
     let result = parsedNumber;
 
     if (Number.isInteger(parsedNumber)) {
