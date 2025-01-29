@@ -205,7 +205,8 @@ export const setIndex = function (dv, top, left){
         let index = 0;
 
         if(layout.hasAxisData){
-            const newTop = (top-(wheelArea.scrollHeight-wheelArea.clientHeight));
+            //const newTop = (top-(wheelArea.scrollHeight-wheelArea.clientHeight));
+            const newTop = (top);
             const valuesCount = scrollData.valuesCount || 0;
 
             const contentHeight = (valuesCount*fontSize);
@@ -228,6 +229,8 @@ export const addBars = function (dv, position){
 
     const layout = dv.getLayout();
 
+    const targetSize = dv.getTargetSize();
+
     const canvasSize = dv.getCanvasSize();
     const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
 
@@ -236,7 +239,8 @@ export const addBars = function (dv, position){
     const graphWidth = graphPosition.width;
     const graphHeight = graphPosition.height;
 
-    const target = dv.getTarget();
+    const mainContainer = dv.getMainContainer();
+    
 
     const bar = dv.getScrollbar();
     const wheelArea = bar.wheelArea;
@@ -277,8 +281,8 @@ export const addBars = function (dv, position){
 
     if(hrBar){
         hrBar.style.position = "absolute";
-        hrBar.style.left = (graphX)+"px";
-        hrBar.style.top = ((canvasHeight)||0) + "px";
+        hrBar.style.left = (position.x+graphX)+"px";
+        hrBar.style.top = ((targetSize.height)||0) + "px";
         hrBar.style.width = ((position.width-graphX)||1) +"px";
         hrBar.style.border = "0px";
         hrBar.style.margin = "0px";
@@ -291,7 +295,7 @@ export const addBars = function (dv, position){
         vrBar.style.position = "absolute";
         vrBar.style.left = (position.x+position.width+2||0) + "px";
         vrBar.style.top = ((position.y)||0) + "px";
-        vrBar.style.height = (position.height||1) +"px";
+        vrBar.style.height = (graphHeight||1) +"px";
         vrBar.style.border = "0px";
         vrBar.style.margin = "0px";
         vrBar.style.padding = "0px";
@@ -300,7 +304,7 @@ export const addBars = function (dv, position){
     }
     
 
-    if(target && ((contentWidth > graphWidth) || (contentHeight > graphHeight)) && wheelArea.parentElement !== target){
+    if(mainContainer && ((contentWidth > graphWidth) || (contentHeight > graphHeight)) && wheelArea.parentElement !== mainContainer){
 
         const scrollAndChart = function (){
             dv.clearToolTipData();
@@ -362,7 +366,7 @@ export const addBars = function (dv, position){
         //add content to scroll bars 
         wheelArea.appendChild(content);
 
-        target.appendChild(wheelArea);
+        mainContainer.appendChild(wheelArea);
 
         //add horizontal scrollbar
         if(contentWidth > graphWidth){
@@ -370,10 +374,7 @@ export const addBars = function (dv, position){
             //set width 
             newContent.style.width = contentWidth + "px";
             hrBar.appendChild(newContent);
-            target.appendChild(hrBar);
-
-            const barWidth = hrBar.offsetHeight - hrBar.clientHeight;
-            hrBar.style.height = barWidth +"px";
+            mainContainer.appendChild(hrBar);
         }
         
         //add vertical scrollbar
@@ -382,10 +383,7 @@ export const addBars = function (dv, position){
             //set height 
             newContent.style.height = contentHeight + "px";
             vrBar.appendChild(newContent);
-            target.appendChild(vrBar);
-
-            const barWidth = vrBar.offsetWidth - vrBar.clientWidth;
-            vrBar.style.width = barWidth +"px";
+            mainContainer.appendChild(vrBar);
         }
 
         //set axis scroll after adding bar

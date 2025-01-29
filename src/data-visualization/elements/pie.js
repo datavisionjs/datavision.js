@@ -1,16 +1,17 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, pieColor) => {
+const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, pieColor, font, tickFormat) => {
     
     const layout = dv.getLayout();
+    
 
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
-    const radius = Calc.getArcRadius(graphWidth, graphHeight);
-    const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+radius);
+    const radius = Calc.getArcRadius((graphWidth*0.9), (graphHeight*0.9));
+    const arcCenterX = ((graphWidth/2)), arcCenterY = (graphHeight/2);
 
     const midPoint = {x: arcCenterX, y: arcCenterY};
 
@@ -48,13 +49,14 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
     const arcLength = radius * (endAngle - startAngle);
 
     // Measure the percentage text width
-    ctx.font = "14px Arial"; // Ensure font matches before measuring
+    ctx.font = `${font.weight} ${font.style} ${font.size}px ${font.family}`;
+
     const percentText = `${percent}%`;
     const textWidth = ctx.measureText(percentText).width;
 
     if(textWidth <= arcLength){
         // Draw the percentage text
-        ctx.fillStyle = "black";
+        ctx.fillStyle = font.color;
         ctx.textAlign = "center"; // Center the text horizontally
         ctx.textBaseline = "middle"; // Center the text vertically
         ctx.fillText(percentText, textX, textY);

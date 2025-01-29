@@ -61,9 +61,6 @@ const DrawTable = (dv) => {
 
     //set scroll content width and height
     Scroll.setContentSize(dv);
-
-    //add axis scroll bar
-    Scroll.addBars(dv, position);
 }
 
 export default DrawTable;

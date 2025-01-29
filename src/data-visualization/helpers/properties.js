@@ -4,8 +4,8 @@ import * as Global from './global.js';
 import customColors from '../helpers/colors.js';
 
 export function setGraphPosition(dv){
-    const canvasSize = dv.getCanvasSize();
-    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
+    const chartArea = Calc.projChartPosition(dv);
+    const canvasWidth = chartArea.width, canvasHeight = chartArea.height;
 
     //layout 
     const layout = dv.getLayout();
@@ -24,22 +24,46 @@ export function setGraphPosition(dv){
     const yLabelMaxWidth = canvasWidth * 0.30;
     const xLabelMaxWidth = canvasHeight * 0.30;
 
-    const getWidth = (hasTitle, textMaxWidth, maxLabelWidth) => {
+    /*
+    const getAxisWidth = (hasTitle, textMaxWidth, maxLabelWidth) => {
+        if(!layout.hasAxisData){
+            return 0;
+        }
+        
         const twiceFontSize = fontSize * 2;
         
-        let width = maxLabelWidth;
-        if(textMaxWidth < width){
+        let width = textMaxWidth;
+        if(textMaxWidth && (textMaxWidth < maxLabelWidth)){
             width = textMaxWidth + twiceFontSize;
+
+            hasTitle? width += twiceFontSize: null;
+        }else {
+            hasTitle? width = (maxLabelWidth+twiceFontSize): null;
+        }
+
+        return width;
+    }*/
+
+    const getAxisWidth = (hasTitle, textMaxWidth, maxLabelWidth) => {
+        if(!layout.hasAxisData){
+            return 0;
+        }
+        
+        const twiceFontSize = fontSize * 2;
+
+        let width = 0;
+        if(textMaxWidth){
+            if(textMaxWidth < maxLabelWidth){
+                width = textMaxWidth + twiceFontSize;
+            }else {
+                width = maxLabelWidth;
+            }
         }
 
         hasTitle? width += twiceFontSize: null;
+
         return width;
     }
-
-
-    //set title space from top;
-    const titleLines = dv.getLayout().title.titleLines;
-    let titleTop = titleLines.length > 0? (((titleLines.length+1)*titleFontSize)+fontSize): fontSize;
 
 
     const axisData = layout.axisData;
@@ -52,14 +76,14 @@ export function setGraphPosition(dv){
     const y1 = valueObject.y1;
     const y1MaxWidth = y1.maxWidth;
     const y1Title = layout.yAxis? layout.yAxis.title: null;
-    let yAxisLeft = getWidth(y1Title, y1MaxWidth, yLabelMaxWidth);
+    let yAxisLeft = getAxisWidth(y1Title, y1MaxWidth, yLabelMaxWidth);
     
 
     //y2
     const y2 = valueObject.y2;
     const y2MaxWidth = y2.maxWidth;
     const y2Title = layout.y2Axis? layout.y2Axis.title: null;
-    let yAxisRight = getWidth((y2Title && (y2MaxWidth>0)), y2MaxWidth, yLabelMaxWidth);
+    let yAxisRight = getAxisWidth((y2Title && (y2MaxWidth>0)), y2MaxWidth, yLabelMaxWidth);
 
 
 
@@ -82,7 +106,7 @@ export function setGraphPosition(dv){
     //x1
     //set x axis space from bottom
     let xAxisRight = 0;
-    const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace));
+    const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight));
 
     const x1 = labelObject.x1;
     const x1MaxWidth = x1.maxWidth;
@@ -92,15 +116,15 @@ export function setGraphPosition(dv){
     xAxisRight = x1.isAllNumbers? x1MaxWidth: 0;
 
     const x1Title = layout.xAxis? layout.xAxis.title: null;
-    let xAxisBottom = getWidth(x1Title, fontSize, xLabelMaxWidth);
+    let xAxisBottom = getAxisWidth(x1Title, (x1MaxWidth? fontSize: 0), xLabelMaxWidth);
     if(!x1.isAllNumbers && ((labelStep/fontSize) < 4)){
-        xAxisBottom = getWidth(x1Title, x1MaxWidth, xLabelMaxWidth);
+        xAxisBottom = getAxisWidth(x1Title, x1MaxWidth, xLabelMaxWidth);
     }
 
 
-    const graphX = (yAxisLeft), graphY = (titleTop);
-    const graphWidth = (canvasWidth-(yAxisLeft+yAxisRight+datasetSpace+xAxisRight));
-    const graphHeight = (canvasHeight-(titleTop+xAxisBottom));
+    const graphX = (yAxisLeft), graphY = fontSize;
+    const graphWidth = (canvasWidth-(yAxisLeft+yAxisRight+xAxisRight));
+    const graphHeight = (canvasHeight-(xAxisBottom+graphY));
 
     const graphPosition = {
         x: graphX,
@@ -114,7 +138,6 @@ export function setGraphPosition(dv){
             y2: yLabelMaxWidth,
         }
     }
-
 
     //set graphposition
     dv.layout = {
@@ -610,8 +633,8 @@ export function setUpChart(dv){
                                             if(sortTarget === "y"){
                                                 if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
                                                     const lastSortValue = dataToSort.get(key);
-
-                                                    dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                    const newSortValue = (newValue || 0);
+                                                    dataToSort.set(key, lastSortValue? (lastSortValue+newSortValue): newSortValue);
                                                 }
                                             }
                                         }
@@ -659,7 +682,8 @@ export function setUpChart(dv){
                                                         if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
                                                             if(customIndex === index || (index === 0 && !customIndex)){
                                                                 const lastSortValue = dataToSort.get(key);
-                                                                dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                                const newSortValue = (newValue || 0);
+                                                                dataToSort.set(key, lastSortValue? (lastSortValue+newSortValue): newSortValue);
                                                             }
                                                         }
                                                     }
@@ -818,7 +842,8 @@ export function setUpChart(dv){
                                         if(sortTarget === "y"){
                                             if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
                                                 const lastSortValue = dataToSort.get(key);
-                                                dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                const newSortValue = (newValue || 0);
+                                                dataToSort.set(key, lastSortValue? (lastSortValue+newSortValue): newSortValue);
                                             }
                                         }
                                     }
@@ -878,7 +903,8 @@ export function setUpChart(dv){
                                                     if(sortDatasetIndex === i || isNaN(sortDatasetIndex)){
                                                         if(customIndex === index || (index === 0 && !customIndex)){
                                                             const lastSortValue = dataToSort.get(key);
-                                                            dataToSort.set(key, lastSortValue? (lastSortValue+newValue): newValue);
+                                                            const newSortValue = (newValue || 0);
+                                                            dataToSort.set(key, lastSortValue? (lastSortValue+newSortValue): newSortValue);
                                                         }
                                                     }
                                                 }
@@ -1063,7 +1089,8 @@ export function setUpChart(dv){
                     //set sort values
                     if(sortTarget === "values"){
                         const lastSortValue = dataToSort.get(label);
-                        dataToSort.set(label, lastSortValue? (lastSortValue+value): value);
+                        const newSortValue = (value || 0);
+                        dataToSort.set(label, lastSortValue? (lastSortValue+newSortValue): newSortValue);
                     }
 
                     const defaultColor = customColors.get(index).code;
@@ -1091,7 +1118,8 @@ export function setUpChart(dv){
                                 if(sortTarget === "custom"){
                                     if(customIndex === index || (index === 0 && !customIndex)){
                                         const lastSortValue = dataToSort.get(label);
-                                        dataToSort.set(label, lastSortValue? (lastSortValue+newValue): newValue);
+                                        const newSortValue = (newValue || 0);
+                                        dataToSort.set(label, lastSortValue? (lastSortValue+newSortValue): newSortValue);
                                     }
                                 }
                                 
@@ -1375,9 +1403,9 @@ export function setUpChart(dv){
     const isDisplayLegend = layout.legend? layout.legend.display: null;
     const isLegendDisplayBool = typeof isDisplayLegend === "boolean";
     layout.legend = {
+        ...layout?.legend,
         ...legendData,
         isDefault: isLegendDisplayBool? isDisplayLegend: true,
-        display: isDisplayLegend,
         size: legendData.data.size,
     }
 

@@ -346,7 +346,6 @@ const DrawElements = (dv, dataset) => {
         tempCtx.clearRect((graphX+graphWidth), 0, canvasWidth, canvasHeight); //clear right
         tempCtx.clearRect(0, (graphY+graphHeight), canvasWidth, canvasHeight); //clear bottom
 
-
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 
     }else if(type === "pie"){
@@ -383,15 +382,14 @@ const DrawElements = (dv, dataset) => {
 
                 const percent = Calc.toFixedIfNeeded(valDecimal*100);
 
-                DrawPieSlice(dv, tempCtx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, tickFormat, color);
+                DrawPieSlice(dv, tempCtx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, color, font, tickFormat);
 
                 startDegrees = endDegrees;
             }
         }
 
         //draw hole in pie to create a daughnut chart
-        const newRadius = Calc.getArcRadius(graphWidth, graphHeight);
-        const arcCenterX = (graphX+(graphWidth/2)), arcCenterY = (graphY+newRadius);
+        const arcCenterX = (graphWidth/2), arcCenterY = (graphHeight/2);
 
         tempCtx.globalCompositeOperation = "destination-out";
         tempCtx.globalAlpha = 1;

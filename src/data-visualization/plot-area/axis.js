@@ -98,7 +98,7 @@ function drawLabels(dv, ctx, position){
             ctx.beginPath();
             ctx.fillStyle = font.color;
             
-            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-((fontSize))));
+            ctx.fillText(title, ((graphX+(graphWidth/2))), (canvasHeight-(fontSize*0.5)));
         }
     }
 }
@@ -228,15 +228,14 @@ function drawYAxis(dv, ctx, position){
             fontSize > step? iterator += Math.round(fontSize/step): null;
 
             const topIndex = Math.floor(scrollData.topIndex||0);
-
-            //axisX -= (fontSize*(scrollData.leftIndex-leftIndex));
             
             const maxStep = Math.ceil(scrollData.topIndex+(graphHeight/fontSize));
             const loopEnd = maxStep < values.length? maxStep: values.length;
             
             for(var i = topIndex; i < loopEnd; i += iterator){
     
-                axisY = ((graphY+graphHeight)-((step/2)+(step*(i-scrollData.topIndex))));
+                //axisY = ((graphY+graphHeight)-((step/2)+(step*(i-scrollData.topIndex))));
+                axisY = ((graphY)+((step/2)+(step*(i-scrollData.topIndex))));
     
                 let value = values[i]+"";
                
@@ -406,7 +405,7 @@ function drawXAxis(dv, ctx, position){
             for(var i = leftIndex; i < loopEnd; i += iterator){
 
                 axisX = (graphX+((step/2)+(step*(i-scrollData.leftIndex))));
-                
+
                 //set text width
                 //const textWidth = ctx.measureText(label).width;
 
@@ -427,7 +426,7 @@ function drawXAxis(dv, ctx, position){
                 const labelCharSize = (labelWidth/label.length);
 
                 if((step/fontSize) < 4){
-                    const textMax = ((maxLabelWidth-fontSize)/labelCharSize);
+                    const textMax = ((maxLabelWidth-(fontSize*1.5))/labelCharSize);
                     label = Global.shortenText(label, textMax);
 
                     angle = -90
@@ -511,7 +510,6 @@ const DrawAxis = (dv) => {
 
     //add axis scroll bar
     const scrollData = dv.getScrollData();
-    Scroll.addBars(dv, position);
 
     const tempCanvas = dv.createCanvas(null, canvasWidth, canvasHeight);
     const tempCtx = tempCanvas.getContext("2d");
@@ -539,8 +537,6 @@ const DrawAxis = (dv) => {
         tempCtx.clearRect(0, (graphY+graphHeight), graphX, fontSize);
 
     }
-
-    
 
     ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 }

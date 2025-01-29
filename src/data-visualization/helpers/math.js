@@ -775,7 +775,8 @@ export function getAxisValuePosition(dv, value, axisName){
             
             if(index >= 0){
                 const topIndex = (dv.getScrollData().topIndex);
-                value = ((graphY+graphHeight)-((step*(index-topIndex))+halfStep));
+                //value = ((graphY+graphHeight)-((step*(index-topIndex))+halfStep));
+                value = ((graphY)+((step*(index-topIndex))+halfStep));
             }
         }else {
             value = posOnGraphYAxis(dv, value, axisName);
@@ -837,26 +838,51 @@ export function roundToEven(number) {
 
     // Ensure the number itself is even
     if (rounded % 2 !== 0) {
-        rounded += 1;  // If it's odd, add 1 to make it even
+        number > 50? rounded -= 1: rounded += 1;  // If it's odd, add 1 to make it even
     }
 
     // Ensure half of the number is also even
     if ((rounded / 2) % 2 !== 0) {
-        rounded += 2;  // If half is odd, add 2 to make it divisible by 4
+        number > 50? rounded -= 2: rounded += 2;  // If half is odd, add 2 to make it divisible by 4
     }
 
     return rounded;
 }
 
+export function projChartPosition(dv) {
 
+    const layout = dv.getLayout();
 
-export function getChartArea(dv, layout) {
-    const target = dv.getTarget() || {};
+    const targetSize = dv.getTargetSize();
     const canvas = dv.getCanvas();
 
+    //styling 
+    const design = dv.getDesign();
+    const font = design.font;
+    const titleDesign = design.title || {};
+
+    const titleFont = titleDesign.font;
+    const titleFontSize = titleFont.size;
+
+    const legendFont = design.legendFont;
+
+    const fontSize = font.size;
+
+    //set title space from top;
+    const titleLines = layout.title.titleLines;
+    let titleTop = titleLines.length? (((titleLines.length+1)*titleFontSize)+fontSize): 0;
+
+    const legend = layout.legend;
+    const legendIsDefault = legend.isDefault;
+    const legendSize = legend.size;
+    const singleLegendSize = (legend.maxWidth+(fontSize*2));
+    const legendMaxWidth = (singleLegendSize > (targetSize.width*0.2)? (targetSize.width*0.2): singleLegendSize);
+
+    const legendPosition = legend.position || "right";
+    const legendIsTopBottom = legendPosition === "top" || legendPosition === "bottom";
+
+
     canvas? canvas.style.display = "none": null;
-    const offsetWidth = target.offsetWidth;
-    const offsetHeight = target.offsetHeight;
     canvas? canvas.style.display = "": null;
 
 
@@ -864,19 +890,39 @@ export function getChartArea(dv, layout) {
     let layoutWidth = layout.width;
     let layoutHeight = layout.height;
 
+    let layoutX = 0, layoutY = titleTop;
+
     if(!layoutWidth || !layoutHeight){
-        layoutWidth = offsetWidth;
+        layoutWidth = targetSize.width;
         layoutHeight = (layoutWidth/2);
 
-        if(offsetHeight){
-            layoutHeight = offsetHeight;
+        if((targetSize.height < layoutHeight) && (targetSize.height > 0)){
+            layoutHeight = targetSize.height;
         }
     }
 
+    //subtract titleTop from layoutHeight
+    layoutHeight = (layoutHeight-titleTop);
+
+    
+    if((legendIsDefault && legendSize > 1) || legend.display){
+         //substract legendWidth
+        if(legendIsTopBottom){
+            layoutHeight = (layoutHeight-(legendFont.size*1.5));
+        }else {
+            layoutWidth = (layoutWidth-legendMaxWidth);
+            
+            //set layoutx if legendPosition is left
+            legendPosition === "left"? layoutX = (layoutX+legendMaxWidth): null;
+        }
+    }
+
+
     // Set initial width and height with default fallbacks
-    let width = roundToEven(layoutWidth) || 800;
-    let height = roundToEven(layoutHeight) || 400;
+    const width = roundToEven(layoutWidth) || 800;
+    const height = roundToEven(layoutHeight) || 400;
 
+    const x = layoutX, y = layoutY;
 
-    return { width, height };
+    return { x, y, width, height };
 }

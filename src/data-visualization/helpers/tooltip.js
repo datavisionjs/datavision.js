@@ -39,134 +39,6 @@ const DrawHover = (dv, ctx, data) => {
     ctx.stroke();
 }
 
-/*
-const GetText = (dv, data, ctx, type, fontSize) => {
-    if(!data[type] && data[type] !== 0) return {text: null, width: 0};
-
-    const canvasSize = dv.getCanvasSize();
-    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
-
-    let text = data[type+"Text"];
-    let textWidth = data[type+"Width"];
-
-    const tickFormat = data.tickFormat? data.tickFormat[type] || {}: {};
-
-    const prefix = (tickFormat.prefix || ""), suffix = (tickFormat.suffix || "");
-    const decimalPlaces = tickFormat.decimalPlaces;
-    const separateNumbers = tickFormat.separateNumbers;
-
-    if(!textWidth){
-        //set value
-        let value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(data[type], decimalPlaces), separateNumbers) + suffix;
-
-        //shorten value
-        const valueWidth = ctx.measureText(value).width;
-        const maxValueWidth = valueWidth > canvasWidth? (canvasWidth*0.9): valueWidth;
-        
-        const valueCharSize = (valueWidth/value.length);
-        value = Global.shortenText(value, ((maxValueWidth)/valueCharSize));
-
-        //set title
-        let name = data[type+"Name"];
-        if(name){
-            //shorten title
-            const titleWidth = ctx.measureText(name).width;
-            const maxTitleWidth = ((canvasWidth-maxValueWidth)-fontSize) || 0;
-
-            const titleCharSize = (titleWidth/name.length);
-            name = Global.shortenText(name, ((maxTitleWidth)/titleCharSize))+": ";
-        }
-
-        //set percent
-        const percent = data.percent && type === "value"? " ("+data.percent+"%)": "";
-
-        text = (name? name+" ": "") + value + percent;
-        textWidth = ctx.measureText(text).width;
-    }
-
-    data[type+"Text"] = text;
-    data[type+"Width"] = textWidth;
-
-    return {text: text, width: textWidth};
-}
-
-
-const DrawToolTip = (dv, ctx, pos, data) => {
-
-    const canvasSize = dv.getCanvasSize();
-    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
-
-    //draw hover
-    DrawHover(dv, ctx, data);
-
-    const design = dv.getDesign();
-    const font = design.font;
-
-    const fontSize = font.size;
-    const halfFontSize = fontSize/2;
-
-    const label = GetText(dv, data, ctx, "label", fontSize);
-    const value = GetText(dv, data, ctx, "value", fontSize);
-    const size = GetText(dv, data, ctx, "size", fontSize);
-
-
-    const textWidth = (Math.max(label.width, value.width, size.width)+(fontSize));
-    const textHeight = (fontSize*(size.text? 5: 3.5));
-    
-    // Calculate tooltip position
-    let tooltipX = (pos.x+20);
-    let tooltipY = (pos.y+25);
-    
-    // Draw a rectangle (tooltip with border)
-    const tooltipWidth = textWidth;
-    const tooltipHeight = textHeight;
-    const tooltipBorderWidth = 1;
-    const tooltipBorderColor = "#b5b5b5";
-    const tooltipFillColor = "#fff";
-
-    const positionRight = (tooltipX+tooltipWidth);
-    const positionBottom = (tooltipY+tooltipHeight);
-
-    //keep tool tip on canvas
-    if(positionRight > canvasWidth){
-        if(((tooltipWidth+fontSize)+20) < (pos.x)){
-            tooltipX = (pos.x) - (tooltipWidth+20);
-        }else {
-            tooltipX = (pos.x+20) - ((positionRight-canvasWidth));
-        }
-    }
-
-    if(positionBottom > canvasHeight){
-        tooltipY = (pos.y) - (tooltipHeight+20);
-    }
-
-    ctx.beginPath();
-
-    ctx.fillStyle = tooltipBorderColor;
-    ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight); // Border
-
-    ctx.beginPath();
-    ctx.fillStyle = tooltipFillColor;
-    ctx.fillRect(tooltipX + tooltipBorderWidth, tooltipY + tooltipBorderWidth, tooltipWidth - 2 * tooltipBorderWidth, tooltipHeight - 2 * tooltipBorderWidth); // Fill
-
-    // Draw text (tooltip)
-    ctx.beginPath();
-    ctx.fillStyle = font.color;
-    ctx.font = font.weight + " " + fontSize+'px ' + font.family;
-    ctx.textBaseline = "top";
-    ctx.textAlign = "left";
-    //ctx.fillText(text, (tooltipX+(textWidth/2)), tooltipY+(textHeight/2));
-
-    //draw label text
-    ctx.fillText(label.text, (tooltipX+halfFontSize), tooltipY+(halfFontSize));
-
-    //draw value text
-    ctx.fillText(value.text, (tooltipX+halfFontSize), tooltipY+(fontSize*2));
-
-    //draw size text
-    size.text? ctx.fillText(size.text, (tooltipX+halfFontSize), tooltipY+(fontSize*3)+(halfFontSize)): null;
-} */
-
 const ShowToolTip = (dv, ctx, pos, data) => {
 
     const canvas = ctx.canvas;
@@ -176,13 +48,13 @@ const ShowToolTip = (dv, ctx, pos, data) => {
 
     const design = dv.getDesign();
     const fontSize = design.font.size;
-    const target = dv.getTarget();
+    const mainContainer = dv.getMainContainer();
 
     const layout = dv.getLayout();
     const tooltip = layout.tooltip || {}
     const formatter = tooltip.formatter;
     
-    let toolTipCard = target.querySelector("#dv_tooltip");
+    let toolTipCard = mainContainer.querySelector("#dv_tooltip");
 
     // Create tooltip if it doesn't exist
     if (!toolTipCard) {
@@ -200,7 +72,7 @@ const ShowToolTip = (dv, ctx, pos, data) => {
             pointer-events: none;  /* Makes tooltip non-interactable */
             z-index: 1000;
         `);
-        target.appendChild(toolTipCard);  // Append to document
+        mainContainer.appendChild(toolTipCard);  // Append to document
     }
 
     // Clear previous content
@@ -282,7 +154,8 @@ const ShowToolTip = (dv, ctx, pos, data) => {
 const DisplayToolTip = (event, dv, position) => {
     if(dv && position){
         const ctx = dv.getCtx();
-        const target = dv.getTarget();
+
+        const mainContainer = dv.getMainContainer();
         
         var rect = ctx.canvas.getBoundingClientRect();
         var x = event.clientX - rect.left;
@@ -297,7 +170,7 @@ const DisplayToolTip = (event, dv, position) => {
         let closestData = null;
 
         //hide tooltip 
-        let toolTipCard = target.querySelector("#dv_tooltip");
+        let toolTipCard = mainContainer.querySelector("#dv_tooltip");
         toolTipCard? toolTipCard.style.display = "none": null;
 
         for (let i = 0; i < toolTipData.length; i++) {
