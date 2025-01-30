@@ -118,13 +118,19 @@ function DataVision(targetId) {
             const title = layout.title || "";
             if(Global.isObject(title)){
                 const titleText = title.text || "";
-                layout.title.titleLines = Global.splitTitleText(this, titleText);
+                layout.title.lines = Global.splitTitleText(this, titleText);
             }else {
-                layout.title = {titleLines: Global.splitTitleText(this, title)};
+                layout.title = {lines: Global.splitTitleText(this, title)};
             }
 
-            //layout.isBarChart = firstDataType === "bar"? true: false;
-            //layout.isPieChart = firstDataType === "pie"? true: false;
+            //sub title
+            const subTitle = layout.subTitle || "";
+            if(Global.isObject(subTitle)){
+                const titleText = subTitle.text || "";
+                layout.subTitle.lines = Global.splitTitleText(this, titleText);
+            }else {
+                layout.subTitle = {lines: Global.splitTitleText(this, subTitle)};
+            }
 
             //set layout default settings
             layout.customColorsIndex = 0;

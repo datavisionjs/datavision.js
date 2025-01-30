@@ -1,10 +1,10 @@
 //import helpers
 import * as Prop from '../helpers/properties.js'
 
+import AddTitle from './title.js';
+
 import DrawAxis from "./axis";
 import DrawTable from './table.js';
-
-import DrawTitleLabel from './title.js';
 
 const plotArea = (dv) => {
     const layout = dv.getLayout();
@@ -16,7 +16,7 @@ const plotArea = (dv) => {
     layout.hasTableData? DrawTable(dv): null;
 
     //draw title
-    DrawTitleLabel(dv);
+    AddTitle(dv);
 };
 
 export default plotArea;

@@ -15,28 +15,14 @@ const TitleLine = (x, y, title, font) => {
     return text;
 };
 
-const DrawTitleLabel = (dv) => {
-    const mainContainer = dv.getMainContainer();
+const GetTitle = (dv, genFont, design, titleLines) => {
     const targetSize = dv.getTargetSize();
-
-    const containerDIV = dv.getTitleContainer();
-
-    if (containerDIV.parentElement === mainContainer) {
-        mainContainer.removeChild(containerDIV);
-        containerDIV.innerHTML = "";
-    }
-
+    
     const layout = dv.getLayout();
-    const design = dv.getDesign();
-    const titleDesign = design.title;
-    const genFont = design.font;
-
     const {y: graphY } = layout.graphPosition;
-    const title = layout.title;
-    const titleLines = title.titleLines;
 
     if (titleLines.length) {
-        const { font, align } = titleDesign;
+        const { font, align } = design;
 
         const { size: fontSize, family: fontFamily, weight: fontWeight, style: fontStyle, color: fontColor } = font;
 
@@ -70,9 +56,9 @@ const DrawTitleLabel = (dv) => {
 
             let x = (chartX+(chartWidth*0.5))-halfTitleWidth; // Center align by default
             if (align === "left") {
-                x = fontSize;
+                x = genFont.size;
             } else if (align === "right") {
-                x = (targetSize.width-(titleWidth+fontSize));
+                x = (targetSize.width-(titleWidth+genFont.size));
             }
 
             const titleLine = TitleLine(x, y, line, font);
@@ -84,11 +70,48 @@ const DrawTitleLabel = (dv) => {
         //insert the title groupt into SVG
         containerSVG.appendChild(titleGroup);
 
-        containerDIV.appendChild(containerSVG);
-
-        // Insert the div container into the target
-        titleLines.length? mainContainer.insertBefore(containerDIV, mainContainer.firstChild): null;
+        return containerSVG;
+    }else {
+        return null;
     }
+}
+
+const AddTitle = (dv) => {
+    const mainContainer = dv.getMainContainer();
+
+    const containerDIV = dv.getTitleContainer();
+
+    if (containerDIV.parentElement === mainContainer) {
+        mainContainer.removeChild(containerDIV);
+        containerDIV.innerHTML = "";
+    }
+
+    const layout = dv.getLayout();
+    const design = dv.getDesign();
+    const genFont = design.font;
+
+    //title
+    const titleDesign = design.title;
+
+    const title = layout.title;
+    const titleLines = title.lines;
+
+    const TitleSVG = GetTitle(dv, genFont, titleDesign, titleLines);
+
+    TitleSVG && containerDIV.appendChild(TitleSVG);
+
+    //subTitle 
+    const subTitleDesign = design.subTitle;
+
+    const subTitle = layout.subTitle;
+    const subTitleLines = subTitle.lines;
+
+    const SubTitleSVG = GetTitle(dv, genFont, subTitleDesign, subTitleLines);
+
+    SubTitleSVG && containerDIV.appendChild(SubTitleSVG);
+    
+    // Insert the div container into the target
+    mainContainer.insertBefore(containerDIV, mainContainer.firstChild);
 };
 
-export default DrawTitleLabel;
+export default AddTitle;

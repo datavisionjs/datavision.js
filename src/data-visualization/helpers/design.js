@@ -41,6 +41,21 @@ const Design = (dv, layout) => {
         align: titleAlign || "center",
     };
 
+    const subTitle = layout.subTitle || {};
+    const subTitleFont = subTitle.font || {}
+    const subTitleAlign = subTitle.align;
+
+    const subTitleDesign = {
+        font: {
+            family: subTitleFont.family || newFont.family, 
+            weight: subTitleFont.weight || newFont.weight,
+            style: subTitleFont.style || newFont.style,
+            size: subTitleFont.size || 20,
+            color: subTitleFont.color || newFont.color,
+        }, 
+        align: subTitleAlign || "center",
+    };
+
     //set getGridTick0
     const newGridTick0 = newGrid.tick0;
 
@@ -105,6 +120,7 @@ const Design = (dv, layout) => {
     return {
         font: newFont,
         title: titleDesign,
+        subTitle: subTitleDesign,
         xAxis: xAxisDesign,
         yAxis: yAxisDesign,
         legendFont: newLegendFont

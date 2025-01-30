@@ -859,18 +859,26 @@ export function projChartPosition(dv) {
     //styling 
     const design = dv.getDesign();
     const font = design.font;
-    const titleDesign = design.title || {};
-
-    const titleFont = titleDesign.font;
-    const titleFontSize = titleFont.size;
 
     const legendFont = design.legendFont;
 
     const fontSize = font.size;
 
     //set title space from top;
-    const titleLines = layout.title.titleLines;
+    const titleDesign = design.title || {};
+    const titleFont = titleDesign.font;
+    const titleFontSize = titleFont.size;
+
+    const titleLines = layout.title.lines;
     let titleTop = titleLines.length? (((titleLines.length+1)*titleFontSize)+fontSize): 0;
+
+    //subtitle 
+    const subTitleDesign = design.subTitle || {};
+    const subTitleFont = subTitleDesign.font;
+    const subTitleFontSize = subTitleFont.size;
+
+    const subTitleLines = layout.title.lines;
+    let subTitleTop = subTitleLines.length? (((subTitleLines.length+1)*subTitleFontSize)+fontSize): 0;
 
     const legend = layout.legend;
     const legendIsDefault = legend.isDefault;
@@ -890,7 +898,7 @@ export function projChartPosition(dv) {
     let layoutWidth = layout.width;
     let layoutHeight = layout.height;
 
-    let layoutX = 0, layoutY = titleTop;
+    let layoutX = 0, layoutY = (titleTop+subTitleTop);
 
     if(!layoutWidth || !layoutHeight){
         layoutWidth = targetSize.width;
@@ -902,7 +910,7 @@ export function projChartPosition(dv) {
     }
 
     //subtract titleTop from layoutHeight
-    layoutHeight = (layoutHeight-titleTop);
+    layoutHeight = (layoutHeight-(titleTop+subTitleTop));
 
     
     if((legendIsDefault && legendSize > 1) || legend.display){
