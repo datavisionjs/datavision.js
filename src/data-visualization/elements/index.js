@@ -200,6 +200,7 @@ const DrawElements = (dv, dataset) => {
                 const labelIsAllNumbers = xAxisIsLabel? xAxisIsAllNumbers: yAxisIsAllNumbers;
                 
                 const isSingleLinePoint = (type === "line" && dataPoints.size === 1);
+
                 //const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
                 if(labels){
                     
@@ -341,10 +342,10 @@ const DrawElements = (dv, dataset) => {
             
         }
 
-        tempCtx.clearRect(0, 0, canvasWidth, graphY); //clear top
+        tempCtx.clearRect(0, 0, canvasWidth, (graphY-(fontSize*0.5))); //clear top
         tempCtx.clearRect(0, 0, graphX, canvasHeight); //clear left
         tempCtx.clearRect((graphX+graphWidth), 0, canvasWidth, canvasHeight); //clear right
-        tempCtx.clearRect(0, (graphY+graphHeight), canvasWidth, canvasHeight); //clear bottom
+        tempCtx.clearRect(0, (graphY+graphHeight+(fontSize*0.5)), canvasWidth, canvasHeight); //clear bottom
 
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 
@@ -438,12 +439,12 @@ const DrawElements = (dv, dataset) => {
 
         const newTopIndex = topIndex, newTopIndexEnd = topIndexEnd < (rowCount-1)? topIndexEnd: (rowCount-1);
 
-        let rowTop = (graphY+thRowHeight)-(((scrollData.topIndex-newTopIndex)/(rowCount-1))*scrollData.contentHeight), rowLeft = graphX;
+        let rowTop = (thRowHeight)-(((scrollData.topIndex-newTopIndex)/(rowCount-1))*scrollData.contentHeight), rowLeft = graphX;
         const defaultRowTop = rowTop, defaultRowLeft = rowLeft;
         
         //draw Columns 
-        let lineWidth = 0;
         let defaultLineWidth = 1;
+        let lineWidth = 0;
         const dataValues = data.values;
         for(let i = 0; i < columnCount; i++){
             const columnValues = dataValues[i] || new Array((rowCount-1)).fill("");
@@ -488,44 +489,43 @@ const DrawElements = (dv, dataset) => {
         }
 
         //draw data outer line 
-        if(lineWidth){
+        if(columnCount){
             tempCtx.beginPath();
             tempCtx.lineWidth = lineWidth;
-            tempCtx.moveTo(graphX, (graphY+thRowHeight));
-            tempCtx.lineTo(graphX, ((graphY+tableHeight)-lineWidth));
-            tempCtx.lineTo(graphWidth, ((graphY+tableHeight)-lineWidth));
-            tempCtx.lineTo(graphWidth, (graphY+thRowHeight));
+            tempCtx.moveTo(graphX, (thRowHeight));
+            tempCtx.lineTo(graphX, ((tableHeight)-lineWidth));
+            tempCtx.lineTo(graphWidth, ((tableHeight)-lineWidth));
+            tempCtx.lineTo(graphWidth, (thRowHeight));
             tempCtx.stroke();
         }
 
         //clear title and header area
         const halfLineWidth = lineWidth? lineWidth/2: lineWidth;
-        tempCtx.clearRect(0, 0, canvas.width, (graphY+(thRowHeight-halfLineWidth)));
+        tempCtx.clearRect(0, 0, canvas.width, ((thRowHeight-halfLineWidth)));
 
+        const line = header.line || {};
+        lineWidth = isNaN(line.width)? 1: line.width;
 
-        rowTop = graphY, rowLeft = graphX;
+        rowTop = (lineWidth/2), rowLeft = graphX;
         //draw Header 
-        lineWidth = 0;
         const headerValues = header.values;
         for(let i = 0; i < columnCount; i++){
             const thColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
             const value = isNaN(headerValues[i])? headerValues[i] || "": headerValues[i];
 
-            const firstPos = {x: rowLeft, y: (rowTop+thRowHeight)};
+            const firstPos = {x: rowLeft, y: (thRowHeight)};
             const secondPos = {x: (rowLeft+thColumnWidth), y: (rowTop+thRowHeight)};
             const thirdPos = {x: secondPos.x, y: rowTop};
 
             const positions = [firstPos, secondPos, thirdPos];
-            const rect = {x: firstPos.x, y: graphY, width: thColumnWidth, height: thRowHeight};
+            const rect = {x: firstPos.x, y: rowTop, width: thColumnWidth, height: thRowHeight};
 
             const fill = header.fill || {};
-            const line = header.line || {};
 
-            lineWidth = isNaN(line.width)? defaultLineWidth: line.width;
             //remove the 'values' property, and the value, center for text position, and adds header properties
             const {values, ...properties } = {
                 value: value, 
-                center: {x: (rowLeft+(thColumnWidth/2)), y: (rowTop+(thRowHeight/2))},
+                center: {x: (rowLeft+(thColumnWidth/2)), y: ((thRowHeight/2))},
                 fontSize: thFontSize,
                 fill: {color: fill.color? fill.color: "white", ...fill},
                 ...header
@@ -541,13 +541,13 @@ const DrawElements = (dv, dataset) => {
         }
 
         //draw header outer line 
-        if(lineWidth){
+        if(columnCount){
             tempCtx.beginPath();
             tempCtx.lineWidth = lineWidth;
-            tempCtx.moveTo(graphX, (graphY+thRowHeight));
-            tempCtx.lineTo(graphX, (graphY));
-            tempCtx.lineTo(graphWidth, (graphY));
-            tempCtx.lineTo(graphWidth, (graphY+thRowHeight));
+            tempCtx.moveTo(graphX, (thRowHeight));
+            tempCtx.lineTo(graphX, rowTop);
+            tempCtx.lineTo(graphWidth, rowTop);
+            tempCtx.lineTo(graphWidth, (thRowHeight));
             tempCtx.stroke();
         }
 

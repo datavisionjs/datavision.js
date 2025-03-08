@@ -115,6 +115,10 @@ export function getClosestToZero(arr){
     return closestValue;
 }
 
+export function getClosest(target, value1, value2) {
+    return Math.abs(target - value1) < Math.abs(target - value2) ? value1 : value2;
+}
+
 export function removeDuplicates(array){ //remove duplicates from array but keep in the same order
     
     const seen = new Set();
@@ -202,26 +206,27 @@ export function customSort(values, order, index = 0, customOrder){
         }
 
         newValues.sort((a, b) => {
-            a = typeof(a) === "object"? a[index]: a;
-            b = typeof(b) === "object"? b[index]: b;
-
-            const isANumeric = !isNaN(a);
-            const isBNumeric = !isNaN(b);
-
+            a = a && typeof a === "object" ? a[index] : a;
+            b = b && typeof b === "object" ? b[index] : b;
+        
+            if (a == null && b == null) return 0; // Both are null or undefined
+            if (a == null) return isAscending ? 1 : -1; // Nulls go last for ascending, first for descending
+            if (b == null) return isAscending ? -1 : 1; // Nulls go last for ascending, first for descending
+        
+            const isANumeric = !isNaN(a) && a !== "";
+            const isBNumeric = !isNaN(b) && b !== "";
+        
             if (isANumeric && isBNumeric) {
-                // Both are numbers
-                return isAscending? sortNumerically(a, b) : sortNumerically(b, a);
+                return isAscending ? sortNumerically(a, b) : sortNumerically(b, a);
             } else if (!isANumeric && !isBNumeric) {
-                // Both are non-numeric strings
-                return isAscending? sortLexicographically(a, b) : sortLexicographically(b, a);
+                return isAscending ? sortLexicographically(a, b) : sortLexicographically(b, a);
             } else if (isANumeric) {
-                // a is numeric, b is non-numeric
-                return isAscending? -1 : 1; // Numbers before strings for ascending, reverse for descending
+                return isAscending ? -1 : 1;
             } else {
-                // a is non-numeric, b is numeric
-                return isAscending? 1 : -1; // Strings after numbers for ascending, reverse for descending
+                return isAscending ? 1 : -1;
             }
         });
+        
     }else if((order === "custom" || order === "custom-desc") && customOrder){
         const isAscending = order === "custom";
         const orderMap = new Map(customOrder.map((item, index) => [item, index]));
@@ -476,8 +481,42 @@ export function hasValidElements(arr) {
     }
 }
 
+/*
+export function tickStep(intervalSize, isReverse = false) {
+    if (isNaN(intervalSize) || intervalSize === 0) return 0; // Handle invalid cases
 
-export function getTicksInterval(intervalSize, isReverse){
+    const sign = Math.sign(intervalSize); // Preserve the original sign
+    const absIntervalSize = Math.abs(intervalSize);
+
+    const niceNumbers = [1, 2, 4, 5, 10];
+    const magnitude = Math.pow(10, Math.floor(Math.log10(absIntervalSize)));
+
+    const candidates = isReverse ? [...niceNumbers].reverse() : niceNumbers;
+    const roundedValue = candidates.find(n => n * magnitude >= absIntervalSize) * magnitude;
+
+    return sign * roundedValue; // Restore the original sign
+}*/
+
+export function tickStep(intervalSize, isReverse){
+    const niceNumbers = [1, 2, 4, 5, 10];
+
+    const sign = Math.sign(intervalSize);
+    const absIntervalSize = Math.abs(intervalSize);
+
+    // Round the interval size to a nice number (1, 2, 5, or 10)
+    const magnitude = Math.pow(10, Math.floor(Math.log10(absIntervalSize)));
+
+    if(isReverse){
+        niceNumbers.reverse();
+        return sign * niceNumbers.find(n => n * magnitude <= absIntervalSize) * magnitude;
+    }else {
+        return sign * niceNumbers.find(n => n * magnitude >= absIntervalSize) * magnitude;
+    }
+}
+
+
+/*
+export function tickStep(intervalSize, isReverse){
     const niceNumbers = [1, 2, 4, 5, 10];
 
     // Round the interval size to a nice number (1, 2, 5, or 10)
@@ -489,7 +528,7 @@ export function getTicksInterval(intervalSize, isReverse){
     }else {
         return niceNumbers.find(n => n * magnitude >= intervalSize) * magnitude;
     }
-}
+}*/
 
 //get the minimun and max from a data of all numbers and return as range
 export function rangeFromData(dataArray, preferredRange = [null, null], altValue) {
@@ -644,11 +683,16 @@ export function posOnGraphYAxis(dv, y, yAxisName, xAxisName){
 
             const rangeDiff = (rangeEnd-rangeStart);
 
+            const tickData = yAxis.tickData;
 
-            //const value = getNumberInRange(y, range);
+            const valueStart = Math.ceil(rangeStart / tickData.interval) * tickData.interval;
+            const rangeWidth = Math.max(((valueStart+(tickData.interval*tickData.count))-rangeStart), rangeDiff);
 
-            const perc = ((y - rangeStart)/rangeDiff);
-            const pos = ((chartY+chartHeight)-(perc*chartHeight));
+
+            const perc = ((y - rangeStart) / rangeWidth);
+            //const pos = ((chartY+(chartHeight-(chartY*0.5)))-(perc*(chartHeight-chartY)));
+            const pos = (chartY+(chartHeight-(perc*chartHeight)));
+
                 
             return pos;
         }
@@ -681,9 +725,12 @@ export function posOnGraphXAxis(dv, x, axisName){
 
             const rangeDiff = (rangeEnd-rangeStart);
 
-            //const value = getNumberInRange(x, range);
+            const tickData = axis.tickData;
+    
+            const valueStart = Math.ceil(rangeStart / tickData.interval) * tickData.interval;
+            const rangeWidth = Math.max(((valueStart+(tickData.interval*tickData.count))-rangeStart), rangeDiff);
 
-            const perc = ((x - rangeStart)/rangeDiff);
+            const perc = ((x - rangeStart)/rangeWidth);
             const pos = (chartX+(perc*chartWidth));
                 
             return pos;

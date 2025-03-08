@@ -161,10 +161,13 @@ function drawYAxis(dv, ctx, position){
                 const format = axis.tickFormat || {};
                 //const prefix = (format.prefix || ""), suffix = (format.suffix || "");
                 //const separateNumbers = format.separateNumbers;
+                const step = tickData.interval;
 
                 const rangeStart = range[0];
-
-                const step = tickData.interval;
+                //let valueStart = Calc.getClosest(rangeStart, Calc.tickStep(rangeStart, true), Calc.tickStep(rangeStart));
+                let valueStart = Math.ceil(rangeStart / step) * step;
+                //const valueStart = step * Math.round(rangeStart / step);
+                //valueStart = Calc.getClosest(rangeStart, 0, Calc.tickStep(rangeStart));
 
                 let dist = tickData.count;
 
@@ -181,8 +184,11 @@ function drawYAxis(dv, ctx, position){
                 for(let i = 0; i <= dist; i += iterator){
 
                     //value = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
-                    value = Global.numberFormat((rangeStart)+(step*i), format);
-                    axisY = ((graphY+graphHeight)-(pixelStep*i));
+                    
+                    const rawValue = (valueStart)+(step*i);
+                    value = Global.numberFormat(rawValue, format);
+                    //axisY = ((graphY+graphHeight)-(pixelStep*i));
+                    axisY = Calc.posOnGraphYAxis(dv, rawValue, key);
 
                     //set text width
                     const textWidth = ctx.measureText(value).width;
@@ -236,6 +242,8 @@ function drawYAxis(dv, ctx, position){
     
                 //axisY = ((graphY+graphHeight)-((step/2)+(step*(i-scrollData.topIndex))));
                 axisY = ((graphY)+((step/2)+(step*(i-scrollData.topIndex))));
+
+                
     
                 let value = values[i]+"";
                
@@ -337,6 +345,8 @@ function drawXAxis(dv, ctx, position){
                 let pixelStep = (graphWidth/dist);
                 pixelStep < 1? pixelStep = 1: null;
 
+                let valueStart = Math.ceil(rangeStart / step) * step;
+
                 let label = 0;
 
                 //get max label width 
@@ -352,10 +362,12 @@ function drawXAxis(dv, ctx, position){
                 for(let i = 0; i <= dist; i += iterator){
 
                     //label = prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i), format.decimalPlaces), separateNumbers) + suffix;
-                    label = Global.numberFormat((rangeStart)+(step*i), format);
+                    const rawLabel = (valueStart)+(step*i);
+                    label = Global.numberFormat(rawLabel, format);
 
                     //label = Calc.commaSeparateNumber(Calc.toFixedIfNeeded((rangeStart)+(step*i)));
-                    axisX = (graphX+(pixelStep*i));
+                    //axisX = (graphX+(pixelStep*i));
+                    axisX = Calc.posOnGraphXAxis(dv, rawLabel, key);
 
 
                     //set text width
@@ -520,9 +532,6 @@ const DrawAxis = (dv) => {
 
     //labels around the graph area
     drawLabels(dv, tempCtx, graphPosition);
-
-    let yEdge = scrollData.isScrollY? fontSize: 0;
-    let xEdge = scrollData.isScrollX? fontSize: 0;
 
     //ctx.beginPath();
     //left edge clear
