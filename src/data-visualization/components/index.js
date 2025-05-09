@@ -18,8 +18,7 @@ const Chart = (dv) => {
         const type = dataset.type;
 
         if(type){
-            const axisChartTypes = Global.getAxisChartTypes();
-            if(axisChartTypes.includes(type)){
+            if(type === "axis"){
 
                 const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
                 const yAxis = axisData.yData[valueAxisName];
@@ -36,7 +35,6 @@ const Chart = (dv) => {
                 AxisChart(dv, dataset);
 
             }else if(type === "pie"){
-
                 PieChart(dv, dataset);
             }else if(type === "table") {
 

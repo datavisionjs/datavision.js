@@ -2,7 +2,7 @@ import * as Calc from './math.js';
 
 //get axis chart types 
 export function getAxisChartTypes(){
-    return ["line", "bar", "scatter", "bubble"];
+    return ["line", "bar", "histogram", "scatter", "bubble", "area"];
 }
 
 //adds event listeners
@@ -67,7 +67,7 @@ export function defaultIfNull(value, alternative) {
 
 //plit graph title text
 export function splitTitleText(dv, text) {
-    if(text.length === 0){
+    if(!text || text.length === 0){
         return [];
     }
 
@@ -109,7 +109,7 @@ export function splitTitleText(dv, text) {
 
 //shorten text 
 export function shortenText(text, maxLength){
-    if (text.length > maxLength) {
+    if (text && (text.length > maxLength)) {
         return text.substr(0, maxLength > 3? (maxLength-2): maxLength) + '..';
     }
     return text;

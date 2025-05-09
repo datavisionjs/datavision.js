@@ -186,6 +186,28 @@ export function pieCustomSort(dv, dataset, dataToSort){
     }
 }
 
+
+export function tableCustomSort(dv, data){
+    const layout = dv.getLayout();
+
+    const sort = layout.sort || {};
+    const order = sort.order;
+    const sortIndex = sort.datasetIndex;
+
+    if (!order || sortIndex === undefined || !data.length) {
+        return data; // Return original dataset if sorting conditions are not met
+    }
+
+    const combined = data[0]?.map((_, colIndex) => data.map(row => row[colIndex]));
+
+    const sortedData = customSort(combined, order, sortIndex);
+
+    // Convert back to column-major format
+    const newData = data.map((_, rowIndex) => sortedData.map(row => row[rowIndex]));
+
+    return newData;
+}
+
 export function customSort(values, order, index = 0, customOrder){
         
     let newValues = values.slice(); //a copy to avoid mutation
@@ -233,8 +255,8 @@ export function customSort(values, order, index = 0, customOrder){
 
         // Sort based on the custom order
         newValues.sort((a, b) => {
-            const valA = typeof a === "object" ? a[index] : a;
-            const valB = typeof b === "object" ? b[index] : b;
+            const valA = a && typeof a === "object" ? a[index] : a;
+            const valB = b && typeof b === "object" ? b[index] : b;
 
             const indexA = orderMap.get(valA) ?? Infinity; // Use Infinity for values not in customOrder
             const indexB = orderMap.get(valB) ?? Infinity;
@@ -267,7 +289,7 @@ export function getNumberInRange(number, range){
 
 //add comma to every third digit from the right of numbers
 export function commaSeparateNumber(number, separateNumbers) {
-    if (typeof number !== 'number' || isNaN(number) || separateNumbers === false) {
+    if (!isNumber(number) || separateNumbers === false) {
         return number;
     }
 
@@ -314,10 +336,9 @@ export function computeOperation(arr, operation, isNumeric){
     if(isNumeric){
         if(operation === "avg"){
             return avg(newArray);
-        }else if(operation === "min"){
-            return Math.min(...getNumericArray(newArray));
-        }else if(operation === "max"){
-            return Math.max(...getNumericArray(newArray));
+        }else if(operation === "min" || operation === "max"){
+            const stats = getArrayStats(newArray);
+            return stats[operation];
         }else if(operation === "count"){
             return newArray.length;
         }else if(operation === "distinct_count"){
@@ -340,6 +361,11 @@ export function computeOperation(arr, operation, isNumeric){
     }
 }
 
+export function isNumber(value) {
+    return typeof value === "number" && !isNaN(value);
+}
+
+
 //Function that returns true if an array contains all numbers.
 export function isAllNumbers(arr) {
     if(!arr){
@@ -355,12 +381,53 @@ export function isAllNumbers(arr) {
 
         if(type === "string"){
             stringCount++;
-        }else if(type === "number") {
+        }else if(isNumber(value)) {
             numberCount++;
         }
     }
 
     return numberCount > (stringCount/2);
+}
+
+export function getArrayStats(arr) {
+    if (!Array.isArray(arr) || arr.length === 0) {
+        return {
+            isNumbers: false,
+            min: null,
+            max: null
+        };
+    }
+
+    let numberCount = 0;
+    let stringCount = 0;
+    let min = Infinity;
+    let max = -Infinity;
+
+    for (let i = 0; i < arr.length; i++) {
+        const value = arr[i];
+        const type = typeof value;
+
+        if (type === "string") {
+            stringCount++;
+        } else if (typeof value === "number" && !isNaN(value)) {
+            if (value < min) min = value;
+            if (value > max) max = value;
+            numberCount++;
+        }
+    }
+
+    const isNumbers = numberCount > (stringCount / 2);
+
+    return {
+        isNumbers,
+        min: numberCount > 0 ? min : null,
+        max: numberCount > 0 ? max : null
+    };
+}
+
+
+export function isObjectButNotArray(variable) {
+    return typeof variable === "object" && variable !== null && !Array.isArray(variable);
 }
 
 export function isYearSeries(range){
@@ -431,7 +498,7 @@ export function toFixedIfNeeded(number, decimalPlaces){
 }*/
 
 export function toFixedIfNeeded(number, decimalPlaces) {
-    if (typeof number !== 'number' || isNaN(number)) {
+    if (!isNumber(number)) {
         return number; // Return original value if not a valid number
     }
 
@@ -730,8 +797,8 @@ export function posOnGraphXAxis(dv, x, axisName){
             const valueStart = Math.ceil(rangeStart / tickData.interval) * tickData.interval;
             const rangeWidth = Math.max(((valueStart+(tickData.interval*tickData.count))-rangeStart), rangeDiff);
 
-            const perc = ((x - rangeStart)/rangeWidth);
-            const pos = (chartX+(perc*chartWidth));
+            const perc = ((x - rangeStart) / rangeWidth);
+            const pos = (chartX+((perc*chartWidth)));
                 
             return pos;
         }
@@ -917,7 +984,7 @@ export function projChartPosition(dv) {
     const titleFontSize = titleFont.size;
 
     const titleLines = layout.title.lines;
-    let titleTop = titleLines.length? (((titleLines.length+1)*titleFontSize)+fontSize): 0;
+    let titleTop = titleLines.length? (((titleLines.length)*titleFontSize)+fontSize): 0;
 
     //subtitle 
     const subTitleDesign = design.subTitle || {};
@@ -925,7 +992,7 @@ export function projChartPosition(dv) {
     const subTitleFontSize = subTitleFont.size;
 
     const subTitleLines = layout.title.lines;
-    let subTitleTop = subTitleLines.length? (((subTitleLines.length+1)*subTitleFontSize)+fontSize): 0;
+    let subTitleTop = subTitleLines.length? (((subTitleLines.length)*subTitleFontSize)+fontSize): 0;
 
     const legend = layout.legend;
     const legendIsDefault = legend.isDefault;

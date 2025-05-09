@@ -25,7 +25,7 @@ const DrawHover = (dv, ctx, data) => {
         ctx.lineWidth = lineWidth;
         
         ctx.arc(point.midPoint.x, point.midPoint.y, (point.radius-2), point.startAngle, point.endAngle);
-    }else if(type === "line"){
+    }else if(type === "line" || type === "area"){
         const hover = data.hover || {};
         
         ctx.strokeStyle = hover.color || "#000";
@@ -82,18 +82,21 @@ const ShowToolTip = (dv, ctx, pos, data) => {
     if(formatter){
         const dataText = data.text;
         const first = dataText[0], second = dataText[1];
+
         const tooltipDataset = {name: second.name};
 
         tooltipDataset.label = first.value;
         tooltipDataset.value = second.value;
+        tooltipDataset.percent = second.percent;
 
         //set x and y
-        tooltipDataset.x = first.value;
-        tooltipDataset.y = second.value;
-        if(first.hasOwnProperty("xIsLabel") && !first.xIsLabel){
-            tooltipDataset.y = first.value;
-            tooltipDataset.x = second.value;
-        }
+        /*
+        tooltipDataset.label = first.value;
+        tooltipDataset.value = second.value;
+        if(first.hasOwnProperty("isLabel") && !first.isLabel){
+            tooltipDataset.label = first.value;
+            tooltipDataset.value = second.value;
+        }*/
 
         //add in the custom data 
         const custom = dataText.slice(2, dataText.length);
@@ -105,7 +108,11 @@ const ShowToolTip = (dv, ctx, pos, data) => {
             const container = document.createElement("div");
             const text = document.createElement("span");
 
-            text.textContent = Global.numberFormat(textObj.name, data.tickFormat) + ": " + Global.numberFormat(textObj.value, data.tickFormat); // Create text content
+            const name = Global.numberFormat(textObj.name, data.tickFormat);
+            const value = Global.numberFormat(textObj.value, data.tickFormat);
+            const percent = Global.numberFormat(textObj.percent, data.tickFormat);
+            
+            text.textContent = name + ": " + value + (textObj.percent? " ("+percent+"%)": ""); // Create text content
 
             // Add to container
             container.appendChild(text);

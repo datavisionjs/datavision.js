@@ -79,7 +79,6 @@ const DrawLines = (dv, ctx, dataset, type, size, position, positionIsOut) => {
             ctx.beginPath();
             ctx.moveTo(position.x, position.y);
         }else {
-
             ctx.lineTo(position.x, position.y);
         }
 

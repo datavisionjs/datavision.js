@@ -7,8 +7,7 @@ import DrawLines from './lines.js';
 import DrawPoints from "./points";
 import DrawPieSlice from './pie.js';
 import DrawCell from './cell.js';
-
-import customColors from '../helpers/colors.js';
+import fillArea from './area.js';
 
 const DrawElements = (dv, dataset) => {
 
@@ -25,6 +24,9 @@ const DrawElements = (dv, dataset) => {
     const tempCanvas = dv.createCanvas(null, canvasWidth, canvasHeight);
     const tempCtx = tempCanvas.getContext("2d");
 
+    const areaCanvas = dv.createCanvas(null, canvasWidth, canvasHeight);
+    const areaCtx = areaCanvas.getContext("2d");
+
     const design = dv.getDesign();
     const font = design.font;
 
@@ -32,7 +34,6 @@ const DrawElements = (dv, dataset) => {
 
     const type = dataset.type;
     const mode = dataset.mode;
-    const customData = dataset.custom;
     const isHorizontal = dataset.direction === "hr";
 
     const graphPosition = layout.graphPosition;
@@ -41,12 +42,17 @@ const DrawElements = (dv, dataset) => {
 
     const axisData = layout.axisData;
     const scrollData = dv.getScrollData();
+
+    const layoutSize = layout.size || {};
+    const sizeRange = layoutSize.range;
     
     //const scrollIndex = isHorizontal? scrollData.topIndex: scrollData.leftIndex;
 
     const topIndex = Math.floor(scrollData.topIndex >= 1? (scrollData.topIndex-1): 0), leftIndex = Math.floor(scrollData.leftIndex >= 1? (scrollData.leftIndex-1): 0);
     const topIndexEnd = Math.ceil((topIndex + 2) + (graphHeight/fontSize));
     const leftIndexEnd = Math.ceil((leftIndex + 2) + (graphWidth/fontSize));
+
+    console.log("li: ", leftIndex, leftIndexEnd, graphWidth, (graphWidth/fontSize));
 
     const topIndexDiff = Math.abs(topIndexEnd-topIndex), leftIndexDiff = Math.abs(leftIndexEnd-leftIndex);
 
@@ -57,27 +63,42 @@ const DrawElements = (dv, dataset) => {
     tempCtx.lineCap = "round";
     tempCtx.lineJoin = "round";
 
-    if(axisChartTypes.includes(type)){
+    if(type === "axis"){
         const isLoopLeftAxis = (scrollData.isScrollX || !axisData.xData["x1"].isAllNumbers) && ((leftIndexDiff > topIndexDiff) || axisData.yData["y1"].isAllNumbers);
 
         const scrollIndex = isLoopLeftAxis? leftIndex: topIndex;
         const scrollIndexEnd = isLoopLeftAxis? leftIndexEnd: topIndexEnd;
 
-        if(type === "bar"){
+        const dataGroup = dataset;
+        const axisDatasets = dataGroup.dataset;
+        const datasetLength = axisDatasets.length;
 
-            const barDataset = dataset.dataset;
+        const maxBarPerLabel = dataGroup.barDatasetCount;
 
-            const maxBarPerLabel = barDataset.length;
+        const graphLength = isHorizontal? graphHeight: graphWidth;
 
-            const graphLength = isHorizontal? graphHeight: graphWidth;
+        const stackLastValues = new Map();
+        const barStackLastValues = new Map();
 
-            const stackLastValues = new Map();
-            
-            for(let i = 0; i < barDataset.length; i++){
+        const isStacked = mode === "stack";
+        const stackSums = dataGroup.stackSums || new Map();
+        const isPercent = dataGroup.format === "percent";
 
-                const barData = barDataset[i];
+        let barDatasetIndex = 0;
+        
+        for(let i = 0; i < axisDatasets.length; i++){
+
+            const dataset = axisDatasets[i];
+            const chartType = dataset.type;
+
+            const customData = dataset.custom || {};
+
+            const isHistogram = chartType === "histogram";
+
+            if(chartType === "bar" || isHistogram){
+                const barData = dataset;
                 //set barData direction 
-                barData.direction = dataset.direction;
+                barData.direction = dataGroup.direction;
 
                 const yAxis = axisData.yData[barData.yAxis];
                 const xAxis = axisData.xData[barData.xAxis];
@@ -95,23 +116,20 @@ const DrawElements = (dv, dataset) => {
                 let step = (graphLength/labelCount);
                 step < fontSize? step = fontSize: null;
 
-                const isStack = mode === "stack";
-                let barSize = isStack? step: (step/(maxBarPerLabel));
+                let barSize = isStacked? step: (step/(maxBarPerLabel));
 
                 //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
-                
                 if(baseAxis.isAllNumbers){
                     const range = baseAxis.range;
                     const rangeStart = range[0], rangeEnd = range[1];
 
                     const rangeLength = (rangeEnd-rangeStart);
 
-                    const datasetBarSize = dataset.barSize;
+                    const datasetBarSize = dataGroup.barSize;
 
                     const newBarSize = datasetBarSize? ((datasetBarSize/rangeLength)*graphLength): null;
 
-                    barSize = newBarSize? isStack? newBarSize: (newBarSize/maxBarPerLabel): barSize;
-
+                    barSize = newBarSize? isStacked? newBarSize: (newBarSize/maxBarPerLabel): barSize;
                 }
 
                 const designSize = barData.design.size;
@@ -126,49 +144,61 @@ const DrawElements = (dv, dataset) => {
                 const barObject = barData.dataPoints;
                 const barCustomData = barData.custom;
                 //const barValues = Array.from(barObject.values());
-                //const keys = Array.from(barObject.keys());
-
-                const labels =  baseAxis.values;
-
                 const keys = Array.from(barObject.keys());
 
+                const labels =  (isHistogram? keys: baseAxis.values) || [];
+
+                //const keys = Array.from(barObject.keys());
+
                 //const loopEnd = baseAxis.isAllNumbers?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
-                const loopEnd = scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
+                const loopEnd = baseAxis.isAllNumbers? barObject.size: (scrollIndexEnd <  barObject.size)? scrollIndexEnd:  barObject.size;
+
                 for(let index = scrollIndex; index < loopEnd; index++){
 
                     const key = labels[index];
                     let value = barObject.get(key);
 
                     const size = Array.isArray(designSize)? designSize[(index>=designSize.length? 0: index)]: designSize;
-                    const newBarSize = barSize * Global.defaultIfNull(size, 0.8);
+                    const newBarSize = barSize * (size || 0.8);
                     
                     Array.isArray(value)? value = value[0]: null;
                     Array.isArray(designColor)? tempCtx.fillStyle = designColor[(index>=designColor.length? 0: index)]: null;
                     
-                    if(mode === "stack"){
-
-                        const lastStack = stackLastValues.has(key)? stackLastValues.get(key): [0, 0];
-                        const lastValue = value >= 0? (lastStack[0]): (lastStack[1]);
-                        
-                        const currentValue = value;
-                        
-                        value = i === 0? value: (lastValue+value);
-
-                        const currentStack = value >= 0? [value, lastStack[1]]: [lastStack[0], currentValue];
-                        stackLastValues.set(key, currentStack);
-
-                        Bars.Stack(dv, tempCtx, barData, newBarSize, key, xAxisIsLabel, lastValue, value, currentValue, barCustomData, tickFormat);
+                    if(isHistogram){
+                        Bars.Histogram(dv, tempCtx, barData, i, key, value, (barSize * 0.96), tickFormat);
                     }else {
-                        Bars.Group(dv, tempCtx, barData, i, key, xAxisIsLabel, value, newBarSize, maxBarPerLabel, barCustomData, tickFormat);
+                        if(isStacked){
+                            const keyRange = stackSums.get(key) || {};
+
+                            // Determine the base max value for percent formatting
+                            const maxValue = Math.abs((value < 0? keyRange.min: keyRange.max) || value);
+
+                            let stackValue = isPercent ? (value / maxValue) * 100 : value;
+
+                            const [lastPos, lastNeg] = barStackLastValues.get(key) || [0, 0];
+
+                            // Determine the base position in the stack depending on the sign
+                            const baseStack = value >= 0 ? lastPos : lastNeg;
+
+                            // Calculate the current cumulative stack value
+                            const cumulativeValue = barDatasetIndex === 0 ? stackValue : baseStack + stackValue;
+
+                            const updatedStack = value >= 0 
+                            ? [cumulativeValue, lastNeg]
+                            : [lastPos, baseStack + value];
+
+                            // Save the updated stack state for this key
+                            barStackLastValues.set(key, updatedStack);
+
+                            Bars.Stack(dv, tempCtx, isPercent, barData, newBarSize, key, xAxisIsLabel, baseStack, cumulativeValue, stackValue, value, barCustomData, tickFormat);
+                        }else {
+                            Bars.Group(dv, tempCtx, barData, barDatasetIndex, key, xAxisIsLabel, value, newBarSize, maxBarPerLabel, barCustomData, tickFormat);
+                        }
                     }
 
                 }
-            }
-
-        }else {
-
-            if(dataset){
-
+                barDatasetIndex++;
+            }else {
                 const valueAxisName = dataset.yAxis? dataset.yAxis: "y1";
                 const labelAxisName = dataset.xAxis? dataset.xAxis: "x1";
     
@@ -178,10 +208,15 @@ const DrawElements = (dv, dataset) => {
                 const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
     
                 const datasetName = dataset.name || "";
-    
-                const designColor = dataset.design.color;
-                const designSize = dataset.design.size || 3;
-                const designText = dataset.design.text; // for tooltip text
+                
+                const datasetDesign = dataset.design || {};
+
+                const designColor = datasetDesign.color;
+
+                const designSize = datasetDesign.size;
+                const designSizeData = designSize?.data || {};
+
+                const defaultSize = 3;
     
                 tempCtx.fillStyle = designColor;
                 tempCtx.strokeStyle = designColor;
@@ -199,7 +234,7 @@ const DrawElements = (dv, dataset) => {
 
                 const labelIsAllNumbers = xAxisIsLabel? xAxisIsAllNumbers: yAxisIsAllNumbers;
                 
-                const isSingleLinePoint = (type === "line" && dataPoints.size === 1);
+                const isSingleLinePoint = (chartType === "line" && dataPoints.size === 1);
 
                 //const values = isHorizontal? dataset.labels: dataset.values? dataset.values: [];
                 if(labels){
@@ -207,48 +242,80 @@ const DrawElements = (dv, dataset) => {
                     let isDrawStarted = false;
                     let lastPosition = {x: null, y: null}, positionType;
                     let valueIsNull = false;
+                    let strokeEnd = true;
     
                     //const loopStart = (Math.floor(scrollIndex) - (Math.floor(scrollIndex) > 0? 1: 0));
     
                     const loopStart = (scrollIndex);
                     const loopEnd = labelIsAllNumbers? labels.length: scrollIndexEnd < labels.length? scrollIndexEnd: labels.length;
-
-                    for(var i = loopStart; i < loopEnd; i++){
-    
-                        const tempLabel = labels[i];
+                    
+                    for(var index = loopStart; index < loopEnd; index++){
+                        
+                        const tempLabel = labels[index];
                         const tempValue = dataPoints.get(tempLabel);
 
                         let value = yAxisIsAllNumbers? tempValue: tempLabel;
                         let label = yAxisIsAllNumbers? tempLabel: tempValue;
     
-                        const prevI = (i-1);
+                        const prevI = (index-1);
                         let prevLabel = Global.defaultIfNull(labels[prevI], tempLabel);
                         let prevValue = Global.defaultIfNull(dataPoints.get(prevLabel), value);
     
-                        const nextI = (i+1);
+                        const nextI = (index+1);
                         let nextLabel = Global.defaultIfNull(labels[nextI], tempLabel);
                         let nextValue = Global.defaultIfNull(dataPoints.get(nextLabel), value);
     
-                        const color = Array.isArray(designColor)? designColor[i]? designColor[i]: designColor[0]: designColor;
-                        const size = Array.isArray(designSize)? designSize[i]: designSize;
-                        const text = Array.isArray(designText)? designText[i]: designText;
+                        const color = Array.isArray(designColor)? designColor[index]? designColor[index]: designColor[0]: designColor;
+                        const sizeName = (designSize || {}).name ?? "";
                         
                         
                         if(value || value === 0){ //proceed if y is valid
-                            
-                            const prevPosition = Calc.getAxisPosition(dv, prevLabel, prevValue, valueAxisName, labelAxisName);
-                            const position = Calc.getAxisPosition(dv, label, value, valueAxisName, labelAxisName);
-                            const nextPosition = Calc.getAxisPosition(dv, nextLabel, nextValue, valueAxisName, labelAxisName);
-                            
-    
-                            let positionIsOut = false;
-    
-                            if(type === "line" && !isSingleLinePoint){
 
-                              
-                                if(i === loopStart){
+                            let stackValue = 0; 
+
+                            let prevCumulativeValue = prevValue;
+                            let cumulativeValue = value;
+                            let nextCumulativeValue = nextValue;
+
+                            if(isStacked && chartType === "area"){
+
+                                //const keyMinMax = stackSums.get(label) || {};
+                                //const nextKeyMinMax = stackSums.get(nextLabel) || {};
+
+                                const range = stackSums.get(label) || 0;//(keyMinMax.max - keyMinMax.min);
+                                const nextRange = stackSums.get(nextLabel) || 0;//(nextKeyMinMax.max - nextKeyMinMax.min);
+
+                                const lastValue = stackLastValues.get(label) || 0;
+
+                                // Convert to percent if isPercent
+                                stackValue = isPercent ? ((value / range) * 100) || 0 : value;
+                                const nextStackValue = isPercent ? ((nextValue / nextRange) * 100) || 0 : nextValue;
+
+                                cumulativeValue = i === 0 ? stackValue : lastValue + stackValue;
+
+                                prevCumulativeValue = stackLastValues.get(prevLabel) || cumulativeValue;
+                                nextCumulativeValue = stackLastValues.get(nextLabel) || nextStackValue;
+
+                                stackLastValues.set(label, cumulativeValue);
+                            }
+                            
+                            const prevPosition = Calc.getAxisPosition(dv, prevLabel, prevCumulativeValue, valueAxisName, labelAxisName);
+                            const position = Calc.getAxisPosition(dv, label, cumulativeValue, valueAxisName, labelAxisName);
+                            const nextPosition = Calc.getAxisPosition(dv, nextLabel, nextCumulativeValue, valueAxisName, labelAxisName);
+                            
+                            let positionIsOut = false;
+
+                            let bubbleSize = defaultSize;
+                            let radius = defaultSize;
+    
+                            if((chartType === "line" || chartType === "area") && !isSingleLinePoint){
+
+                                const size = (Array.isArray(designSize)? designSize[index]: designSize) || defaultSize;
+
+                                if(index === loopStart){
                                     positionType = "start";
-                                }else if(i === (loopEnd-1)){
+                                    strokeEnd = false;
+                                }else if(index === (loopEnd-1)){
                                     !valueIsNull? positionType = "end": null;
                                 }else {
                                     !valueIsNull? positionType = "": null;
@@ -256,31 +323,73 @@ const DrawElements = (dv, dataset) => {
                                 }
     
                                 //const boundPosition = Calc.findAxisBoundPositions(dv, i, labels, values, valueAxisName, labelAxisName, lastPosition, isDrawStarted, loopStart, loopEnd);
-                                
-                                positionIsOut = Calc.posIsOutOfBound(dv, prevPosition) && Calc.posIsOutOfBound(dv, position) && Calc.posIsOutOfBound(dv, nextPosition);
+
+                                const allPositionsIsOut = Calc.posIsOutOfBound(dv, prevPosition) && Calc.posIsOutOfBound(dv, position) && Calc.posIsOutOfBound(dv, nextPosition);
                                 const isCurrentPositionOut = Calc.posIsOutOfBound(dv, position);
-                                
-                                if((positionIsOut && isDrawStarted) || (isCurrentPositionOut && (position.x === lastPosition.x || position.y === lastPosition.y))){
-                                    tempCtx.stroke();
-                                    break;
-                                }else {
-                                    
-                                    if(!positionIsOut){
-                                        !isDrawStarted? positionType = "start": null;
-                                        positionIsOut = Calc.posIsOutOfBound(dv, position);
-                                       
-                                        isDrawStarted = true;
-    
-    
-                                        DrawLines(dv, tempCtx, dataset, positionType, size, position, positionIsOut);
-                                        lastPosition = position;
+
+                                //const isBreakLine = (allPositionsIsOut && positionType === "start") || (isCurrentPositionOut && (position.x === lastPosition.x || position.y === lastPosition.y));
+                                const isBreakLine = (position.x === lastPosition.x && position.y === lastPosition.y);
+
+                                //!isDrawStarted? positionType = "start": null;
+                                positionIsOut = Calc.posIsOutOfBound(dv, position);
+                                isDrawStarted = true;
+
+                                //draw area
+                                if(chartType === "area"){
+                                    if(positionType === "start"){
+                                        areaCtx.beginPath();
+                                        areaCtx.moveTo(position.x, position.y);
+                                    }else {
+                                        areaCtx.lineTo(position.x, position.y);
                                     }
                                 }
+
+                                DrawLines(dv, tempCtx, dataset, positionType, size, position, positionIsOut);
                                 
+                                if(chartType === "area" && (positionType === "end" || isBreakLine)){
+                                    fillArea(
+                                        dv, areaCtx, isStacked, isPercent, i, 
+                                        label, labels, [labelAxisName, valueAxisName], stackLastValues,
+                                        color, [loopStart, loopEnd], dataPoints, stackSums
+                                    );
+                                }
+
+
+                                if((position.x === lastPosition.x && position.y === lastPosition.y)){
+                                    tempCtx.stroke();
+                                    strokeEnd = true;
+                                    break;
+                                }
+
+                                lastPosition = position;
     
-                            }else if(type === "scatter" || type === "bubble" || isSingleLinePoint){
+                            }else if(chartType === "scatter" || isSingleLinePoint){
+                                bubbleSize = designSizeData instanceof Map 
+                                            ? designSizeData.get(tempLabel) 
+                                            : designSize ?? defaultSize;
+
+                                const minSize = sizeRange?.min ?? bubbleSize;
+                                const maxSize = sizeRange?.max ?? bubbleSize;
+
+                                const rangeIsNegative = minSize < 0 || maxSize < 0;
+
+                                const maxRadius = Math.min(graphWidth, graphHeight) * 0.1;
+                                const minRadius = (rangeIsNegative? 3: maxRadius * (0.2));
+
+                                const effectiveBubbleSize = Math.max(0, bubbleSize);
                                 
-                                positionIsOut = Calc.posIsOutOfRange(dv, label, value, labelAxisName, valueAxisName) || Calc.posIsOutOfBound(dv, position);
+                                if (maxSize !== minSize) {
+                                    // Linear interpolation between minRadius and maxRadius
+                                    const radiusRange = maxRadius - minRadius;
+                                    //const sizeProportion = (bubbleSize / maxSize);
+                                    //radius = minRadius + (radiusRange * sizeProportion);
+                                    const sizeProportion = (effectiveBubbleSize / maxSize);
+                                    radius = minRadius + (maxRadius - minRadius) * sizeProportion;
+                                } else {
+                                    radius = minRadius; // Default to minRadius when sizes are equal
+                                }
+
+                                positionIsOut = Calc.posIsOutOfRange(dv, label, cumulativeValue, labelAxisName, valueAxisName) || Calc.posIsOutOfBound(dv, position);
                                 
                                 if(!positionIsOut){
     
@@ -294,9 +403,12 @@ const DrawElements = (dv, dataset) => {
                                     tempCtx.lineWidth = lineSize;
     
                                     
-                                    DrawPoints(dv, tempCtx, size, position);
+                                    DrawPoints(dv, tempCtx, radius, position);
+                                    strokeEnd = true;
                                 }
                             }
+
+                            const designSizeLength = (designSizeData?.size || 0);
     
                             
                             //set tooltip
@@ -307,12 +419,12 @@ const DrawElements = (dv, dataset) => {
                             
                             if(!positionIsOut){
                                 dv.setToolTipData({
-                                    type: type,
-                                    point: { radius: size, midPoint: position },
+                                    type: chartType,
+                                    point: { radius, midPoint: position },
                                     text: [
-                                        { name: labelTitle, value: label, xIsLabel: xAxisIsLabel },
-                                        { name: datasetName, value: value },
-                                        ...(type === "bubble" ? [{ name: text, value: size }] : []),  // Conditionally add for "bubble"
+                                        { name: labelTitle, value: label, isLabel: xAxisIsLabel },
+                                        { name: datasetName, value: value, percent: isPercent && stackValue },
+                                        ...(designSizeLength > 1 ? [{ name: sizeName, value: bubbleSize }] : []),  // Conditionally add for "bubble"
                                         ...customDataValues.map((value, index) => {
                                             return {name: customData[index].name || "", value: value};
                                         })
@@ -329,17 +441,66 @@ const DrawElements = (dv, dataset) => {
                         }else {
                             //draw what lines drawn
                             tempCtx.stroke();
-    
+                            if(chartType === "area"){
+                                fillArea(
+                                    dv, areaCtx, isStacked, isPercent, i, 
+                                    label, labels, [labelAxisName, valueAxisName], stackLastValues,
+                                    color, [loopStart, loopEnd], dataPoints, stackSums
+                                );
+                            }
                             positionType = "start";
                             valueIsNull = true;
                             continue;
                         }
+
+                        /*if(chartType === "area" && (positionType === "end" || (positionType === "" && strokeEnd))){
+                            areaCtx.fillStyle = color;
+
+                            areaCtx.globalAlpha = 0.2;
+
+                            if(i === 0 || !isStacked){
+                                const zeroStartPos = Calc.getAxisPosition(dv, label, 0, valueAxisName, labelAxisName);
+                                const zeroEndPos = Calc.getAxisPosition(dv, labels[loopStart], 0, valueAxisName, labelAxisName);
+                                
+                                if(zeroStartPos && zeroEndPos){
+                                    areaCtx.lineTo(zeroStartPos.x, zeroStartPos.y);
+                                    areaCtx.lineTo(zeroEndPos.x, zeroEndPos.y);
+                                    areaCtx.closePath();
+                                    areaCtx.fill();
+                                }
+                            }else {
+                                
+                                for(var o = (loopEnd-1); o >= loopStart; o--){
+                                    const label = labels[o];
+                                    let value = dataPoints.get(label);
+
+                                    const stackValue = stackLastValues.get(label);
+
+                                    const keyMinMax = stackSums.get(label) || {};
+                                    const range = stackSums.get(label) || 0;//(keyMinMax.max - keyMinMax.min);
+                                    value = isPercent ? (value / range) * 100 : value;
+
+                                    //const prevDataPoints = axisDatasets[i-1].dataPoints;
+                                    //const prevValue = prevDataPoints.get(label);
+
+                                    const prevStackValue = (stackValue - value);
+
+                                    const prevPointsPos = Calc.getAxisPosition(dv, label, prevStackValue, valueAxisName, labelAxisName);
+                                    areaCtx.lineTo(prevPointsPos.x, prevPointsPos.y);
+                                }
+
+                                areaCtx.closePath();
+                                areaCtx.fill();
+                            }
+                        }*/
+
+
+
+
                     }
     
                 }
-    
             }
-            
         }
 
         tempCtx.clearRect(0, 0, canvasWidth, (graphY-(fontSize*0.5))); //clear top
@@ -347,6 +508,14 @@ const DrawElements = (dv, dataset) => {
         tempCtx.clearRect((graphX+graphWidth), 0, canvasWidth, canvasHeight); //clear right
         tempCtx.clearRect(0, (graphY+graphHeight+(fontSize*0.5)), canvasWidth, canvasHeight); //clear bottom
 
+        areaCtx.clearRect(0, 0, canvasWidth, (graphY-(fontSize*0.5))); //clear top
+        areaCtx.clearRect(0, 0, graphX, canvasHeight); //clear left
+        areaCtx.clearRect((graphX+graphWidth), 0, canvasWidth, canvasHeight); //clear right
+        areaCtx.clearRect(0, (graphY+graphHeight+(fontSize*0.5)), canvasWidth, canvasHeight); //clear bottom
+
+        //draw areaCanvas on ctx
+        ctx.drawImage(areaCanvas, 0, 0, canvasWidth, canvasHeight);
+        
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 
     }else if(type === "pie"){
@@ -407,6 +576,13 @@ const DrawElements = (dv, dataset) => {
 
         const header = tableData.header;
         const data = tableData.data;
+        const isSummaryColumns = data.isSummaryColumns || [];
+
+        const maxWidth = tableData.maxValueWidth;
+
+        const totals = tableData.totals || {};
+        const isColumnTotal = totals.enableColumnTotal;
+        const isRowTotal = totals.enableRowTotal;
 
         const columnCount = tableData.columnCount;
         const rowCount = tableData.rowCount;
@@ -425,33 +601,51 @@ const DrawElements = (dv, dataset) => {
         const dataFont = data.font? data.font: {};
         const tdFontSize = dataFont.fontSize? dataFont.fontSize: fontSize;
         const tdRowHeight = (tdFontSize+fontSize);
+        const tdColumnWidth = (maxWidth+(fontSize*2));
+
+        const totalsFont = totals.font || {};
+        const totalsFontSize = totalsFont.fontSize || fontSize;
         
-        const tableWidth = (graphWidth-graphX);
+        const contentLeft = ((((scrollData.leftIndex||0)/(columnCount))*scrollData.contentWidth) || 0);
+        const contentTop = ((((scrollData.topIndex||0)/(rowCount))*scrollData.contentHeight) || 0);
+
+
+        const tableWidth = (tdColumnWidth * columnCount)-contentLeft;
+
         const providedColumnsWidth = columnWidth.length > 0? ((columnWidth.length/columnCount)*tableWidth): 0;                 
         
         //
-        const contentTop = ((((scrollData.topIndex||0)/(rowCount))*scrollData.contentHeight) || 0)
         const tableHeight = ((thRowHeight+(tdRowHeight*(rowCount-1)))-contentTop);
-
 
         //set alt column width
         const altColumnWidth = ((tableWidth-providedColumnsWidth)/columnCount);
 
-        const newTopIndex = topIndex, newTopIndexEnd = topIndexEnd < (rowCount-1)? topIndexEnd: (rowCount-1);
+        let newLeftIndex = leftIndex, newLeftIndexEnd = Math.min(Math.ceil((graphWidth/tdColumnWidth)), columnCount);
 
-        let rowTop = (thRowHeight)-(((scrollData.topIndex-newTopIndex)/(rowCount-1))*scrollData.contentHeight), rowLeft = graphX;
-        const defaultRowTop = rowTop, defaultRowLeft = rowLeft;
-        
+        let newTopIndex = topIndex, newTopIndexEnd = topIndexEnd < (rowCount-1)? topIndexEnd: (rowCount-1);
+        isColumnTotal? newTopIndexEnd = newTopIndexEnd - 1: null;
+
+        let rowTop = (thRowHeight)-(((scrollData.topIndex-newTopIndex)/(rowCount))*scrollData.contentHeight);
+        const defaultRowTop = rowTop;
+
+        //let rowLeft = (maxWidth)-(((scrollData.leftIndex-newLeftIndex)/(columnCount-1))*scrollData.contentWidth);
+        let rowLeft = graphX;
         //draw Columns 
         let defaultLineWidth = 1;
         let lineWidth = 0;
         const dataValues = data.values;
-        for(let i = 0; i < columnCount; i++){
+
+        const columnsTotal = totals.columns;
+        const rowsTotal = totals.rows;
+
+        console.log("indexes: ", newLeftIndex, newLeftIndexEnd, columnCount);
+
+        for(let i = newLeftIndex; i < newLeftIndexEnd; i++){
             const columnValues = dataValues[i] || new Array((rowCount-1)).fill("");
-            const tdColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
+            //const tdColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
 
             for(let index = newTopIndex; index < newTopIndexEnd; index++){
-                const cellValue = isNaN(columnValues[index])? columnValues[index] || "": columnValues[index];
+                let cellValue = isNaN(columnValues[index])? columnValues[index] || "": columnValues[index];
 
                 const firstPos = {x: rowLeft, y: (rowTop+tdRowHeight)};
                 const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop+tdRowHeight)};
@@ -463,11 +657,23 @@ const DrawElements = (dv, dataset) => {
                 const line = data.line || {};
                 lineWidth = isNaN(line.width)? defaultLineWidth: line.width;
 
+                const font = {...data.font};
+
+                if(isRowTotal){
+                    if(i === (columnCount-1)){
+                        cellValue = rowsTotal[index];
+                        console.log("row total: ", cellValue, rowsTotal);
+                        font.style = "bold";
+                        positions.pop();
+                    }
+                }
+
                 //remove the 'values' property, and the value, center for text position, and adds header properties
                 const {values, ...properties } = {
+                    ...data,
                     value: cellValue,
                     center: {x: (rowLeft+(tdColumnWidth/2)), y: (rowTop+(tdRowHeight/2))},
-                    ...data
+                    font
                 };
 
                 rowTop += tdRowHeight;
@@ -477,10 +683,6 @@ const DrawElements = (dv, dataset) => {
                     positions.shift();
                 }
 
-                if(i === (columnCount-1)){
-                    positions.pop();
-                }
-
                 DrawCell(dv, tempCtx, positions, properties, rect, i, index, tdColumnWidth);
                 
             }
@@ -488,56 +690,130 @@ const DrawElements = (dv, dataset) => {
             rowLeft += tdColumnWidth;
         }
 
-        //draw data outer line 
-        if(columnCount){
-            tempCtx.beginPath();
-            tempCtx.lineWidth = lineWidth;
-            tempCtx.moveTo(graphX, (thRowHeight));
-            tempCtx.lineTo(graphX, ((tableHeight)-lineWidth));
-            tempCtx.lineTo(graphWidth, ((tableHeight)-lineWidth));
-            tempCtx.lineTo(graphWidth, (thRowHeight));
-            tempCtx.stroke();
-        }
 
-        //clear title and header area
+        //clear header area
         const halfLineWidth = lineWidth? lineWidth/2: lineWidth;
         tempCtx.clearRect(0, 0, canvas.width, ((thRowHeight-halfLineWidth)));
 
         const line = header.line || {};
         lineWidth = isNaN(line.width)? 1: line.width;
 
+        if(isColumnTotal){
+
+            rowTop = (Math.min(graphHeight, tableHeight)-tdRowHeight), rowLeft = graphX;
+            
+            //clear column total area
+            tempCtx.clearRect(halfLineWidth, rowTop, (canvas.width-halfLineWidth), ((tdRowHeight)));
+
+            const operations = data.operation || [];
+
+            for(let i = 0; i < columnCount; i++){
+                let value = columnsTotal[i];
+                const operation = operations[i] || null;
+                const isOperation = operation && operation !== "none";
+
+                const isNumeric = isSummaryColumns[i];
+                
+
+                const firstPos = {x: rowLeft, y: (rowTop)};
+                const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop)};
+                const thirdPos = {x: secondPos.x, y: (rowTop+tdRowHeight)};
+
+                const positions = [firstPos, secondPos];
+                const rect = {x: firstPos.x, y: rowTop, width: tdColumnWidth, height: tdRowHeight};
+
+                if(i === (columnCount-1) && isRowTotal){
+                    value = totals.grand;
+                }else {
+                    if(!isOperation){
+                        value = "";
+                        if(i === 0){
+                            value = "Total";
+                        }
+                    }
+                }
+
+                const {values, ...properties } = {
+                    value,
+                    center: {x: (rowLeft+(tdColumnWidth/2)), y: (rowTop+(tdRowHeight/2))},
+                    line: {...(data.line || {})},
+                    font: {
+                        ...(data.font || {}),
+                        style: "bold",
+                    },
+                    ...totals,
+                };
+
+                rowLeft += tdColumnWidth;
+
+                //rowTop = defaultRowTop;
+
+                DrawCell(dv, tempCtx, positions, properties, rect, i, (rowCount-1), tdColumnWidth);
+            }
+        }
+
+        //draw data outer line 
+        if(columnCount){
+            tempCtx.beginPath();
+            tempCtx.lineWidth = lineWidth;
+            tempCtx.moveTo(graphX, (thRowHeight));
+            if(isColumnTotal){
+                tempCtx.lineTo(graphX, (Math.min(graphHeight, tableHeight)-tdRowHeight));
+                tempCtx.stroke();
+
+                tempCtx.beginPath();
+                tempCtx.moveTo(tableWidth, (thRowHeight));
+                tempCtx.lineTo(tableWidth, (Math.min(graphHeight, tableHeight)-tdRowHeight));
+            }else {
+                tempCtx.lineTo(graphX, ((tableHeight)-lineWidth));
+                tempCtx.lineTo(tableWidth, ((tableHeight)-lineWidth));
+                tempCtx.lineTo(tableWidth, (thRowHeight));
+            }
+            tempCtx.stroke();
+        }
+
         rowTop = (lineWidth/2), rowLeft = graphX;
         //draw Header 
         const headerValues = header.values;
         for(let i = 0; i < columnCount; i++){
-            const thColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
-            const value = isNaN(headerValues[i])? headerValues[i] || "": headerValues[i];
+            //const thColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
+            let value = isNaN(headerValues[i])? headerValues[i] || "": headerValues[i];
 
             const firstPos = {x: rowLeft, y: (thRowHeight)};
-            const secondPos = {x: (rowLeft+thColumnWidth), y: (rowTop+thRowHeight)};
+            const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop+thRowHeight)};
             const thirdPos = {x: secondPos.x, y: rowTop};
 
             const positions = [firstPos, secondPos, thirdPos];
-            const rect = {x: firstPos.x, y: rowTop, width: thColumnWidth, height: thRowHeight};
+            const rect = {x: firstPos.x, y: rowTop, width: tdColumnWidth, height: thRowHeight};
 
             const fill = header.fill || {};
 
+            const font = {...header.font};
+
+            if(isRowTotal){
+                if(i === (columnCount-1)){
+                    value = "Total";
+                    font.style = "bold";
+                }
+            }
+
             //remove the 'values' property, and the value, center for text position, and adds header properties
             const {values, ...properties } = {
+                ...header,
                 value: value, 
-                center: {x: (rowLeft+(thColumnWidth/2)), y: ((thRowHeight/2))},
+                center: {x: (rowLeft+(tdColumnWidth/2)), y: ((thRowHeight/2))},
                 fontSize: thFontSize,
                 fill: {color: fill.color? fill.color: "white", ...fill},
-                ...header
+                font
             };
 
-            rowLeft += thColumnWidth;
+            rowLeft += tdColumnWidth;
 
             if(i === (columnCount-1)){
                 positions.pop();
             }
 
-            DrawCell(dv, tempCtx, positions, properties, rect, i, 0, thColumnWidth);
+            DrawCell(dv, tempCtx, positions, properties, rect, i, 0, tdColumnWidth);
         }
 
         //draw header outer line 
@@ -545,9 +821,9 @@ const DrawElements = (dv, dataset) => {
             tempCtx.beginPath();
             tempCtx.lineWidth = lineWidth;
             tempCtx.moveTo(graphX, (thRowHeight));
-            tempCtx.lineTo(graphX, rowTop);
-            tempCtx.lineTo(graphWidth, rowTop);
-            tempCtx.lineTo(graphWidth, (thRowHeight));
+            tempCtx.lineTo(graphX, 0);
+            tempCtx.lineTo(tableWidth, 0);
+            tempCtx.lineTo(tableWidth, (thRowHeight));
             tempCtx.stroke();
         }
 

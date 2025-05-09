@@ -2,6 +2,21 @@ import { findAxisBoundPositions, projChartPosition } from "../helpers/math";
 import customColors from '../helpers/colors.js';
 import { shortenText } from "../helpers/global.js";
 
+const createLegendTitle = (font, label, x, y) => {
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", x);
+    text.setAttribute("y", y + font.size * 0.85);
+    text.setAttribute("fill", font.color);
+    text.setAttribute("font-size", font.size);
+    text.setAttribute("font-family", font.family);
+    text.setAttribute("font-weight", font.weight);
+    text.setAttribute("font-style", font.style);
+    text.textContent = label;
+
+    return text;
+}
+
 // Create an SVG legend item
 const createLegendItem = (fillColor, font, label, title, x, y) => {
     const legendGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -45,6 +60,11 @@ const createLegendContainerSVG = (dv, range, displaySize) => {
     const font = design.legendFont;
     const layout = dv.getLayout();
     const legend = layout.legend;
+    const legendTitle = legend.title || {};
+    const titleFont = {
+        ...font,
+        ...legendTitle.font
+    };
     const names = legend.names || Object.keys(legend.data);
     const legendPosition = legend.position || "right";
     const isHorizontal = legendPosition === "top" || legendPosition === "bottom";
@@ -63,13 +83,40 @@ const createLegendContainerSVG = (dv, range, displaySize) => {
     const ctx = dv.getCtx();
     ctx.font = `${font.weight} ${font.style} ${font.size}px ${font.family}`;
 
+    //Implementing legend title
+
+    let titleText = legendTitle.text || "";
+    const titleWidth = ctx.measureText(titleText).width;
+
+    const legendWidth = (targetSize.width*0.2);
+    const maxTextWidth = isHorizontal? (targetSize.width-(font.size*2.25)): (legendWidth-(font.size*2));
+
+    if(titleWidth > maxTextWidth){
+        const lenthDiff = Math.ceil(((titleWidth - maxTextWidth) / titleWidth) * titleText.length);
+        titleText = shortenText(titleText, Math.max((titleText.length - lenthDiff), 1));
+    }
+    
+    const titleElement = createLegendTitle(
+                            titleFont, 
+                            titleText,
+                            isHorizontal ? offsetX : font.size * 0.25,
+                            position
+                        );
+
+    group.appendChild(titleElement);
+
+    if (isHorizontal) {
+        offsetX += titleWidth + font.size * 2;
+    } else {
+        position += font.size * 1.5;
+    }
+
+    //Implementing legend values
+
     for (let i = range.start; i < range.end; i++) {
 
         const labelWidth = ctx.measureText(names[i]).width;
         let label = names[i];
-
-        const legendWidth = (targetSize.width*0.2);
-        const maxTextWidth = isHorizontal? (targetSize.width-(font.size*2.25)): (legendWidth-(font.size*2));
 
         if(labelWidth > maxTextWidth){
             const lenthDiff = Math.ceil(((labelWidth - maxTextWidth) / labelWidth) * label.length);

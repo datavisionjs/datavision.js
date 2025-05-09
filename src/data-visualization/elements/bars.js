@@ -12,10 +12,10 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
     const yAxis = axisData.yData[barData.yAxis];
     const xAxis = axisData.xData[barData.xAxis];
 
-    const yAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
+    const layoutYAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
     
     const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
-    const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
+    const valueTitle = layout[layoutYAxisName]? layout[layoutYAxisName].title: null;
     const datasetName = barData.name || "";
 
     const customDataPoints = barData.customDataPoints;
@@ -32,7 +32,7 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
 
     //find the starting position of the bar on the y-axis
         
-    const startPos = range? isHorizontal? Calc.getAxisLabelPosition(dv, rangeStart): Calc.getAxisValuePosition(dv, rangeStart): null;
+    const startPos = range? isHorizontal? Calc.getAxisLabelPosition(dv, rangeStart): Calc.getAxisValuePosition(dv, rangeStart, barData.yAxis): null;
     //const start = find0? find0: startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
     const start = startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
     
@@ -74,8 +74,8 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
                         width, height
                     },
                     text: [
-                        {name: datasetName, value: key, xIsLabel},
-                        {name: valueTitle, value: value},
+                        {name: labelTitle, value: key, isLabel: xIsLabel},
+                        {name: datasetName, value: value},
                         ...customDataValues.map((value, index) => {
                             const data = customData[index] || {};
                             return {name: data.name || "", value: value};
@@ -97,7 +97,7 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
 
         //value > rangeEnd? value = rangeEnd: null; //making sure value stays in range
 
-        const end = Calc.getAxisValuePosition(dv, value);
+        const end = Calc.getAxisValuePosition(dv, value, barData.yAxis);
 
         const barHeight = (start-end);
 
@@ -114,7 +114,6 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
                 const yDiff = (graphY-y);
                 y = (graphY);
                 height = (height-yDiff);
-
             }
 
             //draw bar
@@ -132,7 +131,7 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
                         width, height
                     },
                     text: [
-                        {name: labelTitle, value: key, xIsLabel},
+                        {name: labelTitle, value: key, isLabel: xIsLabel},
                         {name: datasetName, value: value},
                         ...customDataValues.map((value, index) => {
                             const data = customData[index] || {};
@@ -149,7 +148,21 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
 
 };
 
-export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value, currentValue, customData, tickFormat) => {
+export const Stack = (
+    dv, 
+    ctx, 
+    isPercent,
+    barData, 
+    barSize, 
+    key, 
+    xIsLabel, 
+    baseStack, 
+    cumulativeValue, 
+    stackValue, 
+    originalValue,
+    customData, 
+    tickFormat
+) => {
     const layout = dv.getLayout();
 
     const isHorizontal = barData.direction === "hr";
@@ -159,9 +172,9 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
     const yAxis = axisData.yData[barData.yAxis];
     const xAxis = axisData.xData[barData.xAxis];
 
-    const yAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
+    const layoutYAxisName = barData.yAxis === "y2"? "y2Axis": "yAxis";
     const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
-    const valueTitle = layout[yAxisName]? layout[yAxisName].title: null;
+    const valueTitle = layout[layoutYAxisName]? layout[layoutYAxisName].title: null;
     const datasetName = barData.name || "";
 
     const customDataPoints = barData.customDataPoints;
@@ -174,11 +187,11 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
 
     let range = isHorizontal? xAxis.range: yAxis.range;
 
-    lastValue = Calc.getNumberInRange(lastValue, range); //keep lastValue in range;
+    baseStack = Calc.getNumberInRange(baseStack, range); //keep lastStackValue in range;
 
     //find the starting position of the bar on the y-axis
         
-    const startPos = range? isHorizontal? Calc.getAxisLabelPosition(dv, lastValue): Calc.getAxisValuePosition(dv, lastValue): null;
+    const startPos = range? isHorizontal? Calc.getAxisLabelPosition(dv, baseStack): Calc.getAxisValuePosition(dv, baseStack, barData.yAxis): null;
     //const start = find0? find0: startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
     const start = startPos? startPos: isHorizontal? graphX: (graphY+graphHeight);
 
@@ -194,7 +207,7 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
 
         //value > rangeEnd? value = rangeEnd: null; //making sure value stays in range
 
-        const end = Calc.getAxisLabelPosition(dv, value);
+        const end = Calc.getAxisLabelPosition(dv, cumulativeValue);
 
         const barWidth = (end-start);
 
@@ -218,8 +231,8 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
                     x: x, y: y, width: width, height: height
                 },
                 text: [
-                    {name: labelTitle, value: key, xIsLabel},
-                    {name: datasetName, value: currentValue},
+                    {name: labelTitle, value: key, isLabel: xIsLabel},
+                    {name: datasetName, value: originalValue, percent: isPercent && stackValue},
                     ...customDataValues.map((value, index) => {
                         const data = customData[index] || {};
                         return {name: data.name || "", value: value};
@@ -240,7 +253,7 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
 
         //value > rangeEnd? value = rangeEnd: null; //making sure value stays in range
 
-        const end = Calc.getAxisValuePosition(dv, value);
+        const end = Calc.getAxisValuePosition(dv, cumulativeValue, barData.yAxis);
 
         const barHeight = (start-end);
 
@@ -262,8 +275,8 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
                     x: x, y: y, width: width, height: height
                 },
                 text: [
-                    {name: labelTitle, value: key, xIsLabel},
-                    {name: datasetName, value: currentValue},
+                    {name: labelTitle, value: key, isLabel: xIsLabel},
+                    {name: datasetName, value: originalValue, percent: isPercent && stackValue},
                     ...customDataValues.map((value, index) => {
                         const data = customData[index] || {};
                         return {name: data.name || "", value: value};
@@ -274,3 +287,87 @@ export const Stack = (dv, ctx, barData, barSize, key, xIsLabel, lastValue, value
         );
     }
 }
+
+
+export const Histogram = (dv, ctx, barData, index, key, value, barSize, tickFormat) => { //process grouped bars
+    const layout = dv.getLayout();
+
+    const axisData = layout.axisData;
+
+    const binWidth = barData.binWidth || 0;
+
+    const yAxis = axisData.yData[barData.yAxis];
+
+    const labelTitle = layout["xAxis"]? layout["xAxis"].title: null;
+
+    const datasetName = barData.name || "";
+
+    //stores the position and dimensions of the graph area
+    const graphPosition = layout.graphPosition;
+    const graphY = graphPosition.y;
+    const graphHeight = graphPosition.height;
+
+    let range = yAxis.range;
+
+    const rangeStart = Calc.getNumberInRange(0, range);
+
+    //find the starting position of the bar on the y-axis
+        
+    const startPos = range? Calc.getAxisValuePosition(dv, rangeStart): null;
+    const start = startPos? startPos: (graphY+graphHeight);
+    
+    const newKey = (key + (binWidth/2))
+    const labelPositionX = Calc.getAxisLabelPosition(dv, newKey);
+
+    const barArea = (barSize);
+    const barAreaStartX = (labelPositionX-(barArea/2));
+    
+    const barWidth = barSize;
+    let axisX = barAreaStartX+(barWidth*index);
+
+    const end = Calc.getAxisValuePosition(dv, value);
+
+    const barHeight = (start-end);
+
+    const x = axisX;
+    let y = end;
+    const width = barWidth;
+    let height = barHeight;
+
+    let isRectIn = Global.crashWithRect({x: x, y: y, width: width, height: height}, graphPosition);
+
+    if(isRectIn){
+
+        if(y < (graphY)){
+            const yDiff = (graphY-y);
+            y = (graphY);
+            height = (height-yDiff);
+
+        }
+
+        //draw bar
+        ctx.beginPath();
+
+        ctx.rect(x, y, width, height);
+
+        ctx.fill();
+
+        //set tooltip
+        dv.setToolTipData(
+            { 
+                type: "bar",
+                point: {
+                    x, y,
+                    width, height
+                },
+                text: [
+                    {name: labelTitle, value: key, isLabel: true},
+                    {name: datasetName, value: value},
+                ],
+                tickFormat
+            }
+        );
+    
+    }
+
+};

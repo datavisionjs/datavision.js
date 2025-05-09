@@ -80,6 +80,7 @@ const AddTitle = (dv) => {
     const mainContainer = dv.getMainContainer();
 
     const containerDIV = dv.getTitleContainer();
+    containerDIV.setAttribute("style", "line-height: 0");
 
     if (containerDIV.parentElement === mainContainer) {
         mainContainer.removeChild(containerDIV);
@@ -91,22 +92,26 @@ const AddTitle = (dv) => {
     const genFont = design.font;
 
     //title
-    const titleDesign = design.title;
+    const titleDesign = design.title || {};
+    const titleFont = titleDesign.font;
+    const titleFontSize = titleFont.size;
 
     const title = layout.title;
     const titleLines = title.lines;
 
-    const TitleSVG = GetTitle(dv, genFont, titleDesign, titleLines);
+    const TitleSVG = GetTitle(dv, titleFont, titleDesign, titleLines);
 
     TitleSVG && containerDIV.appendChild(TitleSVG);
 
     //subTitle 
-    const subTitleDesign = design.subTitle;
+    const subTitleDesign = design.subTitle || {};
+    const subTitleFont = subTitleDesign.font;
+    const subTitleFontSize = subTitleFont.size;
 
     const subTitle = layout.subTitle;
     const subTitleLines = subTitle.lines;
 
-    const SubTitleSVG = GetTitle(dv, genFont, subTitleDesign, subTitleLines);
+    const SubTitleSVG = GetTitle(dv, subTitleFont, subTitleDesign, subTitleLines);
 
     SubTitleSVG && containerDIV.appendChild(SubTitleSVG);
     

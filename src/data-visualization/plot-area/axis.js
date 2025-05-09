@@ -103,7 +103,7 @@ function drawLabels(dv, ctx, position){
     }
 }
 
-function drawYAxis(dv, ctx, position){
+function drawYAxis(dv, ctx, position, isPercent){
 
     const scrollData = dv.getScrollData();
 
@@ -135,6 +135,7 @@ function drawYAxis(dv, ctx, position){
 
     //set axisData
     const axisData = layout.axisData;
+    const isHorizontal = axisData.direction === "hr";
 
     const axisValues = axisData.yData;
 
@@ -155,12 +156,14 @@ function drawYAxis(dv, ctx, position){
 
             //let range = ranges? isHorizontal? ranges.labelRange: ranges.valueRange: dataRange;
             let range = axis.range;
+
+            console.log("myRange: ", range, axis);
             
             if(range){
 
                 const format = axis.tickFormat || {};
-                //const prefix = (format.prefix || ""), suffix = (format.suffix || "");
-                //const separateNumbers = format.separateNumbers;
+                isPercent && !isHorizontal? format.suffix = "%": null;
+                
                 const step = tickData.interval;
 
                 const rangeStart = range[0];
@@ -194,12 +197,12 @@ function drawYAxis(dv, ctx, position){
                     const textWidth = ctx.measureText(value).width;
                     
                     const textPosX = "y2" === key? ((axisX+graphWidth)+fontSize): ((axisX-textWidth)-(fontSize));
-                    const textPosY = (axisY+Math.floor(fontSize/2));
+                    //const textPosY = (axisY+Math.floor(fontSize/2));
 
                     //draw grid
                     ctx.beginPath();
-                    ctx.strokeStyle = value === "0"? gridTick0Design.color: gridDesign.color;
-                    ctx.lineWidth = value === "0"? gridTick0Design.width: gridDesign.width;
+                    ctx.strokeStyle = rawValue === 0? gridTick0Design.color: gridDesign.color;
+                    ctx.lineWidth = rawValue === 0? gridTick0Design.width: gridDesign.width;
 
                     if("y2" === key){
                         ctx.moveTo((graphX+graphWidth), axisY);
@@ -208,6 +211,7 @@ function drawYAxis(dv, ctx, position){
                         ctx.moveTo((graphX+graphWidth), axisY);
                         ctx.lineTo((graphX-(fontSize/2)), (axisY));
                     }
+
                     ctx.stroke();
                     ctx.closePath();
                     
@@ -216,7 +220,6 @@ function drawYAxis(dv, ctx, position){
                     ctx.fillStyle = font.color;
                     ctx.textBaseline = "middle";
                     ctx.fillText(value, textPosX, axisY);
-
                 }
             }
 
@@ -277,10 +280,9 @@ function drawYAxis(dv, ctx, position){
 
 }
 
-function drawXAxis(dv, ctx, position){
+function drawXAxis(dv, ctx, position, isPercent){
 
     const layout = dv.getLayout();
-
     const scrollData = dv.getScrollData();
 
 
@@ -310,11 +312,10 @@ function drawXAxis(dv, ctx, position){
 
     //set barData
     const axisData = layout.axisData;
-    //const isHorizontal = axisData.direction === "hr";
+    const isHorizontal = axisData.direction === "hr";
 
     const labels = axisData.xData;
     
-
     for(let key in labels){
         const maxLabelWidth = position.maxLabelWidth[key];
 
@@ -331,6 +332,7 @@ function drawXAxis(dv, ctx, position){
             if(range){
 
                 const format = axis.tickFormat || {};
+                isPercent && isHorizontal? format.suffix = "%": null;
                 //const prefix = (format.prefix || ""), suffix = (format.suffix || "");
                 //const separateNumbers = format.separateNumbers;
 
@@ -378,8 +380,8 @@ function drawXAxis(dv, ctx, position){
 
                     //draw grid 
                     ctx.beginPath();
-                    ctx.strokeStyle = label === "0"? gridTick0Design.color: gridDesign.color;
-                    ctx.lineWidth = label === "0"? gridTick0Design.width: gridDesign.width;
+                    ctx.strokeStyle = rawLabel === 0? gridTick0Design.color: gridDesign.color;
+                    ctx.lineWidth = rawLabel === 0? gridTick0Design.width: gridDesign.width;
 
                     ctx.moveTo(axisX, graphY);
                     ctx.lineTo(axisX, ((graphY+graphHeight)+(fontSize/2)));
@@ -496,18 +498,6 @@ const DrawAxis = (dv) => {
     const font = design.font;
     
     const fontSize = font.size;
-    const halfFontSize = (fontSize/2);
-
-    //draw a rectangle representing the graph area
-    
-    /*
-    ctx.beginPath();
-    ctx.fillStyle = "black";
-    ctx.strokeStyle = "#b5b5b5";
-    ctx.lineWidth = "0.1";
-    ctx.rect((graphX+1), graphY, (graphWidth-2), graphHeight);
-    ctx.stroke();
-    */
 
     const position = {x: 0, y: graphY, width: (graphX+graphWidth), height: (graphHeight)};
     
@@ -525,10 +515,13 @@ const DrawAxis = (dv) => {
 
     const tempCanvas = dv.createCanvas(null, canvasWidth, canvasHeight);
     const tempCtx = tempCanvas.getContext("2d");
+
+    const data = dv.getData()[0] || {};
+    const isPercent = data.format === "percent";
     
     //Draw Y-axis, X-axis around the graph area
-    drawXAxis(dv, tempCtx, graphPosition);
-    drawYAxis(dv, tempCtx, graphPosition);
+    drawXAxis(dv, tempCtx, graphPosition, isPercent);
+    drawYAxis(dv, tempCtx, graphPosition, isPercent);
 
     //labels around the graph area
     drawLabels(dv, tempCtx, graphPosition);

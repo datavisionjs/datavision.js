@@ -3,6 +3,7 @@ import * as Scroll from './scrollbar.js';
 
 const DrawTable = (dv) => {
 
+    /*
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
     
@@ -10,11 +11,10 @@ const DrawTable = (dv) => {
 
     const design = dv.getDesign();
     const font = design.font;
-    const fontSize = font.size;
+    //const fontSize = font.size;
+    */
 
-    const canvasSize = dv.getCanvasSize();
-    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
-
+    /*
     const graphPosition = layout.graphPosition;
     const graphX = graphPosition.x, graphY = graphPosition.y;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
@@ -41,20 +41,24 @@ const DrawTable = (dv) => {
     const thRowHeight = (thFontSize+fontSize);
 
     const dataFont = data.font? data.font: {};
-    const tdFontSize = dataFont.fontSize? dataFont.fontSize: fontSize;
-    const tdRowHeight = (tdFontSize+fontSize);
+    //const tdFontSize = dataFont.fontSize? dataFont.fontSize: fontSize;
+    //const tdRowHeight = (tdFontSize+fontSize);
 
     
-    const topIndex = (scrollData.topIndex || 0), leftIndex = (scrollData.leftIndex || 0);
-    let rowTop = ((topIndex/(rowCount))*scrollData.contentHeight) || 0, rowLeft = graphX;
+    //const topIndex = (scrollData.topIndex || 0), leftIndex = (scrollData.leftIndex || 0);
+    //let rowTop = ((topIndex/(rowCount))*scrollData.contentHeight) || 0, rowLeft = graphX;
     
-    const tableWidth = (graphWidth-graphX);
+    //const tableWidth = (graphWidth-graphX);
     //                   
-    const tableHeight = (thRowHeight+(tdRowHeight*(rowCount-1))-rowTop);
+    //const tableHeight = (thRowHeight+(tdRowHeight*(rowCount-1))-rowTop);
 
-    const position = {x: 0, y: graphY, width: (graphWidth), height: (canvasHeight-graphY)};
+    //const position = {x: 0, y: graphY, width: (graphWidth), height: (canvasHeight-graphY)};
 
+    */
 
+    const canvasSize = dv.getCanvasSize();
+    const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
+    
     //clear axis area
     dv.clearCanvas(0, 0, canvasWidth, canvasHeight);
     

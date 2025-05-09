@@ -45,6 +45,7 @@ export const setContentSize = function (dv){
         scrollData.wheelWidth = ((fontSize*labelsCount)+graphX);
         scrollData.contentHeight = ((valuesCount*fontSize)) || 0;
         scrollData.contentWidth = ((fontSize*labelsCount));
+
     }else if(layout.hasTableData){
         const tableData = layout.tableData;
         //const columnWidth = tableData.columnWidth || [];
@@ -61,16 +62,17 @@ export const setContentSize = function (dv){
         const headerFont = header.font? header.font: {};
         const thFontSize = headerFont.fontSize? headerFont.fontSize: fontSize;
         const thRowHeight = (thFontSize+fontSize);
+        const tdColumnWidth = (maxWidth+(fontSize*2));
     
         const dataFont = data.font? data.font: {};
         const tdFontSize = dataFont.fontSize? dataFont.fontSize: fontSize;
         const tdRowHeight = (tdFontSize+fontSize);
 
         scrollData.contentHeight = (thRowHeight+(tdRowHeight*(rowCount-1)));
-        scrollData.contentWidth = 0;
+        scrollData.contentWidth = (tdColumnWidth * columnCount);
 
         scrollData.wheelHeight = scrollData.contentHeight;
-        scrollData.wheelWidth = 0;
+        scrollData.wheelWidth = scrollData.contentWidth;
     }
 
     /*
@@ -373,6 +375,7 @@ export const addBars = function (dv, position){
             const newContent = content.cloneNode(true);
             //set width 
             newContent.style.width = contentWidth + "px";
+            newContent.style.height = "1px";
             hrBar.appendChild(newContent);
             mainContainer.appendChild(hrBar);
         }
@@ -382,6 +385,7 @@ export const addBars = function (dv, position){
             const newContent = content.cloneNode(true);
             //set height 
             newContent.style.height = contentHeight + "px";
+            newContent.style.width = "1px";
             vrBar.appendChild(newContent);
             mainContainer.appendChild(vrBar);
         }
