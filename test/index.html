@@ -232,42 +232,7 @@
             },
         }
 
-        const table = {
-            header: {
-                fill: {color: "#e4e9f4"},
-                font: {family: "arial", size: 14, weight: "normal"},
-                line: {width: 1, color: "lightgray"},
-                values: ["RegionName"],
-            },
-            data: {
-                font : {family: 'arial', size: 14, weight: 'normal', style: 'normal'},
-                line: {width: 1, color: 'lightgray'},
-                operation: ["none", "sum"], 
-                values: [
-                    [null, "North", "South", "West", "North", "South"],
-                    [1, 2, 3, 4, 5, 6],
-                    //["Teddy", "Newark", "Teddy", "Newark", "Teddy", "Newark"],
-                    //[50, 40, 30, 20, 10, 30],
-                ]
-            },
-            totals: {
-                //enableColumnTotal: false,
-                enableRowTotal: true
-            },
-            type: "table",
-        }
-
-        const nom = [
-        "Alice", "Xander", "Yasmin",
-        "Zane", "Aaron", "Bella", "Cody", "Diana"
-        ];
-
-        const nomValues = [
-            1, 2, 3, 4,
-           5, 6, 7, 8
-        ];
-
-    const matchLength = [
+        const matchLength = [
     9,
     46.1,
     6.2,
@@ -3545,6 +3510,46 @@
     3.2
 ];
 
+
+
+        const table = {
+            header: {
+                fill: {color: "#e4e9f4"},
+                font: {family: "arial", size: 14, weight: "normal"},
+                line: {width: 1, color: "lightgray"},
+                values: ["Same", "RegionName", "How", "Team", "Money"],
+            },
+            data: {
+                font : {family: 'arial', size: 14, weight: 'normal', style: 'normal'},
+                line: {width: 1, color: 'lightgray'},
+                operation: ["sum", "none"], 
+                values: [
+                    matchLength,
+                    [null, "North", "South", "West", "North", "South"],
+                   
+                    ["Teddy", "Newark", "Teddy", "Newark", "Teddy", "Newark"],
+                    //[50, 40, 30, 20, 10, 30],
+                ]
+            },
+            totals: {
+                //enableColumnTotal: false,
+                enableRowTotal: true
+            },
+            stickyColumns: {
+                //count: 1
+            },
+            type: "table",
+        }
+
+        const nom = [
+        "Alice", "Xander", "Yasmin",
+        "Zane", "Aaron", "Bella", "Cody", "Diana"
+        ];
+
+        const nomValues = [
+            1, 2, 3, 4,
+           5, 6, 7, 8
+        ];
 
         const trace1 = {
             x: matchLength,

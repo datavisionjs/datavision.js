@@ -68,8 +68,6 @@ const DrawCell = (dv, ctx, positions, properties, rect, column, row, columnWidth
     let fontWeight = getValue(font.weight, column, row, "normal");
     let fontStyle = getValue(font.style, column, row, "normal");
     let fontColor = getValue(font.color, column, row, "black");
-
-    const value = Global.shortenText(properties.value, ((columnWidth-(lineWidth*2))/fontSize));
     
     ctx.beginPath();
     ctx.fillStyle = fontColor;
@@ -77,7 +75,14 @@ const DrawCell = (dv, ctx, positions, properties, rect, column, row, columnWidth
     ctx.textAlign = align;
     ctx.font = fontStyle + " " + fontWeight + " " + fontSize +"px "+ family;
 
-    ctx.fillText(value, center.x, center.y);
+    const value = properties.value || "";
+
+    const valueWidth = ctx.measureText(value).width;
+    const valueCharSize = (valueWidth/value.length);
+
+    const newValue = Global.shortenText(value, ((columnWidth-(lineWidth*2))/valueCharSize));
+
+    ctx.fillText(newValue, center.x, center.y);
 
 };
 

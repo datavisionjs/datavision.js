@@ -50,20 +50,15 @@ const DrawElements = (dv, dataset) => {
 
     const topIndex = Math.floor(scrollData.topIndex >= 1? (scrollData.topIndex-1): 0), leftIndex = Math.floor(scrollData.leftIndex >= 1? (scrollData.leftIndex-1): 0);
     const topIndexEnd = Math.ceil((topIndex + 2) + (graphHeight/fontSize));
-    const leftIndexEnd = Math.ceil((leftIndex + 2) + (graphWidth/fontSize));
-
-    console.log("li: ", leftIndex, leftIndexEnd, graphWidth, (graphWidth/fontSize));
-
-    const topIndexDiff = Math.abs(topIndexEnd-topIndex), leftIndexDiff = Math.abs(leftIndexEnd-leftIndex);
-
-
-    const axisChartTypes = Global.getAxisChartTypes();
 
     //set line cap and join
     tempCtx.lineCap = "round";
     tempCtx.lineJoin = "round";
 
     if(type === "axis"){
+        const leftIndexEnd = Math.ceil((leftIndex + 2) + (graphWidth/fontSize));
+        const topIndexDiff = Math.abs(topIndexEnd-topIndex), leftIndexDiff = Math.abs(leftIndexEnd-leftIndex);
+
         const isLoopLeftAxis = (scrollData.isScrollX || !axisData.xData["x1"].isAllNumbers) && ((leftIndexDiff > topIndexDiff) || axisData.yData["y1"].isAllNumbers);
 
         const scrollIndex = isLoopLeftAxis? leftIndex: topIndex;
@@ -578,7 +573,8 @@ const DrawElements = (dv, dataset) => {
         const data = tableData.data;
         const isSummaryColumns = data.isSummaryColumns || [];
 
-        const maxWidth = tableData.maxValueWidth;
+        const maxWidths = tableData.maxWidths || [];
+        const cumulativeWidths = tableData.cumulativeWidths || [];
 
         const totals = tableData.totals || {};
         const isColumnTotal = totals.enableColumnTotal;
@@ -587,12 +583,15 @@ const DrawElements = (dv, dataset) => {
         const columnCount = tableData.columnCount;
         const rowCount = tableData.rowCount;
 
-        let columnWidth = Array.isArray(tableData.columnWidth)? tableData.columnWidth: [];
-        const columnWidthDiff = (columnCount - columnWidth.length);
+        const stickyColumns = tableData.stickyColumns || {};
+        const stickyCount = Math.min((stickyColumns.count || 0), columnCount);
 
-        columnWidth = columnWidth.length <= columnCount? columnWidth.concat(new Array(columnWidthDiff).fill(Math.min(columnWidth) || 1)): columnWidth.slice(0, columnCount);
+        //let columnWidth = Array.isArray(tableData.columnWidth)? tableData.columnWidth: [];
+        //const columnWidthDiff = (columnCount - columnWidth.length);
 
-        const columnWidthSum = Calc.sum(columnWidth);
+        //columnWidth = columnWidth.length <= columnCount? columnWidth.concat(new Array(columnWidthDiff).fill(Math.min(columnWidth) || 1)): columnWidth.slice(0, columnCount);
+
+        //const columnWidthSum = Calc.sum(columnWidth);
 
         const headerFont = header.font? header.font: {};
         const thFontSize = headerFont.fontSize? headerFont.fontSize: fontSize;
@@ -601,26 +600,27 @@ const DrawElements = (dv, dataset) => {
         const dataFont = data.font? data.font: {};
         const tdFontSize = dataFont.fontSize? dataFont.fontSize: fontSize;
         const tdRowHeight = (tdFontSize+fontSize);
-        const tdColumnWidth = (maxWidth+(fontSize*2));
+
+        const maxRowWidth = tableData.rowsValueSum;
+        const avgColumnWidth = ((maxRowWidth/columnCount));
 
         const totalsFont = totals.font || {};
         const totalsFontSize = totalsFont.fontSize || fontSize;
         
-        const contentLeft = ((((scrollData.leftIndex||0)/(columnCount))*scrollData.contentWidth) || 0);
+        //const contentLeft = ((((scrollData.leftIndex||0)/(columnCount))*scrollData.contentWidth) || 0);
+        //const contentLeft = scrollData.leftIndex >= 1? (cumulativeWidths.slice(stickyCount)[Math.floor(scrollData.leftIndex)] || 0): 0;
         const contentTop = ((((scrollData.topIndex||0)/(rowCount))*scrollData.contentHeight) || 0);
 
-
-        const tableWidth = (tdColumnWidth * columnCount)-contentLeft;
-
-        const providedColumnsWidth = columnWidth.length > 0? ((columnWidth.length/columnCount)*tableWidth): 0;                 
+        //const providedColumnsWidth = columnWidth.length > 0? ((columnWidth.length/columnCount)*tableWidth): 0;                 
         
         //
         const tableHeight = ((thRowHeight+(tdRowHeight*(rowCount-1)))-contentTop);
 
-        //set alt column width
-        const altColumnWidth = ((tableWidth-providedColumnsWidth)/columnCount);
+        const viewLastColumnIndex = Calc.scrolledColumnIndex((scrollData.x + graphWidth), cumulativeWidths);
 
-        let newLeftIndex = leftIndex, newLeftIndexEnd = Math.min(Math.ceil((graphWidth/tdColumnWidth)), columnCount);
+        const leftIndexEnd = (viewLastColumnIndex + 2)//Math.ceil((leftIndex + 2) + viewLastColumnIndex);
+        let newLeftIndex = Math.floor(scrollData.leftIndex >= 1? scrollData.leftIndex: 0), newLeftIndexEnd = leftIndexEnd < columnCount? leftIndexEnd: columnCount;
+        const leftIndexDiff = (scrollData.leftIndex-newLeftIndex);
 
         let newTopIndex = topIndex, newTopIndexEnd = topIndexEnd < (rowCount-1)? topIndexEnd: (rowCount-1);
         isColumnTotal? newTopIndexEnd = newTopIndexEnd - 1: null;
@@ -628,8 +628,26 @@ const DrawElements = (dv, dataset) => {
         let rowTop = (thRowHeight)-(((scrollData.topIndex-newTopIndex)/(rowCount))*scrollData.contentHeight);
         const defaultRowTop = rowTop;
 
-        //let rowLeft = (maxWidth)-(((scrollData.leftIndex-newLeftIndex)/(columnCount-1))*scrollData.contentWidth);
-        let rowLeft = graphX;
+        //const stickyRowSum = maxWidths.slice(0, stickyCount)?.reduce((acc, val) => acc + val, 0);
+        const stickyWidth = cumulativeWidths[stickyCount-1] || 0;
+
+        const leftIndexCeilDiff = (Math.floor(leftIndexDiff)+1)-leftIndexDiff;
+
+        //const offsetColIndex = Math.floor(scrollData.leftIndex-newLeftIndex);
+        const offsetColIndex = Math.floor(scrollData.leftIndex);
+        const stickyOffset = cumulativeWidths.slice(stickyCount)[newLeftIndex];
+        const lastOffsetColumnWidth = maxWidths.slice(stickyCount)[offsetColIndex];
+
+        //const stickyRowLeft = ((graphX + (stickyWidth))-(((scrollData.leftIndex-newLeftIndex)/(columnCount))*scrollData.contentWidth));
+        const stickyRowLeft = ((graphX + (stickyWidth))-((stickyOffset-stickyWidth)-(leftIndexCeilDiff*lastOffsetColumnWidth)));
+
+        const tableWidth = (maxRowWidth) - ((stickyOffset-stickyWidth)-(leftIndexCeilDiff*lastOffsetColumnWidth));
+
+        //const stickyWidth = (stickyRowWidth * stickyCount);
+
+        const defaultRowLeft = ((graphX)-((stickyOffset-stickyWidth)-(leftIndexCeilDiff*lastOffsetColumnWidth)));
+        let rowLeft = stickyRowLeft;
+
         //draw Columns 
         let defaultLineWidth = 1;
         let lineWidth = 0;
@@ -638,83 +656,131 @@ const DrawElements = (dv, dataset) => {
         const columnsTotal = totals.columns;
         const rowsTotal = totals.rows;
 
-        console.log("indexes: ", newLeftIndex, newLeftIndexEnd, columnCount);
+        function drawHeader(start, end, keepEndPosition){
 
-        for(let i = newLeftIndex; i < newLeftIndexEnd; i++){
-            const columnValues = dataValues[i] || new Array((rowCount-1)).fill("");
-            //const tdColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
+            //const prevCumWidth = (cumulativeWidths[(start-1)|| 0]) - stickyWidth;
+            //const maxWidth = maxWidths[i];
+            //rowLeft += (start !== (stickyCount-1)? prevCumWidth: 0)
 
-            for(let index = newTopIndex; index < newTopIndexEnd; index++){
-                let cellValue = isNaN(columnValues[index])? columnValues[index] || "": columnValues[index];
+            const headerValues = header.values;
+            for(let i = start; i < end; i++){
+                const prevCumWidth = (cumulativeWidths[i-1] || 0) - stickyWidth;
+                const maxWidth = maxWidths[i];
+                const tdColumnWidth = (i === start && i !== (stickyCount-1)? prevCumWidth: 0) + maxWidth;
+                //const tdColumnWidth = maxWidths[i];
+                //const thColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
+                let value = isNaN(headerValues[i])? headerValues[i] || "": headerValues[i];
 
-                const firstPos = {x: rowLeft, y: (rowTop+tdRowHeight)};
-                const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop+tdRowHeight)};
+                const firstPos = {x: rowLeft, y: (thRowHeight)};
+                const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop+thRowHeight)};
                 const thirdPos = {x: secondPos.x, y: rowTop};
 
                 const positions = [firstPos, secondPos, thirdPos];
-                const rect = {x: firstPos.x, y: rowTop, width: tdColumnWidth, height: tdRowHeight};
+                const rect = {x: firstPos.x, y: rowTop, width: tdColumnWidth, height: thRowHeight};
 
-                const line = data.line || {};
-                lineWidth = isNaN(line.width)? defaultLineWidth: line.width;
+                const fill = header.fill || {};
 
-                const font = {...data.font};
+                const font = {...header.font};
 
                 if(isRowTotal){
                     if(i === (columnCount-1)){
-                        cellValue = rowsTotal[index];
-                        console.log("row total: ", cellValue, rowsTotal);
+                        value = "Total";
                         font.style = "bold";
-                        positions.pop();
-                    }
+                    } 
                 }
 
                 //remove the 'values' property, and the value, center for text position, and adds header properties
                 const {values, ...properties } = {
-                    ...data,
-                    value: cellValue,
-                    center: {x: (rowLeft+(tdColumnWidth/2)), y: (rowTop+(tdRowHeight/2))},
+                    ...header,
+                    value: value, 
+                    center: {x: ((rowLeft+tdColumnWidth)-(maxWidth/2)), y: ((thRowHeight/2))},
+                    fontSize: thFontSize,
+                    fill: {color: fill.color? fill.color: "white", ...fill},
                     font
                 };
 
-                rowTop += tdRowHeight;
+                rowLeft += tdColumnWidth;
 
-                if(index === (newTopIndexEnd-1)){
-                    rowTop = defaultRowTop;
-                    positions.shift();
+                if(i === (end-1) && !keepEndPosition){
+                    rowLeft = defaultRowLeft;
+                    positions.pop();
                 }
 
-                DrawCell(dv, tempCtx, positions, properties, rect, i, index, tdColumnWidth);
-                
+                DrawCell(dv, tempCtx, positions, properties, rect, i, 0, tdColumnWidth);
             }
-
-            rowLeft += tdColumnWidth;
         }
 
+        function drawBody(start, end){
 
-        //clear header area
-        const halfLineWidth = lineWidth? lineWidth/2: lineWidth;
-        tempCtx.clearRect(0, 0, canvas.width, ((thRowHeight-halfLineWidth)));
+            for(let i = start; i < end; i++){
+                const prevCumWidth = (cumulativeWidths[i-1] || 0) - stickyWidth;
+                const maxWidth = maxWidths[i];
+                const tdColumnWidth = (i === start && i !== (stickyCount-1)? prevCumWidth: 0) + maxWidth;
+                //const tdColumnWidth = maxWidths[i];
+                const columnValues = dataValues[i] || new Array((rowCount-1)).fill("");
+                //const tdColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
+    
+                for(let index = newTopIndex; index < newTopIndexEnd; index++){
+                    let cellValue = isNaN(columnValues[index])? columnValues[index] || "": columnValues[index];
+    
+                    const firstPos = {x: rowLeft, y: (rowTop+tdRowHeight)};
+                    const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop+tdRowHeight)};
+                    const thirdPos = {x: secondPos.x, y: rowTop};
+    
+                    const positions = [firstPos, secondPos, thirdPos];
+                    const rect = {x: firstPos.x, y: rowTop, width: tdColumnWidth, height: tdRowHeight};
 
-        const line = header.line || {};
-        lineWidth = isNaN(line.width)? 1: line.width;
+                    const line = data.line || {};
+                    lineWidth = isNaN(line.width)? defaultLineWidth: line.width;
+    
+                    const font = {...data.font};
+    
+                    if(isRowTotal){
+                        if(i === (columnCount-1)){
+                            cellValue = rowsTotal[index];
+                            font.style = "bold";
+                            positions.pop();
+                        }
+                    }
+    
+                    //remove the 'values' property, and the value, center for text position, and adds header properties
+                    const {values, ...properties } = {
+                        ...data,
+                        value: cellValue,
+                        center: {x: ((rowLeft+tdColumnWidth)-(maxWidth/2)), y: (rowTop+(tdRowHeight/2))},
+                        font
+                    };
+    
+                    rowTop += tdRowHeight;
+    
+                    if(index === (newTopIndexEnd-1)){
+                        rowTop = defaultRowTop;
+    
+                        positions.shift();
+                    }
+    
+                    DrawCell(dv, tempCtx, positions, properties, rect, i, index, tdColumnWidth);
+                    
+                }
+    
+                rowLeft += tdColumnWidth;
+            }
 
-        if(isColumnTotal){
+            rowLeft = defaultRowLeft;
+        }
 
-            rowTop = (Math.min(graphHeight, tableHeight)-tdRowHeight), rowLeft = graphX;
-            
-            //clear column total area
-            tempCtx.clearRect(halfLineWidth, rowTop, (canvas.width-halfLineWidth), ((tdRowHeight)));
-
+        function drawColumnTotal(start, end){
             const operations = data.operation || [];
 
-            for(let i = 0; i < columnCount; i++){
+            for(let i = start; i < end; i++){
+                const prevCumWidth = (cumulativeWidths[i-1] || 0) - stickyWidth;
+                const maxWidth = maxWidths[i];
+                const tdColumnWidth = (i === start && i !== (stickyCount-1)? prevCumWidth: 0) + maxWidth;
+                
                 let value = columnsTotal[i];
                 const operation = operations[i] || null;
                 const isOperation = operation && operation !== "none";
-
-                const isNumeric = isSummaryColumns[i];
                 
-
                 const firstPos = {x: rowLeft, y: (rowTop)};
                 const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop)};
                 const thirdPos = {x: secondPos.x, y: (rowTop+tdRowHeight)};
@@ -735,7 +801,7 @@ const DrawElements = (dv, dataset) => {
 
                 const {values, ...properties } = {
                     value,
-                    center: {x: (rowLeft+(tdColumnWidth/2)), y: (rowTop+(tdRowHeight/2))},
+                    center: {x: ((rowLeft+tdColumnWidth)-(maxWidth/2)), y: (rowTop+(tdRowHeight/2))},
                     line: {...(data.line || {})},
                     font: {
                         ...(data.font || {}),
@@ -746,9 +812,44 @@ const DrawElements = (dv, dataset) => {
 
                 rowLeft += tdColumnWidth;
 
-                //rowTop = defaultRowTop;
-
                 DrawCell(dv, tempCtx, positions, properties, rect, i, (rowCount-1), tdColumnWidth);
+            }
+
+            rowLeft = defaultRowLeft;
+        }
+
+        //draw columns body
+        drawBody((newLeftIndex + stickyCount), newLeftIndexEnd);
+        
+        if(stickyCount){
+            tempCtx.clearRect(graphX, 0, stickyWidth, canvas.height);
+            rowLeft = graphX;
+            drawBody(0, stickyCount);
+        }
+
+
+        //clear header area
+        const halfLineWidth = lineWidth? lineWidth/2: lineWidth;
+        tempCtx.clearRect(0, 0, canvas.width, ((thRowHeight-halfLineWidth)));
+
+        const line = header.line || {};
+        lineWidth = isNaN(line.width)? 1: line.width;
+
+        if(isColumnTotal){
+
+            const totalRowTop = (Math.min(graphHeight, tableHeight)-tdRowHeight);
+            rowTop = totalRowTop;
+            rowLeft = stickyRowLeft;
+            
+            //clear column total area
+            tempCtx.clearRect(halfLineWidth, rowTop, (canvas.width-halfLineWidth), ((tdRowHeight)));
+            
+            drawColumnTotal((newLeftIndex + stickyCount), newLeftIndexEnd);
+
+            if(stickyCount){
+                tempCtx.clearRect(graphX, totalRowTop, stickyWidth, tdRowHeight);
+                rowLeft = graphX;
+                drawColumnTotal(0, stickyCount);
             }
         }
 
@@ -772,48 +873,17 @@ const DrawElements = (dv, dataset) => {
             tempCtx.stroke();
         }
 
-        rowTop = (lineWidth/2), rowLeft = graphX;
+        rowTop = (lineWidth/2);
+        rowLeft = stickyRowLeft;
         //draw Header 
-        const headerValues = header.values;
-        for(let i = 0; i < columnCount; i++){
-            //const thColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
-            let value = isNaN(headerValues[i])? headerValues[i] || "": headerValues[i];
+        drawHeader((newLeftIndex + stickyCount), newLeftIndexEnd);
 
-            const firstPos = {x: rowLeft, y: (thRowHeight)};
-            const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop+thRowHeight)};
-            const thirdPos = {x: secondPos.x, y: rowTop};
+        if(stickyCount){
+            rowLeft = graphX;
+            rowTop = (lineWidth/2);
 
-            const positions = [firstPos, secondPos, thirdPos];
-            const rect = {x: firstPos.x, y: rowTop, width: tdColumnWidth, height: thRowHeight};
-
-            const fill = header.fill || {};
-
-            const font = {...header.font};
-
-            if(isRowTotal){
-                if(i === (columnCount-1)){
-                    value = "Total";
-                    font.style = "bold";
-                }
-            }
-
-            //remove the 'values' property, and the value, center for text position, and adds header properties
-            const {values, ...properties } = {
-                ...header,
-                value: value, 
-                center: {x: (rowLeft+(tdColumnWidth/2)), y: ((thRowHeight/2))},
-                fontSize: thFontSize,
-                fill: {color: fill.color? fill.color: "white", ...fill},
-                font
-            };
-
-            rowLeft += tdColumnWidth;
-
-            if(i === (columnCount-1)){
-                positions.pop();
-            }
-
-            DrawCell(dv, tempCtx, positions, properties, rect, i, 0, tdColumnWidth);
+            tempCtx.clearRect(rowLeft, rowTop, stickyWidth, thRowHeight);
+            drawHeader(0, stickyCount, true);
         }
 
         //draw header outer line 
@@ -825,6 +895,28 @@ const DrawElements = (dv, dataset) => {
             tempCtx.lineTo(tableWidth, 0);
             tempCtx.lineTo(tableWidth, (thRowHeight));
             tempCtx.stroke();
+        }
+
+        //draw sticky line 
+        if(stickyCount){
+
+            const lineColor = "green";
+            //vertical
+            tempCtx.beginPath();
+            tempCtx.lineWidth = lineWidth;
+            tempCtx.strokeStyle = lineColor;
+            tempCtx.moveTo((graphX+stickyWidth), thRowHeight);
+            tempCtx.lineTo((graphX+stickyWidth), tableHeight);
+            tempCtx.stroke();
+
+            //horizontal
+            tempCtx.beginPath();
+            tempCtx.lineWidth = lineWidth;
+            tempCtx.strokeStyle = lineColor;
+            tempCtx.moveTo(graphX, thRowHeight);
+            tempCtx.lineTo(tableWidth, thRowHeight);
+            tempCtx.stroke();
+            
         }
 
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);

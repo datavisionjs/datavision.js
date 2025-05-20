@@ -338,6 +338,7 @@ export function setUpChart(dv){
     const font = design.font;
 
     const fontSize = font.size;
+    const twiceFontSize = fontSize * 2;
     ctx.font = font.weight + " " + fontSize+"px "+ font.family;
 
     //get scroll data 
@@ -1234,6 +1235,9 @@ export function setUpChart(dv){
                 const newTableHeaders = []; //tableheaders values
                 const newTableData = []; //tabledata values
 
+                const maxWidths = [];
+                const cumulativeWidths = [];
+
                 const isSummaryColumns = [];
                 let hasSummaryColumn = false;
 
@@ -1246,7 +1250,7 @@ export function setUpChart(dv){
 
                 const dataOperation = dataset.data? dataset.data.operation: false;
 
-                let maxValueWidth = 0;
+                let rowsValueSum = 0;
                 let columnCount = data.length > headerValues.length? data.length: headerValues.length;
                 let rowCount = 0;
 
@@ -1268,14 +1272,14 @@ export function setUpChart(dv){
 
                        //process column data
                        const column = data[index];
-                       if(column){
-                           const columnIsAllNumbers = Calc.isAllNumbers(column);
-                           isSummaryColumns.push(columnIsAllNumbers);
-                           !hasSummaryColumn? hasSummaryColumn = columnIsAllNumbers: null;
+                        if(column){
+                            const columnIsAllNumbers = Calc.isAllNumbers(column);
+                            isSummaryColumns.push(columnIsAllNumbers);
+                            !hasSummaryColumn? hasSummaryColumn = columnIsAllNumbers: null;
 
-                           const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
-                           const isOperation = operation && operation !== "none";
-                           isOperation? hasNoOperations = false: null;
+                            const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
+                            const isOperation = operation && operation !== "none";
+                            isOperation? hasNoOperations = false: null;
 
                             //if(!columnIsAllNumbers){
                             if(operation === "none"){
@@ -1299,9 +1303,9 @@ export function setUpChart(dv){
                                 operationStatus = "all";
                             }
 
-                           isNumericColumns.push(columnIsAllNumbers);
-                       }
-                   }
+                            isNumericColumns.push(columnIsAllNumbers);
+                        }
+                    }
 
                    hasNoOperations? operationStatus = null: null;
 
@@ -1316,8 +1320,143 @@ export function setUpChart(dv){
                    //set row count 
                    rowCount = 1;
 
-                   //set column values in the bucket
-                   for(let index = 0; index < columnCount; index++){
+                    if(includesNone && operationStatus !== "all"){
+
+                        //set column values in the bucket
+                        const firstColumn = data[0] || [];
+                        const columnsMap = Array.from({ length: columnCount }, () => new Map());
+
+                        for(let i = 0; i < firstColumn.length; i++){
+                        
+                            for(let index = 0; index < columnCount; index++){
+                                const columnIsNumeric = isNumericColumns[index];
+                                const maxWidth = maxWidths[index] || 0;
+
+                                if(i === 0){
+                                    const headerValue = headerValues[index];
+                                    if(headerValue){
+                                        newTableHeaders.push(headerValue);
+                    
+                                        const valueWidth = (ctx.measureText(headerValue).width + twiceFontSize);
+                                        maxWidths[index] = Math.max(maxWidth, valueWidth);
+                                    }
+                                }
+                                
+                                const column = data[index];
+                                const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
+
+                                
+                                if(column){
+
+                                    let columnMap = columnsMap[index] || {};
+
+                                    let row = hasNoOperations ? allRows[i] : categoricalRows[i];
+
+                                    row = Array.isArray(row) ? row.slice() : ["column"];
+                                        
+                                    //const rowString = (!operationStatus? row: row.splice(maxCatColumnIndex, 1)).toString();
+                                    let rowString;
+                                    if (Array.isArray(row)) {
+                                        const safeCatColumnIndex = Math.max(maxCatColumnIndex, 1); // Ensure the index is valid
+                                        rowString = (!operationStatus ? row : row.slice(0, safeCatColumnIndex).concat(row.slice(safeCatColumnIndex + 1))).toString();
+                                    } else {
+                                        rowString = row.toString();
+                                    }
+
+                                    
+                                        
+                                    const value = column[i];
+
+                                    if(columnMap.has(rowString)){
+                                        columnMap.get(rowString).push(value);
+                                    }else {
+                                        columnMap.set(rowString, [value]);
+                                    }
+
+                                    if(i === (firstColumn.length-1)){
+                                        columnsTotal.push(Calc.computeOperation(column, operation, columnIsNumeric));
+                                    }
+                                    
+                                }
+
+                            }
+                        }
+
+
+                        //process bucket
+                        for(let index = 0; index < columnsMap.length; index++){
+                            const columnMap = columnsMap[index];
+
+                            if(columnMap){
+                                const columnIsNumeric = isNumericColumns[index];
+                                
+                                const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
+                                const isOperation = operation && operation !== "none";
+
+                                const columnValues = [];
+                                let maxWidth = maxWidths[index] || 0;
+
+                                for(const [key, bucket] of columnMap){
+
+                                    const newValue = isOperation? Calc.computeOperation(bucket, operation, columnIsNumeric): bucket[0] || "";
+
+                                    const valueWidth = (ctx.measureText(newValue).width + twiceFontSize);
+                                    maxWidths[index] = Math.max(maxWidth, valueWidth);
+
+                                    columnValues.push(newValue);
+
+                                    if(columnIsNumeric){
+                                        if(Calc.isNumber(newValue)){
+                                            const rowTotal = rowsTotal.get(key) || 0;
+                                            rowsTotal.set(key, (rowTotal+newValue));
+                                        }
+                                    }
+                                }
+
+                                rowsValueSum += maxWidths[index];
+                                cumulativeWidths.push(rowsValueSum);
+
+                                if(rowCount < columnValues.length){
+                                    rowCount = columnValues.length;
+                                }
+
+                                newTableData.push(columnValues);
+                            }
+                        }
+
+                    }else {
+
+                        for(let index = 0; index < columnCount; index++){
+                            const columnIsNumeric = isNumericColumns[index];
+                            const maxWidth = maxWidths[index] || 0;
+
+                            const column = data[index];
+                            const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
+
+                            if(column){
+                                const newValue = Calc.computeOperation(column, operation, columnIsNumeric);
+
+                                const valueWidth = (ctx.measureText(newValue).width + twiceFontSize);
+                                maxWidths[index] = Math.max(maxWidth, valueWidth);
+
+                                if(columnIsNumeric){
+                                    if(Calc.isNumber(newValue)){
+                                        const rowTotal = rowsTotal.get("0") || 0;
+                                        rowsTotal.set("0", (rowTotal+newValue));
+                                    }
+                                }
+
+                                rowsValueSum += maxWidths[index];
+                                cumulativeWidths.push(rowsValueSum);
+
+                                newTableData.push([newValue]);
+                            }
+                        }
+                    }
+
+
+                    /*
+                    for(let index = 0; index < columnCount; index++){
                         const columnIsNumeric = isNumericColumns[index];
 
                         //process header values 
@@ -1326,9 +1465,7 @@ export function setUpChart(dv){
                             newTableHeaders.push(headerValue);
         
                             const valueWidth = ctx.measureText(headerValue).width;
-                            if(valueWidth > maxValueWidth){
-                                maxValueWidth = valueWidth;
-                            }
+                            maxValueWidth = Math.max(maxValueWidth, valueWidth);
                         }
 
                         //process column data
@@ -1374,9 +1511,7 @@ export function setUpChart(dv){
                                     const newValue = isOperation? Calc.computeOperation(bucket, operation, columnIsNumeric): bucket[0] || "";
 
                                     const valueWidth = ctx.measureText(newValue).width;
-                                    if(valueWidth > maxValueWidth){
-                                        maxValueWidth = valueWidth;
-                                    }
+                                    maxValueWidth = Math.max(maxValueWidth, valueWidth);
 
                                     columnValues.push(newValue);
 
@@ -1399,9 +1534,7 @@ export function setUpChart(dv){
                                 const newValue = Calc.computeOperation(column, operation, columnIsNumeric);
 
                                 const valueWidth = ctx.measureText(newValue).width;
-                                if(valueWidth > maxValueWidth){
-                                    maxValueWidth = valueWidth;
-                                }
+                                maxValueWidth = Math.max(maxValueWidth, valueWidth);
 
                                 if(columnIsNumeric){
                                     if(Calc.isNumber(newValue)){
@@ -1418,18 +1551,64 @@ export function setUpChart(dv){
                         }
                     }
 
+                    */
+
                 }else {
 
+                    const firstColumn = data[0] || [];
+                    const newColumns = Array.from({ length: columnCount }, () => []);
+
+                    for(let i = 0; i < firstColumn.length; i++){
+
+                        for(let index = 0; index < columnCount; index++){
+                            const maxWidth = maxWidths[index] || 0;
+                            //prcess header data
+                            if(i === 0){
+                                const headerValue = headerValues[index];
+                                if(headerValue){
+                                    newTableHeaders.push(headerValue);
+                
+                                    const valueWidth = (ctx.measureText(headerValue).width + twiceFontSize);
+                                    maxWidths[index] = Math.max(maxWidth, valueWidth);
+                                }
+                            }
+
+                            //process column data
+                            const column = data[index];
+                            if(column){
+                                const newColumn = newColumns[index];
+                                const len = column.length;
+
+                                len > rowCount? rowCount = len: null;
+
+                                const value = column[i];
+                                newColumn.push(value);
+
+                                const valueWidth = (ctx.measureText(value).width + twiceFontSize);
+                                maxWidths[index] = Math.max(maxWidth, valueWidth);
+
+                                if(i === (firstColumn.length-1)){
+                                    rowsValueSum += maxWidths[index];
+                                    cumulativeWidths.push(rowsValueSum);
+
+                                    newTableData.push(newColumn);
+                                }
+                            }
+
+                        }
+                    }
+
+                    /*
                     for(let index = 0; index < columnCount; index++){
                          //process header values 
+                         const maxWidth = maxWidths[index] || 0;
+
                         const headerValue = headerValues[index];
                         if(headerValue){
                             newTableHeaders.push(headerValue);
-     
+                
                             const valueWidth = ctx.measureText(headerValue).width;
-                            if(valueWidth > maxValueWidth){
-                                maxValueWidth = valueWidth;
-                            }
+                            maxWidths[index] = Math.max(maxWidth, valueWidth);
                         }
 
                         //process column data
@@ -1444,14 +1623,12 @@ export function setUpChart(dv){
                                 newColumn.push(value);
 
                                 const valueWidth = ctx.measureText(value).width;
-                                if(valueWidth > maxValueWidth){
-                                    maxValueWidth = valueWidth;
-                                }
+                                maxValueWidth = Math.max(maxValueWidth, valueWidth);
                             }
 
                             newTableData.push(newColumn);
                         }
-                    }
+                    }*/
 
                 }
 
@@ -1521,8 +1698,6 @@ export function setUpChart(dv){
                 const columnsGrandTotal = Calc.computeOperation(columnsTotal, "sum", true);
                 const grandTotal = (columnsGrandTotal + rowsGrandTotal);
 
-                console.log("rt: ", rowsTotal);
-
                 newTableDataset.totals = {
                     ...(dataset.totals || []),
                     columns: columnsTotal,
@@ -1533,7 +1708,10 @@ export function setUpChart(dv){
                 }
 
                 newTableDataset.type = "table";
-                newTableDataset.maxValueWidth = maxValueWidth;
+                newTableDataset.rowsValueSum = rowsValueSum;
+                newTableDataset.maxWidths = maxWidths;
+                newTableDataset.cumulativeWidths = cumulativeWidths;
+
                 newTableDataset.columnCount = (newColumnCount + (isRowTotal? 1: 0));
                 newTableDataset.rowCount = ((rowCount? (rowCount+1): 1) + (isColumnTotal? 1: 0)); //plus 1 is adding the header row
 

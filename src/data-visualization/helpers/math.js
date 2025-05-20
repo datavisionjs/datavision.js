@@ -287,6 +287,39 @@ export function getNumberInRange(number, range){
     }
 }
 
+//using binary search to get column index for tables
+export function scrolledColumnIndex(scrollX, cumulativeWidths, maxWidths) {
+
+    let left = 0, right = cumulativeWidths.length - 1, mid;
+
+    // Binary search to find the first column where cumulativeWidths[mid] > scrollX
+    while (left <= right) {
+        mid = Math.floor((left + right) / 2);
+        if (cumulativeWidths[mid] <= scrollX) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    //console.log("myRIghts: ", right, left, mid);
+
+    // At this point, right is the last column fully passed
+    //if (right < 0) return scrollX / cumulativeWidths[0]; // before first column
+    //if (left >= cumulativeWidths.length) return cumulativeWidths.length; // beyond last column
+
+    const prevEdge = cumulativeWidths[right] || 0;
+    const nextEdge = cumulativeWidths[left];
+
+    const progress = (scrollX - prevEdge) / (nextEdge - prevEdge);
+
+    //console.log("myRIghts: ", left, progress, scrollX, cumulativeWidths, maxWidths);
+
+    return left + progress;
+}
+
+
+
 //add comma to every third digit from the right of numbers
 export function commaSeparateNumber(number, separateNumbers) {
     if (!isNumber(number) || separateNumbers === false) {

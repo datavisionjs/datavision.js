@@ -1,5 +1,6 @@
 import * as dataVis from '../index.js'
 import * as Global from '../helpers/global.js';
+import { scrolledColumnIndex } from '../helpers/math.js';
 
 export const getBarSize = function (dv){
     const bar = dv.getScrollbar();
@@ -57,19 +58,25 @@ export const setContentSize = function (dv){
         const columnCount = tableData.columnCount;
         const rowCount = tableData.rowCount;
 
+        const cumulativeWidths = tableData.cumulativeWidths || [];
+
+        const stickyColumns = tableData.stickyColumns || {};
+        const stickyCount = Math.min((stickyColumns.count || 0), columnCount);
+        const stickyWidth = cumulativeWidths[stickyCount - 1] || 0;
+
         const maxWidth = tableData.maxValueWidth;
+        const rowsValueSum = tableData.rowsValueSum || 0;
     
         const headerFont = header.font? header.font: {};
         const thFontSize = headerFont.fontSize? headerFont.fontSize: fontSize;
         const thRowHeight = (thFontSize+fontSize);
-        const tdColumnWidth = (maxWidth+(fontSize*2));
     
         const dataFont = data.font? data.font: {};
         const tdFontSize = dataFont.fontSize? dataFont.fontSize: fontSize;
         const tdRowHeight = (tdFontSize+fontSize);
 
         scrollData.contentHeight = (thRowHeight+(tdRowHeight*(rowCount-1)));
-        scrollData.contentWidth = (tdColumnWidth * columnCount);
+        scrollData.contentWidth = (rowsValueSum + stickyWidth);
 
         scrollData.wheelHeight = scrollData.contentHeight;
         scrollData.wheelWidth = scrollData.contentWidth;
@@ -191,12 +198,24 @@ export const setIndex = function (dv, top, left){
             const tableData = layout.tableData;
         
             const columnCount = tableData.columnCount;
-    
             const contentWidth = scrollData.contentWidth;
-            index = Math.abs((left/contentWidth)*columnCount);
+
+            const stickyColumns = tableData.stickyColumns || {};
+            const stickyCount = Math.min((stickyColumns.count || 0), columnCount);
+
+            const cumulativeWidths = (tableData.cumulativeWidths || []).slice(stickyCount);
+
+            index = scrolledColumnIndex(left, cumulativeWidths, tableData.maxWidths);
+
+            //console.log("indie: ", index, left, cumulativeWidths);
+
+            //index = (left / contentWidth) * columnCount;
+
+            //console.log("indie: ", index, left, cumulativeWidths);
         }
 
         scrollData.leftIndex = index;
+        scrollData.x = left;
     }
 
     if(!isNaN(top)){
