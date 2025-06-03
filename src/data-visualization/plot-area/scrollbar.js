@@ -16,6 +16,7 @@ export const getBarSize = function (dv){
 
 export const setContentSize = function (dv){
     const layout = dv.getLayout();
+    const axisData = layout?.axisData || {};
 
     const design = dv.getDesign();
     const font = design.font;

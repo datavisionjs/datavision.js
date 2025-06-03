@@ -302,8 +302,6 @@ export function scrolledColumnIndex(scrollX, cumulativeWidths, maxWidths) {
         }
     }
 
-    //console.log("myRIghts: ", right, left, mid);
-
     // At this point, right is the last column fully passed
     //if (right < 0) return scrollX / cumulativeWidths[0]; // before first column
     //if (left >= cumulativeWidths.length) return cumulativeWidths.length; // beyond last column
@@ -312,8 +310,6 @@ export function scrolledColumnIndex(scrollX, cumulativeWidths, maxWidths) {
     const nextEdge = cumulativeWidths[left];
 
     const progress = (scrollX - prevEdge) / (nextEdge - prevEdge);
-
-    //console.log("myRIghts: ", left, progress, scrollX, cumulativeWidths, maxWidths);
 
     return left + progress;
 }
@@ -358,7 +354,7 @@ export function avg(arr) {
     return numericArr.length === 0 ? null : sum / numericArr.length;
 }
 
-export function computeOperation(arr, operation, isNumeric){
+export async function computeOperation(arr, operation, isNumeric){
     if(arr.length === 0){
         return null; //making sure that we do not get -infinity when array length is 0
     }
@@ -367,18 +363,14 @@ export function computeOperation(arr, operation, isNumeric){
     const newArray = arr.filter(item => item !== null && item !== undefined);
 
     if(isNumeric){
-        if(operation === "avg"){
-            return avg(newArray);
-        }else if(operation === "min" || operation === "max"){
-            const stats = getArrayStats(newArray);
-            return stats[operation];
-        }else if(operation === "count"){
+        if(operation === "count"){
             return newArray.length;
         }else if(operation === "distinct_count"){
             const set = new Set(newArray);
             return set.size;
         }else {
-            return sum(newArray); //sum is the default
+            const stats = await getArrayStats(newArray);
+            return stats[operation || "sum"];
         }
     }else {
         if(operation === "last"){
@@ -422,6 +414,7 @@ export function isAllNumbers(arr) {
     return numberCount > (stringCount/2);
 }
 
+/*
 export function getArrayStats(arr) {
     if (!Array.isArray(arr) || arr.length === 0) {
         return {
@@ -456,7 +449,101 @@ export function getArrayStats(arr) {
         min: numberCount > 0 ? min : null,
         max: numberCount > 0 ? max : null
     };
+}*/
+
+
+export async function getArrayStats(arr) {
+    return new Promise((resolve) => {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            resolve({
+                isNumbers: false,
+                count: 0,
+                min: null,
+                max: null,
+                sum: null,
+                avg: null,
+                variance: null,
+                std_dev: null,
+                median: null,
+                distinct_count: 0
+            });
+            return;
+        }
+
+        let min = Infinity;
+        let max = -Infinity;
+        let sum = 0;
+        let sumSq = 0;
+        let numericValues = [];
+        const distinctSet = new Set();
+
+        let numberCount = 0;
+        let stringCount = 0;
+
+        //for (let i = 0; i < arr.length; i++) {
+        for(const [i, value] of arr.entries()){
+            //const value = arr[i];
+
+            if (typeof value === "number" && !isNaN(value)) {
+                sum += value;
+                sumSq += value * value;
+                if (value < min) min = value;
+                if (value > max) max = value;
+                numericValues.push(value);
+                distinctSet.add(value);
+                numberCount++;
+            }else {
+                stringCount++;
+            }
+        }
+
+        const count = numericValues.length;
+
+        if (count === 0) {
+            resolve({
+                isNumbers: false,
+                count: 0,
+                min: null,
+                max: null,
+                sum: null,
+                avg: null,
+                variance: null,
+                std_dev: null,
+                median: null,
+                distinct_count: 0
+            });
+            return;
+        }
+
+        // Sort once for median
+        numericValues = customSort(numericValues, "asc");
+
+        const average = sum / count;
+        const variance = (sumSq / count) - (average * average);
+        const standardDeviation = Math.sqrt(variance);
+
+        const median =
+            count % 2 === 0
+                ? (numericValues[count / 2 - 1] + numericValues[count / 2]) / 2
+                : numericValues[Math.floor(count / 2)];
+
+        const isNumbers = numberCount > (stringCount / 2);
+
+        resolve({
+            isNumbers,
+            count,
+            min,
+            max,
+            sum,
+            avg: average,
+            variance,
+            std_dev: standardDeviation,
+            median,
+            distinct_count: distinctSet.size
+        });
+    });
 }
+
 
 
 export function isObjectButNotArray(variable) {

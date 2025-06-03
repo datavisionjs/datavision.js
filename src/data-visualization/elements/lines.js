@@ -1,7 +1,7 @@
 import * as Calc from '../helpers/math.js'
 
 
-const DrawLines = (dv, ctx, dataset, type, size, position, positionIsOut) => {
+const DrawLines = (dv, ctx, dataset, type, color, size, position, positionIsOut) => {
 
     const mode = dataset.mode;
 
@@ -77,10 +77,13 @@ const DrawLines = (dv, ctx, dataset, type, size, position, positionIsOut) => {
 
         if(type === "start"){
             ctx.beginPath();
+
             ctx.moveTo(position.x, position.y);
         }else {
             ctx.lineTo(position.x, position.y);
         }
+
+        ctx.strokeStyle = color;
 
         if(mode === "scatter" && !positionIsOut){
             ctx.stroke();

@@ -156,8 +156,6 @@ function drawYAxis(dv, ctx, position, isPercent){
 
             //let range = ranges? isHorizontal? ranges.labelRange: ranges.valueRange: dataRange;
             let range = axis.range;
-
-            console.log("myRange: ", range, axis);
             
             if(range){
 

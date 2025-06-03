@@ -3522,7 +3522,7 @@
             data: {
                 font : {family: 'arial', size: 14, weight: 'normal', style: 'normal'},
                 line: {width: 1, color: 'lightgray'},
-                operation: ["sum", "none"], 
+                operation: ["sum", "first", "first"], 
                 values: [
                     matchLength,
                     [null, "North", "South", "West", "North", "South"],
@@ -3554,25 +3554,27 @@
         const trace1 = {
             x: matchLength,
             name: 'Group 1',
-            type: 'histogram',
+            type: 'area',
             binCount: 30,
         };
 
+        const mX = ["Action", "Adventure", "Puzzle", "Racing", "Role-Playing", "Shooter", "Sports"];
+
         const trace2 = {
-            x: [2014, 2015, 2016],
-            y: [50, 40, 50],
+            x: mX,
+            y: [50, 40, 50, 20, null, null, 10],
             name: 'JP_Sales',
-            
-            type: 'line'
+            //mode: "stack",
+            type: 'bar'
         };
 
         const trace3 = { 
-            x: [2014, 2015, 2016],
-            y: [-120, 40, 20],
+            x: mX,
+            y: [20, 50, 50, null, 6, null, 10],
             //yAxis: "y2",
             //direction: "hr",
             name: 'Group 3',
-            type: 'line',
+            type: 'bar',
         };
 
         const tranceExp = {
@@ -3616,14 +3618,22 @@
             "custom": []
         }
 
+        const hist = {
+            x: matchLength,
+            name: 'Frequency',
+            type: 'histogram',
+            binCount: 30,
+        };
+
         const data = [
             //trace2,
             //trace1,
-            //trace2,
-            //trace3
-            table
+            trace2,
+            trace3,
+            //table,
             //tranceExp,
             //traceImp,
+            //hist
         ];
 
         const layout = {
@@ -3764,7 +3774,8 @@
         chart.plot(data, layout2);
 
         window.addEventListener('resize', function () {
-            chart.plot(data, layout2);
+            console.log("Resizing chart");
+            chart.update();
         });
 
         

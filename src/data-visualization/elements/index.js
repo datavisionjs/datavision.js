@@ -213,9 +213,6 @@ const DrawElements = (dv, dataset) => {
 
                 const defaultSize = 3;
     
-                tempCtx.fillStyle = designColor;
-                tempCtx.strokeStyle = designColor;
-    
                 const xAxisIsAllNumbers = xAxis.isAllNumbers;
                 const yAxisIsAllNumbers = yAxis.isAllNumbers;
 
@@ -238,6 +235,9 @@ const DrawElements = (dv, dataset) => {
                     let lastPosition = {x: null, y: null}, positionType;
                     let valueIsNull = false;
                     let strokeEnd = true;
+
+                    let hasAreaStartIndex = false;
+                    let areaStartIndex = 0;
     
                     //const loopStart = (Math.floor(scrollIndex) - (Math.floor(scrollIndex) > 0? 1: 0));
     
@@ -262,9 +262,15 @@ const DrawElements = (dv, dataset) => {
     
                         const color = Array.isArray(designColor)? designColor[index]? designColor[index]: designColor[0]: designColor;
                         const sizeName = (designSize || {}).name ?? "";
-                        
+
+                        //tempCtx.fillStyle = color;
+                        //tempCtx.strokeStyle = color;
                         
                         if(value || value === 0){ //proceed if y is valid
+                            if(!hasAreaStartIndex){
+                                areaStartIndex = index;
+                                hasAreaStartIndex = true;
+                            }
 
                             let stackValue = 0; 
 
@@ -339,13 +345,14 @@ const DrawElements = (dv, dataset) => {
                                     }
                                 }
 
-                                DrawLines(dv, tempCtx, dataset, positionType, size, position, positionIsOut);
+                                DrawLines(dv, tempCtx, dataset, positionType, color, size, position, positionIsOut);
                                 
+                                //if(chartType === "area" && (positionType === "end" || isBreakLine)){
                                 if(chartType === "area" && (positionType === "end" || isBreakLine)){
                                     fillArea(
                                         dv, areaCtx, isStacked, isPercent, i, 
                                         label, labels, [labelAxisName, valueAxisName], stackLastValues,
-                                        color, [loopStart, loopEnd], dataPoints, stackSums
+                                        color, [areaStartIndex, loopEnd], dataPoints, stackSums
                                     );
                                 }
 
@@ -434,13 +441,14 @@ const DrawElements = (dv, dataset) => {
                             
     
                         }else {
+                            hasAreaStartIndex = false;
                             //draw what lines drawn
                             tempCtx.stroke();
-                            if(chartType === "area"){
+                            if(chartType === "area" && (prevValue || prevValue === 0)){
                                 fillArea(
                                     dv, areaCtx, isStacked, isPercent, i, 
-                                    label, labels, [labelAxisName, valueAxisName], stackLastValues,
-                                    color, [loopStart, loopEnd], dataPoints, stackSums
+                                    prevLabel, labels, [labelAxisName, valueAxisName], stackLastValues,
+                                    color, [areaStartIndex, index], dataPoints, stackSums
                                 );
                             }
                             positionType = "start";

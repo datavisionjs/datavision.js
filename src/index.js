@@ -20,6 +20,9 @@ function DataVision(targetId) {
     this.rawData = [];
     this.data = [];
 
+    //check if set up chart is called
+    this.isSetUpChart = false;
+
     this.layout = {};
     this.design = {};
 
@@ -383,10 +386,11 @@ DataVision.prototype.update = function (){
     this.clearToolTipData();
 
     //set data
+    /*
     this.setData(this.getRawData());
 
     //set chart properties
-    Prop.setUpChart(this);
+    await Prop.setUpChart(this);*/
 
     //set canvas 
     this.setCanvas(this.getLayout());
@@ -417,7 +421,7 @@ DataVision.prototype.update = function (){
     this.addMainContainer();
 };
 
-DataVision.prototype.plot = function (data, layout){
+DataVision.prototype.plot = async function (data, layout){
     //create copy of data and layout
     data = [...data];
     layout = {...layout};
@@ -428,8 +432,11 @@ DataVision.prototype.plot = function (data, layout){
     //set data and layout
     //this.setData(data);
     this.setRawData(data);
+    this.setData(this.getRawData());
 
     this.setLayout(layout);
+
+    await Prop.setUpChart(this);
 
     this.update();
 };

@@ -234,7 +234,6 @@ function setAxisProperties(dv, isZeroBased, axisObject, type){
                 if(layout.y2Axis){
                     targetAxis = layout.y2Axis
                 }
-
             }else {
                 if(layout.yAxis){
                     targetAxis = layout.yAxis
@@ -326,7 +325,10 @@ function setPieProperties(pieData){
 
 
 
-export function setUpChart(dv){
+export async function setUpChart(dv){
+
+    if(dv.isSetUpChart) return;
+    dv.isSetUpChart = true;
 
     const ctx = dv.getCtx();
     const layout = dv.getLayout();
@@ -397,7 +399,6 @@ export function setUpChart(dv){
     const axisXData = {x1: new NewAxis()};
     const axisYData = { y1: new NewAxis(), y2: new NewAxis()};
 
-
     const axisChartTypes = Global.getAxisChartTypes();
 
     let hasAxisData = false;
@@ -406,8 +407,6 @@ export function setUpChart(dv){
     let hasPieData = false;
     let hasTableData = false;
     let axisDirection = null;
-
-
 
     //get range from data 
     if(data){
@@ -419,8 +418,10 @@ export function setUpChart(dv){
 
         const stackTrackValues = new Map(); //track and add values of stacked bars for range
 
-        for(let i = 0; i < tempDataLength; i++){
-            const dataset = {...tempData[i]};
+
+        for(const [i, dataset] of tempData.entries()){
+        //for(let i = 0; i < tempDataLength; i++){
+            //const dataset = {...tempData[i]};
 
             const dataValueAxis =  dataset.yAxis || "y1";
             const dataLabelAxis = dataset.xAxis || "x1";
@@ -483,11 +484,11 @@ export function setUpChart(dv){
                     yAxis: dataValueAxis
                 };
                 
-                const xDataStats = Calc.getArrayStats(xData);
-                const yDataStats = Calc.getArrayStats(yData);
+                const xDataStats = await Calc.getArrayStats(xData);
+                const yDataStats = await Calc.getArrayStats(yData);
 
                 const xDataIsAllNumber = xDataStats.isNumbers;
-                let yDataIsAllNumber = yDataStats.isNumbers;
+                let yDataIsAllNumber = yDataStats.isNumbers; 
             
                 //get and set tick format
                 const layoutXAxis = getAxisFromLayout(layout, dataLabelAxis);
@@ -653,10 +654,10 @@ export function setUpChart(dv){
                             if(barData.dataPoints.size > 0){
             
                                 //loop through barData dataPoints bucket and execute the operation
-                                barData.dataPoints.forEach((bucket, key) => {
-            
+                                for(const [key, bucket] of barData.dataPoints.entries()){
+                                    //if bucket is empty continue
                                     if(bucket.length > 0){
-                                        let newValue = Calc.computeOperation(bucket, operation, newYDataIsAllNumber);
+                                        let newValue = await Calc.computeOperation(bucket, operation, newYDataIsAllNumber);
             
                                         const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
             
@@ -724,11 +725,11 @@ export function setUpChart(dv){
                                     const customBuckets = barData.customDataPoints.get(key);
 
                                     if(customBuckets){
-                                        customBuckets.map((bucket, index) => {
+                                        customBuckets.map(async (bucket, index) => {
                                             if(bucket.length > 0){
                                                 const customObj = customData[index] || {};
                                                 const isAllNumber = customObj.isAllNumber;
-                                                let newValue = Calc.computeOperation(bucket, customObj.operation, isAllNumber);
+                                                let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
                                                 
                                                 //sort
                                                 if(sortDatasetIndex || sortTarget){
@@ -748,7 +749,7 @@ export function setUpChart(dv){
                                         });
                                     }
             
-                                });
+                                };
 
                             }
                         }
@@ -788,15 +789,16 @@ export function setUpChart(dv){
                         }
 
                         if(j === (loopEnd-1)){//at the end of the j loop
-                            barData.dataPoints.forEach((bucket, key) => {
+                            //barData.dataPoints.forEach(async (bucket, key) => {
+                            for(const [key, bucket] of barData.dataPoints.entries()){
             
                                 if(bucket.length > 0){
-                                    let newValue = Calc.computeOperation(bucket, "count", xDataStats.isNumbers);
+                                    let newValue = await Calc.computeOperation(bucket, "count", xDataStats.isNumbers);
                                     barData.dataPoints.set(key, newValue);
 
                                     yAxis.values.add(newValue);
                                 }
-                            });
+                            };
                         }
 
                         xDataIsAllNumber? xAxis.values.add(xValue): null;
@@ -845,7 +847,7 @@ export function setUpChart(dv){
                             for (let [key, bucket] of bucketMap){
             
                                 if(bucket.length > 0){
-                                    let newValue = Calc.computeOperation(bucket, operation, yDataIsAllNumber);
+                                    let newValue = await Calc.computeOperation(bucket, operation, yDataIsAllNumber);
 
                                     //sort 
                                     if(sortDatasetIndex || sortTarget){
@@ -878,29 +880,35 @@ export function setUpChart(dv){
                                             //keyRange.max = Math.max(max, newValue);
                                             //keyRange.min = Math.min(min, newValue);
 
-                                            let [min, max, range] = axisData.stackSums.get(key) || [0,0,0];
 
-                                            range = range + Math.abs(newValue);
-                                            newValue = (lastValue+newValue);
-
-                                            min = Math.min(newValue, min);
-                                            max = Math.max(newValue, max);
-
-                                            axisData.stackSums.set(key, [min, max, range]);
-
-                                            if(axisData.format === "percent" && i === (tempDataLength-1)){
-                                                const minPercent = ((min / range) * 100) || 0;
-                                                const maxPercent = ((max / range) * 100) || 0;
-
-                                                const maxValue = axisData.maxValue || minPercent;
-                                                const minValue = axisData.minValue || maxPercent;
-                                                
-                                                axisData.minValue = Math.min(minValue, minPercent);
-                                                axisData.maxValue = Math.max(maxValue, maxPercent);
-
-                                                axisData.stackSums.set(key, range);
-                                            }
                                         //}
+
+                                        let [min, max, range] = axisData.stackSums.get(key) || [0,0,0];
+
+                                        range = range + Math.abs(newValue);
+                                    
+                                        newValue = (lastValue+newValue);
+                                        stackTrackValues.set(key, newValue);
+
+                                        min = Math.min(newValue, min);
+                                        max = Math.max(newValue, max);
+
+                                        axisData.stackSums.set(key, [min, max, range]);
+
+                                        if(axisData.format === "percent" && i === (tempDataLength-1)){
+                                            const minPercent = ((min / range) * 100) || 0;
+                                            const maxPercent = ((max / range) * 100) || 0;
+
+                                            const maxValue = axisData.maxValue || minPercent;
+                                            const minValue = axisData.minValue || maxPercent;
+                                            
+                                            axisData.minValue = Math.min(minValue, minPercent);
+                                            axisData.maxValue = Math.max(maxValue, maxPercent);
+
+                                            axisData.stackSums.set(key, range);
+                                        }
+
+                                        
         
                                         //const currentStack = newValue >= 0? [newValue, lastStack[1]]: [lastStack[0], newValue];
                                         //stackTrackValues.set(key, newValue);
@@ -925,7 +933,7 @@ export function setUpChart(dv){
 
                                 if(isBubble){
                                     const sizeBucket = axisSizeBuckets.get(key);
-                                    const newValue = Calc.computeOperation(sizeBucket, sizeObj.operation, sizeObj.isAllNumber);
+                                    const newValue = await Calc.computeOperation(sizeBucket, sizeObj.operation, sizeObj.isAllNumber);
                                     
                                     if(newValue){
                                         const minSize = sizeRange.min || newValue;
@@ -942,12 +950,12 @@ export function setUpChart(dv){
                                 const customBuckets = customDataBuckets.get(key);
 
                                 if(customBuckets){
-                                    customBuckets.map((bucket, index) => {
+                                    customBuckets.map(async (bucket, index) => {
                                         if(bucket.length > 0){
 
                                             const customObj = customData[index] || {};
                                             const isAllNumber = customObj.isAllNumber;
-                                            let newValue = Calc.computeOperation(bucket, customObj.operation, isAllNumber);
+                                            let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
 
                                             //sort
                                             if(sortDatasetIndex || sortTarget){
@@ -1047,8 +1055,9 @@ export function setUpChart(dv){
                     //remove all duplicates
                     if(!xAxis.isAllNumbers){
                         const xAxisSize = xAxis.values.size;
+
                         //set axis count
-                        xAxisSize > (scrollData.labelsCount|| 0)? scrollData.labelsCount = xAxisSize: null;
+                        xAxisSize > (scrollData.labelsCount || 0)? scrollData.labelsCount = xAxisSize: null;
                     } 
                 }
             
@@ -1151,7 +1160,7 @@ export function setUpChart(dv){
                 let index = 0;
                 let validValueCount = 0;
                 for (const [label, bucket] of valueBuckets.entries()) {
-                    const value = Calc.computeOperation(bucket, operation, true);
+                    const value = await Calc.computeOperation(bucket, operation, true);
                     
                     if(value > -1){
                         // Set sort values
@@ -1177,11 +1186,12 @@ export function setUpChart(dv){
                         const customBuckets = customDataBuckets.get(label);
                     
                         if (customBuckets) {
-                            customBuckets.forEach((bucket, i) => {
+                            //customBuckets.forEach(async (bucket, i) => {
+                            for(const [i, bucket] of customBuckets.entries()) {
                                 if (bucket.length > 0) {
                                     const customObj = customData[i];
                                     const isAllNumber = customObj.isAllNumber;
-                                    let newValue = Calc.computeOperation(bucket, customObj.operation, isAllNumber);
+                                    let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
                                     
                                     // Set sort values for custom data
                                     if (sortTarget === "custom") {
@@ -1194,7 +1204,7 @@ export function setUpChart(dv){
                                     
                                     customBuckets[i] = newValue;
                                 }
-                            });
+                            };
                         }
 
                         if (validValueCount > 49) {
@@ -1374,7 +1384,7 @@ export function setUpChart(dv){
                                     }
 
                                     if(i === (firstColumn.length-1)){
-                                        columnsTotal.push(Calc.computeOperation(column, operation, columnIsNumeric));
+                                        columnsTotal.push(await Calc.computeOperation(column, operation, columnIsNumeric));
                                     }
                                     
                                 }
@@ -1398,7 +1408,7 @@ export function setUpChart(dv){
 
                                 for(const [key, bucket] of columnMap){
 
-                                    const newValue = isOperation? Calc.computeOperation(bucket, operation, columnIsNumeric): bucket[0] || "";
+                                    const newValue = isOperation? await Calc.computeOperation(bucket, operation, columnIsNumeric): bucket[0] || "";
 
                                     const valueWidth = (ctx.measureText(newValue).width + twiceFontSize);
                                     maxWidths[index] = Math.max(maxWidth, valueWidth);
@@ -1428,13 +1438,23 @@ export function setUpChart(dv){
 
                         for(let index = 0; index < columnCount; index++){
                             const columnIsNumeric = isNumericColumns[index];
-                            const maxWidth = maxWidths[index] || 0;
 
                             const column = data[index];
                             const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
 
+                            const headerValue = headerValues[index];
+                            if(headerValue){
+                                const maxWidth = maxWidths[index] || 0;
+                                const valueWidth = (ctx.measureText(headerValue).width + twiceFontSize);
+                                maxWidths[index] = Math.max(maxWidth, valueWidth);
+
+                                newTableHeaders.push(headerValue);
+                            }
+
                             if(column){
-                                const newValue = Calc.computeOperation(column, operation, columnIsNumeric);
+                                const maxWidth = maxWidths[index] || 0;
+                                
+                                const newValue = await Calc.computeOperation(column, operation, columnIsNumeric);
 
                                 const valueWidth = (ctx.measureText(newValue).width + twiceFontSize);
                                 maxWidths[index] = Math.max(maxWidth, valueWidth);
@@ -1694,8 +1714,8 @@ export function setUpChart(dv){
 
                 const rowsTotalValues = Array.from(rowsTotal.values());
 
-                const rowsGrandTotal = Calc.computeOperation(rowsTotalValues, "sum", true);
-                const columnsGrandTotal = Calc.computeOperation(columnsTotal, "sum", true);
+                const rowsGrandTotal = await Calc.computeOperation(rowsTotalValues, "sum", true);
+                const columnsGrandTotal = await Calc.computeOperation(columnsTotal, "sum", true);
                 const grandTotal = (columnsGrandTotal + rowsGrandTotal);
 
                 newTableDataset.totals = {
