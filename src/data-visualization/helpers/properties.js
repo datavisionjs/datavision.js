@@ -420,7 +420,7 @@ export async function setUpChart(dv){
 
 
         for(const [i, dataset] of tempData.entries()){
-        //for(let i = 0; i < tempDataLength; i++){
+            //for(let i = 0; i < tempDataLength; i++){
             //const dataset = {...tempData[i]};
 
             const dataValueAxis =  dataset.yAxis || "y1";
@@ -488,7 +488,7 @@ export async function setUpChart(dv){
                 const yDataStats = await Calc.getArrayStats(yData);
 
                 const xDataIsAllNumber = xDataStats.isNumbers;
-                let yDataIsAllNumber = yDataStats.isNumbers; 
+                let yDataIsAllNumber = yDataStats.isNumbers;
             
                 //get and set tick format
                 const layoutXAxis = getAxisFromLayout(layout, dataLabelAxis);
@@ -725,7 +725,10 @@ export async function setUpChart(dv){
                                     const customBuckets = barData.customDataPoints.get(key);
 
                                     if(customBuckets){
-                                        customBuckets.map(async (bucket, index) => {
+                                        
+                                        for(let index = 0; index < customBuckets.length; index++){
+                                            const bucket = customBuckets[index];
+
                                             if(bucket.length > 0){
                                                 const customObj = customData[index] || {};
                                                 const isAllNumber = customObj.isAllNumber;
@@ -746,7 +749,7 @@ export async function setUpChart(dv){
                                                 
                                                 customBuckets[index] = newValue;
                                             }
-                                        });
+                                        };
                                     }
             
                                 };
@@ -768,7 +771,6 @@ export async function setUpChart(dv){
                             xAxis.values.add(xValue) : null;
                         }
 
-                        
 
                     }else if(chartType === "histogram"){
                         const min = xDataStats.min, max = xDataStats.max;
@@ -950,7 +952,9 @@ export async function setUpChart(dv){
                                 const customBuckets = customDataBuckets.get(key);
 
                                 if(customBuckets){
-                                    customBuckets.map(async (bucket, index) => {
+                                    for (let index = 0; index < customBuckets.length; index++) {
+                                        const bucket = customBuckets[index];
+
                                         if(bucket.length > 0){
 
                                             const customObj = customData[index] || {};
@@ -972,7 +976,7 @@ export async function setUpChart(dv){
 
                                             customBuckets[index] = newValue;
                                         }
-                                    });
+                                    };
                                 }
                             }
             
@@ -1062,7 +1066,7 @@ export async function setUpChart(dv){
                 }
             
                 if(yAxis){
-                    if(!yDataIsAllNumber){
+                    if(!yAxis.isAllNumbers){
                         const yAxisSize = yAxis.values.size;
                         //set axis count
                         yAxisSize > (scrollData.valuesCount|| 0)? scrollData.valuesCount = yAxisSize: null;
@@ -1187,22 +1191,23 @@ export async function setUpChart(dv){
                     
                         if (customBuckets) {
                             //customBuckets.forEach(async (bucket, i) => {
-                            for(const [i, bucket] of customBuckets.entries()) {
+                            for(let index = 0; index < customBuckets.length; index++){
+                                const bucket = customBuckets[index];
                                 if (bucket.length > 0) {
-                                    const customObj = customData[i];
+                                    const customObj = customData[index];
                                     const isAllNumber = customObj.isAllNumber;
                                     let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
                                     
                                     // Set sort values for custom data
                                     if (sortTarget === "custom") {
-                                        if (customIndex === i || (i === 0 && !customIndex)) {
+                                        if (customIndex === index || (index === 0 && !customIndex)) {
                                             const lastSortValue = dataToSort.get(label);
                                             const newSortValue = newValue || 0;
                                             dataToSort.set(label, lastSortValue ? lastSortValue + newSortValue : newSortValue);
                                         }
                                     }
                                     
-                                    customBuckets[i] = newValue;
+                                    customBuckets[index] = newValue;
                                 }
                             };
                         }

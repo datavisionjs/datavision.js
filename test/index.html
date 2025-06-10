@@ -10,9 +10,10 @@
     <script src="../dist/datavision.min.js"></script>
     
     <div style="display: flex; ">
-        <!-- <div style="width: 300px; height: 200px;"></div> -->
-        <div id="my-chart" style="resize: both; display: table-column; width: 100%; max-width: 1000px; padding: 10px"></div>
+        <div id="my-chart-1" style="resize: both; width: 100%;"></div>
     </div>
+
+    
 
 
     <script>
@@ -3669,6 +3670,7 @@
         }
 
       const layout2 = {
+            "maintainAspectRatio": false,
             "title": {
                 "text": "",
                 "font": {
@@ -3770,13 +3772,16 @@
             "backgroundColor": "white",
             "tooltip": {},
         }
-        const chart = new DataVision("my-chart");
-        chart.plot(data, layout2);
+        const chart2 = new window.DataVision("my-chart-1");
+        chart2.plot([trace2], layout2);
 
-        window.addEventListener('resize', function () {
+        //const chart = new DataVision("my-chart");
+        //chart.plot([trace3], layout2);
+
+        /*window.addEventListener('resize', function () {
             console.log("Resizing chart");
             chart.update();
-        });
+        });*/
 
         
     </script>

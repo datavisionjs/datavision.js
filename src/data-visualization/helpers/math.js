@@ -414,43 +414,6 @@ export function isAllNumbers(arr) {
     return numberCount > (stringCount/2);
 }
 
-/*
-export function getArrayStats(arr) {
-    if (!Array.isArray(arr) || arr.length === 0) {
-        return {
-            isNumbers: false,
-            min: null,
-            max: null
-        };
-    }
-
-    let numberCount = 0;
-    let stringCount = 0;
-    let min = Infinity;
-    let max = -Infinity;
-
-    for (let i = 0; i < arr.length; i++) {
-        const value = arr[i];
-        const type = typeof value;
-
-        if (type === "string") {
-            stringCount++;
-        } else if (typeof value === "number" && !isNaN(value)) {
-            if (value < min) min = value;
-            if (value > max) max = value;
-            numberCount++;
-        }
-    }
-
-    const isNumbers = numberCount > (stringCount / 2);
-
-    return {
-        isNumbers,
-        min: numberCount > 0 ? min : null,
-        max: numberCount > 0 ? max : null
-    };
-}*/
-
 
 export async function getArrayStats(arr) {
     return new Promise((resolve) => {
@@ -484,7 +447,7 @@ export async function getArrayStats(arr) {
         for(const [i, value] of arr.entries()){
             //const value = arr[i];
 
-            if (typeof value === "number" && !isNaN(value)) {
+            if (isNumber(value)) {
                 sum += value;
                 sumSq += value * value;
                 if (value < min) min = value;
@@ -492,7 +455,7 @@ export async function getArrayStats(arr) {
                 numericValues.push(value);
                 distinctSet.add(value);
                 numberCount++;
-            }else {
+            }else if(typeof value === "string") {
                 stringCount++;
             }
         }
@@ -1086,6 +1049,8 @@ export function roundToEven(number) {
 export function projChartPosition(dv) {
 
     const layout = dv.getLayout();
+    const maintainAspectRatio = layout?.maintainAspectRatio || false;
+
 
     const targetSize = dv.getTargetSize();
     const canvas = dv.getCanvas();
@@ -1135,11 +1100,17 @@ export function projChartPosition(dv) {
     let layoutX = 0, layoutY = (titleTop+subTitleTop);
 
     if(!layoutWidth || !layoutHeight){
-        layoutWidth = targetSize.width;
-        layoutHeight = (layoutWidth/2);
 
-        if((targetSize.height < layoutHeight) && (targetSize.height > 0)){
-            layoutHeight = targetSize.height;
+        if(maintainAspectRatio){
+            layoutWidth = targetSize.width || 800;
+            layoutHeight = targetSize.height || 400;
+        }else {
+            layoutWidth = targetSize.width;
+            layoutHeight = (layoutWidth/2);
+
+            if((targetSize.height < layoutHeight) && (targetSize.height > 0)){
+                layoutHeight = targetSize.height;
+            }
         }
     }
 

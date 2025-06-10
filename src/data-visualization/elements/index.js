@@ -456,49 +456,6 @@ const DrawElements = (dv, dataset) => {
                             continue;
                         }
 
-                        /*if(chartType === "area" && (positionType === "end" || (positionType === "" && strokeEnd))){
-                            areaCtx.fillStyle = color;
-
-                            areaCtx.globalAlpha = 0.2;
-
-                            if(i === 0 || !isStacked){
-                                const zeroStartPos = Calc.getAxisPosition(dv, label, 0, valueAxisName, labelAxisName);
-                                const zeroEndPos = Calc.getAxisPosition(dv, labels[loopStart], 0, valueAxisName, labelAxisName);
-                                
-                                if(zeroStartPos && zeroEndPos){
-                                    areaCtx.lineTo(zeroStartPos.x, zeroStartPos.y);
-                                    areaCtx.lineTo(zeroEndPos.x, zeroEndPos.y);
-                                    areaCtx.closePath();
-                                    areaCtx.fill();
-                                }
-                            }else {
-                                
-                                for(var o = (loopEnd-1); o >= loopStart; o--){
-                                    const label = labels[o];
-                                    let value = dataPoints.get(label);
-
-                                    const stackValue = stackLastValues.get(label);
-
-                                    const keyMinMax = stackSums.get(label) || {};
-                                    const range = stackSums.get(label) || 0;//(keyMinMax.max - keyMinMax.min);
-                                    value = isPercent ? (value / range) * 100 : value;
-
-                                    //const prevDataPoints = axisDatasets[i-1].dataPoints;
-                                    //const prevValue = prevDataPoints.get(label);
-
-                                    const prevStackValue = (stackValue - value);
-
-                                    const prevPointsPos = Calc.getAxisPosition(dv, label, prevStackValue, valueAxisName, labelAxisName);
-                                    areaCtx.lineTo(prevPointsPos.x, prevPointsPos.y);
-                                }
-
-                                areaCtx.closePath();
-                                areaCtx.fill();
-                            }
-                        }*/
-
-
-
 
                     }
     
@@ -886,7 +843,7 @@ const DrawElements = (dv, dataset) => {
         //draw Header 
         drawHeader((newLeftIndex + stickyCount), newLeftIndexEnd);
 
-        if(stickyCount){
+        if(stickyCount){  
             rowLeft = graphX;
             rowTop = (lineWidth/2);
 

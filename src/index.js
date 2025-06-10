@@ -13,68 +13,59 @@ import * as Global from './data-visualization/helpers/global.js';
 import DrawLegend from './data-visualization/plot-area/legend.js';
 import { addBars } from './data-visualization/plot-area/scrollbar.js';
 
+class DataVision {
+    constructor(targetId) {
+        if (!targetId || typeof targetId !== 'string') {
+            throw new Error("A valid target ID is required to initialize DataVision.");
+        }
 
+        // Ensure the chart is destroyed before plotting new data
+        this.destroy();
 
-function DataVision(targetId) {
-    //styles 
-    this.rawData = [];
-    this.data = [];
+        // Styles and data
+        this.rawData = [];
+        this.data = [];
+        this.isSetUpChart = false;
+        this.layout = {};
+        this.design = {};
 
-    //check if set up chart is called
-    this.isSetUpChart = false;
+        // DOM elements
+        this.titleContainer = document.createElement("div");
+        this.scrollWheelArea = document.createElement("div");
+        this.hrScrollBar = document.createElement("div");
+        this.vrScrollBar = document.createElement("div");
+        this.legendScrollBar = document.createElement("div");
+        this.legendContainer = document.createElement("div");
+        this.target = document.getElementById(targetId);
+        this.targetCanvas = document.createElement("canvas");
+        this.mainContainer = document.createElement("div");
+        this.canvasContainer = document.createElement("div");
+        this.canvas = document.createElement("canvas");
+        this.tempCanvas = document.createElement("canvas");
+        this.canvasCopy = document.createElement("canvas");
 
-    this.layout = {};
-    this.design = {};
+        // State
+        this.canvasSize = { width: 1, height: 1 };
+        this.scrollData = { topIndex: 0, leftIndex: 0, isScrollY: false, isScrollX: false };
+        this.legendScrollTop = 0;
+        this.toolTipData = [];
+        this.ctx = null;
 
-    //title 
-    this.titleContainer = document.createElement("div");
+        // Initialize
+        this.clearTarget();
+    }
 
-    //scrolls
-
-    //axisScrolls 
-    this.scrollWheelArea = document.createElement("div");
-    this.hrScrollBar = document.createElement("div");
-    this.vrScrollBar = document.createElement("div");
-
-    this.scrollData = {topIndex: 0, leftIndex: 0, isScrollY: false, isScrollX: false};
-
-    this.legendScrollBar = document.createElement("div");
-    this.legendScrollTop = 0;
-    this.legendContainer = document.createElement("div");
-
-
-    this.target = document.getElementById(targetId);
-    this.targetCanvas = document.createElement("canvas");
-
-    this.mainContainer = document.createElement("div");
-
-    this.canvasContainer = document.createElement("div");
-    this.canvas = document.createElement("canvas");
-    this.canvasSize = {width: 1, height: 1};
-    this.canvasCopy = document.createElement("canvas");
-
-    this.ctx = null;
-
-    this.tempCanvas = document.createElement("canvas");
-
-    this.toolTipData = [];
-
-    //create canvas for aspect ratio 
-    this.createCanvas = function (canvas, width, height) {
+    createCanvas(canvas, width, height) {
         const newCanvas = canvas || document.createElement("canvas");
-
         const ctx = newCanvas.getContext("2d");
-
         const ratio = window.devicePixelRatio || 1;
-
         const ratioWidth = width * ratio;
         const ratioHeight = height * ratio;
 
         newCanvas.width = ratioWidth;
         newCanvas.height = ratioHeight;
-
-        newCanvas.style.width = width + "px";
-        newCanvas.style.height = height + "px";
+        newCanvas.style.width = `${width}px`;
+        newCanvas.style.height = `${height}px`;
 
         ctx.scale(ratio, ratio);
         ctx.clearRect(0, 0, width, height);
@@ -82,112 +73,96 @@ function DataVision(targetId) {
         return newCanvas;
     }
 
-    //clear target
-    this.clearTarget = function (){
+    clearTarget() {
         const target = this.getTarget();
         target.innerHTML = "";
     }
-    
-    //setter and getter 
 
-
-    //data 
-    this.setRawData = function (data){
-        this.rawData = data;
-    }
-    this.getRawData = function (){
-        return this.rawData;
-    }
-
-    this.setData = function (data){
-        //set data to a new data
+    // Data getters and setters
+    setData(data) {
         this.data = data;
-    };
-    this.getData = function (){
+    }
+
+    getData() {
         return [...this.data];
-    };
+    }
 
-    //layout
-    this.setLayout = function (layout){
-
-        if(layout){
-            //get the data type of the dataset
-            //const data = this.getData();
-
-            //set general designs
+    // Layout methods
+    setLayout(layout) {
+        if (layout) {
             this.setDesign(layout);
 
-            //set title text to multiple lines 
+            // Handle title
             const title = layout.title || "";
-            if(Global.isObject(title)){
+            if (Global.isObject(title)) {
                 const titleText = title.text || "";
                 layout.title.lines = Global.splitTitleText(this, titleText);
-            }else {
-                layout.title = {lines: Global.splitTitleText(this, title)};
+            } else {
+                layout.title = { lines: Global.splitTitleText(this, title) };
             }
 
-            //sub title
+            // Handle subtitle
             const subTitle = layout.subTitle || "";
-            if(Global.isObject(subTitle)){
+            if (Global.isObject(subTitle)) {
                 const titleText = subTitle.text || "";
                 layout.subTitle.lines = Global.splitTitleText(this, titleText);
-            }else {
-                layout.subTitle = {lines: Global.splitTitleText(this, subTitle)};
+            } else {
+                layout.subTitle = { lines: Global.splitTitleText(this, subTitle) };
             }
 
-            //set layout default settings
             layout.customColorsIndex = 0;
-
-            //set layout to new layout
-            this.layout = {...layout};
+            this.layout = { ...layout };
         }
-    };
-    this.getLayout = function (){
+    }
+
+    getLayout() {
         return this.layout;
-    };
+    }
 
-    this.setDesign = function (layout){
+    // Design methods
+    setDesign(layout) {
         this.design = Design(this, layout);
-    };
-    this.getDesign = function (){
-        return this.design;
-    };
+    }
 
-    //title
-    this.getTitleContainer = function (){
+    getDesign() {
+        return this.design;
+    }
+
+    // Title methods
+    getTitleContainer() {
         return this.titleContainer;
     }
 
-    //canvas
-    this.setCanvas = function (layout){
+    // Canvas methods
+    setCanvas() {
         const chartArea = Calc.projChartPosition(this);
-
-        const width = chartArea.width, height = chartArea.height;
-
+        const { width, height } = chartArea;
         const canvas = this.createCanvas(this.getCanvas(), width, height);
         
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
-        this.canvasSize = {width: width, height: height};
-    };
+        this.canvasSize = { width, height };
+    }
 
-    this.getCanvasContainer = function (){
+    getCanvasContainer() {
         return this.canvasContainer;
-    };
-    this.getCanvas = function (){
+    }
+
+    getCanvas() {
         return this.canvas;
-    };
-    this.clearCanvas = function (x, y, width, height){
+    }
+
+    clearCanvas(x, y, width, height) {
         const ctx = this.getCtx();
         const layout = this.getLayout();
-
         const canvasSize = this.getCanvasSize();
-
-        if(ctx){
-            const newX = (x || 0), newY = (y || 0);
-            const newWidth = (width || canvasSize.width),  newHeight = (height || canvasSize.height);
-           
-            //set bg color 
+        
+        if (ctx) {
+            const newX = x || 0;
+            const newY = y || 0;
+            const newWidth = width || canvasSize.width;
+            const newHeight = height || canvasSize.height;
+            
             const bgColor = layout.backgroundColor || "transparent";
             const newCanvas = this.createCanvas(null, newWidth, newHeight);
             const newCtx = newCanvas.getContext("2d");
@@ -197,146 +172,128 @@ function DataVision(targetId) {
             ctx.beginPath();
             ctx.clearRect(newX, newY, newWidth, newHeight);
             ctx.drawImage(newCanvas, newX, newY, newWidth, newHeight);
-           
         }
-    };
-    this.getCanvasSize = function (){
-        return this.canvasSize;
-    };
-    this.addCanvas = function (){
+    }
 
+    getCanvasSize() {
+        return this.canvasSize;
+    }
+
+    addCanvas() {
         const canvasContainer = this.getCanvasContainer();
         canvasContainer.style.width = "100%";
         canvasContainer.style.height = "auto";
 
         const mainContainer = this.getMainContainer();
-        //target.style.display = "table-column";
-
         const canvas = this.getCanvas();
 
-        if(!mainContainer){
-            return;
-        }
+        if (!mainContainer) return;
 
-        if(canvasContainer.parentElement !== mainContainer){
-            //set style on target 
+        if (canvasContainer.parentElement !== mainContainer) {
             mainContainer.style.position = "relative";
 
-            //set event on canvas
-            const dv = this; //get datavision object
-            
-            Global.on(canvas, "wheel", function (){
-                const wheelArea = dv.getScrollbar().wheelArea;
-                wheelArea? wheelArea.style.pointerEvents = "": null;
+            Global.on(canvas, "wheel", () => {
+                const wheelArea = this.getScrollbar().wheelArea;
+                if (wheelArea) wheelArea.style.pointerEvents = "";
             });
 
-            Global.on(canvas, "mousedown", function (){
-                const wheelArea = dv.getScrollbar().wheelArea;
-                wheelArea? wheelArea.style.pointerEvents = "": null;
+            Global.on(canvas, "mousedown", () => {
+                const wheelArea = this.getScrollbar().wheelArea;
+                if (wheelArea) wheelArea.style.pointerEvents = "";
             }, "touchstart");
 
-            Global.on(canvas, "mousemove", function (event){
-
+            Global.on(canvas, "mousemove", (event) => {
                 event.stopPropagation();
                 const mousePosition = Global.getMousePosition(event);
-                DisplayToolTip(event, dv, mousePosition);
-
+                DisplayToolTip(event, this, mousePosition);
             }, "touchend");
 
-            Global.on(canvas, "mouseleave", function (){
+            Global.on(canvas, "mouseleave", () => {
                 let toolTipCard = mainContainer.querySelector("#dv_tooltip");
-                toolTipCard? toolTipCard.style.display = "none": null;
+                if (toolTipCard) toolTipCard.style.display = "none";
             }, "");
 
-            Global.on(document, "click", function (){
-                //if not touch screen, update target canvas
-                if(!(navigator.maxTouchPoints > 0)){
-                    dv.updateTargetCanvas();
+            Global.on(document, "click", () => {
+                if (!(navigator.maxTouchPoints > 0)) {
+                    this.updateTargetCanvas();
                 }
             }, "");
 
-            //add canvas to target
             canvasContainer.appendChild(canvas);
             mainContainer.appendChild(canvasContainer);
         }
-    };
+    }
 
-
-    //tooltip 
-    this.setToolTipData = function (data){
+    // Tooltip methods
+    setToolTipData(data) {
         this.toolTipData.push(data);
-    };
-    this.getToolTipData = function (){
+    }
+
+    getToolTipData() {
         return this.toolTipData;
-    };
-    this.clearToolTipData = function (){
+    }
+
+    clearToolTipData() {
         this.toolTipData = [];
-    };
+    }
 
-
-
-    this.updateCanvasCopy = function (){
+    // Canvas copy methods
+    updateCanvasCopy() {
         const canvas = this.getCanvas();
-        
-        
-        const canvasSize = this.getCanvasSize();
-        const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
-
-        const canvasCopy = this.createCanvas(null, canvasWidth, canvasHeight);
+        const { width, height } = this.getCanvasSize();
+        const canvasCopy = this.createCanvas(null, width, height);
         const ctx = canvasCopy.getContext("2d");
 
-        ctx.drawImage(canvas, 0, 0, canvasWidth, canvasHeight);
-
+        ctx.drawImage(canvas, 0, 0, width, height);
         this.canvasCopy = canvasCopy;
-    };
-    this.getCanvasCopy = function (){
+    }
+
+    getCanvasCopy() {
         return this.canvasCopy;
-    };
+    }
 
-    //2d context 
-    this.getCtx = function (){
+    // Context and temp canvas
+    getCtx() {
         return this.ctx || this.getCanvas().getContext("2d");
-    };
+    }
 
-    this.getTempCanvas = function (){
+    getTempCanvas() {
         return this.tempCanvas;
-    };
+    }
 
-    //scrolls 
-    this.getScrollData = function (){
+    // Scroll methods
+    getScrollData() {
         return this.scrollData;
-    };
-    this.getScrollbar = function (){
+    }
 
+    getScrollbar() {
         return {
             wheelArea: this.scrollWheelArea,
             hr: this.hrScrollBar,
             vr: this.vrScrollBar
         };
-    };
+    }
 
-    this.getLegendContainer = function (){
+    getLegendContainer() {
         return this.legendContainer;
-    };
+    }
 
-    //target 
-    this.getTarget = function (){
+    // Target methods
+    getTarget() {
         return this.target;
-    };
-    this.getTargetSize = function () {
+    }
+
+    getTargetSize() {
         const target = this.getTarget();
         const computedStyle = window.getComputedStyle(target);
     
-        // Parse padding values
         const paddingTop = parseFloat(computedStyle.paddingTop);
         const paddingBottom = parseFloat(computedStyle.paddingBottom);
         const paddingLeft = parseFloat(computedStyle.paddingLeft);
         const paddingRight = parseFloat(computedStyle.paddingRight);
     
-        // Get full dimensions (including padding, borders)
         const boundingRect = target.getBoundingClientRect();
     
-        // Calculate content-box width and height
         const contentWidth = boundingRect.width - paddingLeft - paddingRight;
         const contentHeight = boundingRect.height - paddingTop - paddingBottom;
     
@@ -344,101 +301,150 @@ function DataVision(targetId) {
             width: contentWidth,
             height: contentHeight,
         };
-    };
-    
-    this.updateTargetCanvas = function (){
-        const canvasCopy = this.getCanvasCopy();
-
-        const canvasSize = this.getCanvasSize();
-        const canvasWidth = canvasSize.width, canvasHeight = canvasSize.height;
-
-        const ctx = this.getCtx();
-
-        //ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        this.clearCanvas();
-        ctx.drawImage(canvasCopy, 0, 0, canvasWidth, canvasHeight);
-    };
-
-    //main container
-    this.getMainContainer = function (){
-        return this.mainContainer;
-    };
-
-    this.addMainContainer = () => {
-        const target = this.getTarget();
-        const targetSize = this.getTargetSize();
-        const mainContainer = this.getMainContainer();
-
-        const width = targetSize.width, height = targetSize.height;
-        mainContainer.setAttribute("style", `position: relative; width: ${width}px; height: ${height}px`);
-        
-        target?.appendChild(mainContainer);
     }
 
+    updateTargetCanvas() {
+        const canvasCopy = this.getCanvasCopy();
+        const { width, height } = this.getCanvasSize();
+        const ctx = this.getCtx();
 
-    //clearTarget 
-    this.clearTarget();
+        this.clearCanvas();
+        ctx.drawImage(canvasCopy, 0, 0, width, height);
+    }
 
+    // Main container methods
+    getMainContainer() {
+        return this.mainContainer;
+    }
+
+    addMainContainer() {
+        const target = this.getTarget();
+        const { width, height } = this.getTargetSize();
+        const mainContainer = this.getMainContainer();
+
+        mainContainer.setAttribute("style", `position: relative; width: ${width}px; height: ${height}px`);
+        
+        if(!mainContainer.parentElement || mainContainer.parentElement !== target) {
+            target?.appendChild(mainContainer);
+        }
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    update() {
+        
+        //clear tooltipData 
+        this.clearToolTipData();
+
+        //set canvas 
+        this.setCanvas();
+
+        //set graph position
+        Prop.setGraphPosition(this);
+
+        //clear rect
+        this.clearCanvas();
+
+        dataVis.DrawPlotArea(this);
+
+        dataVis.Chart(this);
+
+        //update date canvas copy with main canvas
+        this.updateCanvasCopy();
+
+        //add main canvas to user target element
+        this.addCanvas();
+
+        //add scrollBars
+        addBars(this, Calc.projChartPosition(this));
+
+        //Draw dataset names
+        DrawLegend(this);
+
+        //add mainCanvas to target
+        this.addMainContainer();
+    }
+
+    async plot (data, layout) {
+
+        if (!data || !layout) {
+            throw new Error("Data and layout are required to plot the chart.");
+        }
+
+        // Deep copy to prevent modifying original data
+        data = JSON.parse(JSON.stringify(data)); // Simple deep copy; consider lodash for complex cases
+        layout = JSON.parse(JSON.stringify(layout));
+
+        // Clear tooltip data
+        this.clearToolTipData();
+
+        // Set data and layout
+        this.setData(data);
+        this.setLayout(layout);
+
+        try {
+            await Prop.setUpChart(this);
+        } catch (error) {
+            console.error('Error setting up chart:', error);
+            throw error;
+        }
+
+        this.update();
+
+        const isResponsive = layout?.responsive !== undefined ? layout.responsive : true;
+
+        if(isResponsive){
+            // Remove existing event listeners
+            if (this.resizeHandler) {
+                window.removeEventListener('chartResize', this.resizeHandler);
+            }
+            if (this.windowResizeHandler) {
+                window.removeEventListener('resize', this.windowResizeHandler);
+            }
+
+            // Debounce the update method
+            this.resizeHandler = this.debounce(() => {
+                this.update();
+            }, 100);
+            window.addEventListener('chartResize', this.resizeHandler, { passive: true });
+
+            // Listen for window resize and dispatch custom event
+            this.windowResizeHandler = this.debounce(() => {
+                window.dispatchEvent(new Event('chartResize'));
+            }, 100);
+            window.addEventListener('resize', this.windowResizeHandler, { passive: true });
+        }
+    }
+
+    destroy() {
+        if (this.resizeHandler) {
+            window.removeEventListener('chartResize', this.resizeHandler);
+            this.resizeHandler = null;
+        }
+
+        if (this.windowResizeHandler) {
+            window.removeEventListener('resize', this.windowResizeHandler);
+            this.windowResizeHandler = null;
+        }
+
+        // Remove any canvas or custom elements added
+        if (this.target) {
+            while (this.target.firstChild) {
+                this.target.removeChild(this.target.firstChild);
+            }
+        }
+
+        // Optionally clear internal references
+        this.layout = null;
+        this.data = null;
+        this.canvas = null;
+    }
 }
-
-DataVision.prototype.update = function (){
-    //clear tooltipData 
-    this.clearToolTipData();
-
-    //set data
-    /*
-    this.setData(this.getRawData());
-
-    //set chart properties
-    await Prop.setUpChart(this);*/
-
-    //set canvas 
-    this.setCanvas(this.getLayout());
-
-    //set graph position
-    Prop.setGraphPosition(this);
-
-    //clear rect
-    this.clearCanvas();
-
-    dataVis.DrawPlotArea(this);
-
-    dataVis.Chart(this);
-
-    //update date canvas copy with main canvas
-    this.updateCanvasCopy();
-
-    //add main canvas to user target element
-    this.addCanvas();
-
-    //add scrollBars
-    addBars(this, Calc.projChartPosition(this));
-
-    //Draw dataset names
-    DrawLegend(this);
-
-    //add mainCanvas to target
-    this.addMainContainer();
-};
-
-DataVision.prototype.plot = async function (data, layout){
-    //create copy of data and layout
-    data = [...data];
-    layout = {...layout};
-
-    //clear tooltipData 
-    this.clearToolTipData();
-
-    //set data and layout
-    //this.setData(data);
-    this.setRawData(data);
-    this.setData(this.getRawData());
-
-    this.setLayout(layout);
-
-    await Prop.setUpChart(this);
-
-    this.update();
-};
 
 export default DataVision;
