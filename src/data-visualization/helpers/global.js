@@ -117,14 +117,20 @@ export function shortenText(text, maxLength){
 
 
 export function numberFormat(number, format){
-    if(!isNaN(number)){
-        const prefix = (format.prefix || ""), suffix = (format.suffix || "");
-        const separateNumbers = format.separateNumbers;
-        
-        return prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(number, format.decimalPlaces), separateNumbers) + suffix;
+    if(!Calc.isNumber(number) || !format || !isObject(format)){
+        return number;
     }
-
-    return number;
+        
+    const prefix = (format.prefix || ""), suffix = (format.suffix || "");
+    const decimalPlaces = format.decimalPlaces || 2;
+    const separateNumbers = format.separateNumbers;
+    const abbreviate= format.abbreviate || false;
+    
+    if(abbreviate){
+        return prefix + Calc.abbreviateNumber(Calc.toFixedIfNeeded(number, decimalPlaces));
+    }else {
+        return prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(number, decimalPlaces), separateNumbers) + suffix;
+    }
 }
 
 //repeat arrays

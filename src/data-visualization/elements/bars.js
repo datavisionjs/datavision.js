@@ -135,9 +135,6 @@ export const Group = (dv, ctx, barData, index, key, xIsLabel, value, barSize, ma
                         {name: datasetName, value: value},
                         ...customDataValues.map((value, index) => {
                             const data = customData[index] || {};
-                            if(key === "Strategy"){
-                                console.log("bars: ", data, value, customDataValues[0]);
-                            }
                             return {name: data.name || "", value: value};
                         })
                     ],

@@ -49,8 +49,6 @@ const fillArea = (
         endValue = isPercent ? (endValue / endRange) * 100 : endValue;
         const prevStackEndValue = (stackEndValue - endValue);
 
-        console.log("s: ", startValue, stackStartValue, prevStackStartValue, " e: ", endValue, stackEndValue, prevStackEndValue, "lab: ", label, labels);
-
 
         
         const startPos = Calc.getAxisPosition(dv, startLabel, prevStackStartValue, valueAxisName, labelAxisName);

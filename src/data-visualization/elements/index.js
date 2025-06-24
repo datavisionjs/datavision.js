@@ -551,13 +551,6 @@ const DrawElements = (dv, dataset) => {
         const stickyColumns = tableData.stickyColumns || {};
         const stickyCount = Math.min((stickyColumns.count || 0), columnCount);
 
-        //let columnWidth = Array.isArray(tableData.columnWidth)? tableData.columnWidth: [];
-        //const columnWidthDiff = (columnCount - columnWidth.length);
-
-        //columnWidth = columnWidth.length <= columnCount? columnWidth.concat(new Array(columnWidthDiff).fill(Math.min(columnWidth) || 1)): columnWidth.slice(0, columnCount);
-
-        //const columnWidthSum = Calc.sum(columnWidth);
-
         const headerFont = header.font? header.font: {};
         const thFontSize = headerFont.fontSize? headerFont.fontSize: fontSize;
         const thRowHeight = (thFontSize+fontSize);
@@ -671,7 +664,7 @@ const DrawElements = (dv, dataset) => {
                     positions.pop();
                 }
 
-                DrawCell(dv, tempCtx, positions, properties, rect, i, 0, tdColumnWidth);
+                DrawCell(tempCtx, positions, properties, rect, i, 0, tdColumnWidth);
             }
         }
 
@@ -683,6 +676,9 @@ const DrawElements = (dv, dataset) => {
                 const tdColumnWidth = (i === start && i !== (stickyCount-1)? prevCumWidth: 0) + maxWidth;
                 //const tdColumnWidth = maxWidths[i];
                 const columnValues = dataValues[i] || new Array((rowCount-1)).fill("");
+                const isNumeric = (data.isNumericColumns||[])[i] || false;
+                const format = Array.isArray(data.format)? data.format[i]: data.format || {};
+                const range = data.columnRanges? data.columnRanges[i]: [null, null];
                 //const tdColumnWidth = columnWidth[i]? ((columnWidth[i]/columnWidthSum)*providedColumnsWidth): altColumnWidth;
     
                 for(let index = newTopIndex; index < newTopIndexEnd; index++){
@@ -713,7 +709,10 @@ const DrawElements = (dv, dataset) => {
                         ...data,
                         value: cellValue,
                         center: {x: ((rowLeft+tdColumnWidth)-(maxWidth/2)), y: (rowTop+(tdRowHeight/2))},
-                        font
+                        font,
+                        isNumeric,
+                        format,
+                        range,
                     };
     
                     rowTop += tdRowHeight;
@@ -724,7 +723,7 @@ const DrawElements = (dv, dataset) => {
                         positions.shift();
                     }
     
-                    DrawCell(dv, tempCtx, positions, properties, rect, i, index, tdColumnWidth);
+                    DrawCell(tempCtx, positions, properties, rect, i, index, tdColumnWidth);
                     
                 }
     
@@ -745,6 +744,9 @@ const DrawElements = (dv, dataset) => {
                 let value = columnsTotal[i];
                 const operation = operations[i] || null;
                 const isOperation = operation && operation !== "none";
+
+                const isNumeric = (data.isNumericColumns||[])[i] || false;
+                const format = Array.isArray(data.format)? data.format[i]: data.format || {};
                 
                 const firstPos = {x: rowLeft, y: (rowTop)};
                 const secondPos = {x: (rowLeft+tdColumnWidth), y: (rowTop)};
@@ -772,12 +774,14 @@ const DrawElements = (dv, dataset) => {
                         ...(data.font || {}),
                         style: "bold",
                     },
+                    isNumeric,
+                    format,
                     ...totals,
                 };
 
                 rowLeft += tdColumnWidth;
 
-                DrawCell(dv, tempCtx, positions, properties, rect, i, (rowCount-1), tdColumnWidth);
+                DrawCell(tempCtx, positions, properties, rect, i, (rowCount-1), tdColumnWidth);
             }
 
             rowLeft = defaultRowLeft;

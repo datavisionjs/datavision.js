@@ -3518,23 +3518,26 @@
                 fill: {color: "#e4e9f4"},
                 font: {family: "arial", size: 14, weight: "normal"},
                 line: {width: 1, color: "lightgray"},
-                values: ["Same", "RegionName", "How", "Team", "Money"],
+                values: ["Team"],
             },
             data: {
                 font : {family: 'arial', size: 14, weight: 'normal', style: 'normal'},
                 line: {width: 1, color: 'lightgray'},
-                operation: ["sum", "first", "first"], 
+                operation: ["none"], 
                 values: [
-                    matchLength,
-                    [null, "North", "South", "West", "North", "South"],
+                    //matchLength,
+                    [0.2, 0.4, 0.6, 0.800001, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0],
+                    ["Strategy", "Sports", "Simulation How", "Moooter", "Role-Playing", "North", "South"],
                    
-                    ["Teddy", "Newark", "Teddy", "Newark", "Teddy", "Newark"],
-                    //[50, 40, 30, 20, 10, 30],
-                ]
+                    //["Teddy", "Newark", "Teddy", "Newark City Bags", "Teddy", "Newark"],
+                ],
+                format: {
+                    
+                }
             },
             totals: {
-                //enableColumnTotal: false,
-                enableRowTotal: true
+                enableColumnTotal: false,
+                enableRowTotal: false
             },
             stickyColumns: {
                 //count: 1
@@ -3559,11 +3562,11 @@
             binCount: 30,
         };
 
-        const mX = ["Action", "Adventure", "Puzzle", "Racing", "Role-Playing", "Shooter", "Sports"];
+        const mX = ["Action", "Adventure", "Puzzle", "Racing"];
 
         const trace2 = {
             x: mX,
-            y: [50, 40, 50, 20, null, null, 10],
+            y: [5000291.4567, 11500207.3290, 7170613.8089, 31720647.2456],
             name: 'JP_Sales',
             //mode: "stack",
             type: 'bar'
@@ -3571,7 +3574,7 @@
 
         const trace3 = { 
             x: mX,
-            y: [20, 50, 50, null, 6, null, 10],
+            y: [20001, 50001, 50001, null, 6, null, 10001],
             //yAxis: "y2",
             //direction: "hr",
             name: 'Group 3',
@@ -3591,9 +3594,9 @@
                 "Tues"
             ],
             "y": [
-                30,
-                20,
-                -30
+                3000,
+                20000,
+                -3000
             ],
             "name": "Price",
             "operation": "sum",
@@ -3611,9 +3614,9 @@
                 "Tues"
             ],
             "y": [
-                -50,
-                40,
-                50
+                -5000,
+                40000,
+                5000
             ],
             "name": "Savings",
             "custom": []
@@ -3629,9 +3632,9 @@
         const data = [
             //trace2,
             //trace1,
-            trace2,
-            trace3,
-            //table,
+            //trace2,
+            //trace3,
+            table,
             //tranceExp,
             //traceImp,
             //hist
@@ -3709,7 +3712,10 @@
                 "range": [
                     "",
                     ""
-                ]
+                ], 
+                tickFormat: {
+                   abbreviate: true,
+                }
             },
             "font": {
                 "family": "arial",
@@ -3773,7 +3779,7 @@
             "tooltip": {},
         }
         const chart2 = new window.DataVision("my-chart-1");
-        chart2.plot([trace2], layout2);
+        chart2.plot(data, layout2);
 
         //const chart = new DataVision("my-chart");
         //chart.plot([trace3], layout2);

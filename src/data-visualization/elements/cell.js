@@ -1,4 +1,5 @@
 import * as Global from '../helpers/global.js';
+import * as Calc from '../helpers/math.js';
 
 const getValue = (element, column, row, defaultValue) => {
     let value = defaultValue;
@@ -23,7 +24,7 @@ const getValue = (element, column, row, defaultValue) => {
     }
 };
 
-const DrawCell = (dv, ctx, positions, properties, rect, column, row, columnWidth) => {
+const DrawCell = (ctx, positions, properties, rect, column, row, columnWidth) => {
     //
     const align = getValue(properties.align, column, row, "center");
 
@@ -75,7 +76,19 @@ const DrawCell = (dv, ctx, positions, properties, rect, column, row, columnWidth
     ctx.textAlign = align;
     ctx.font = fontStyle + " " + fontWeight + " " + fontSize +"px "+ family;
 
-    const value = properties.value || "";
+    const isNumeric = properties.isNumeric || false;
+    const range = properties.range || [0, 0];
+    const format = properties.format || {};
+    
+    const isYearSeries = Calc.isYearSeries(range);
+    if(!format.separateNumbers){
+        format.separateNumbers = !isYearSeries;
+    }
+    if(format.abbreviate) {
+        format.abbreviate = !isYearSeries;
+    }
+
+    const value = ((isNumeric && Global.numberFormat(properties.value, format)) || properties.value) || "";
 
     const valueWidth = ctx.measureText(value).width;
     const valueCharSize = (valueWidth/value.length);

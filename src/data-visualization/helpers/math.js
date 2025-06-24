@@ -331,6 +331,25 @@ export function commaSeparateNumber(number, separateNumbers) {
     return parts.join(".");
 }
 
+export function abbreviateNumber(number){
+    if (!isNumber(number) || (number < 1000)) {
+        return number;
+    }
+
+    const suffixes = ["", "K", "M", "B", "T"];
+    const tier = Math.floor(Math.log10(Math.abs(number)) / 3);
+    
+    if (tier < 0 || tier >= suffixes.length) {
+        return number.toString(); // Return original number if out of range
+    }
+
+    const scaled = number / Math.pow(1000, tier);
+    const formatted = scaled.toFixed(scaled % 1 === 0 ? 0 : 1); // Format to one decimal place if needed
+
+    return `${formatted}${suffixes[tier]}`;
+}
+
+
 
 //find sum of an array of numbers
 export function sum(arr) {
@@ -516,7 +535,7 @@ export function isObjectButNotArray(variable) {
 export function isYearSeries(range){
     // Define the typical range for year values
     const minYear = 1000;
-    const maxYear = 9999;
+    const maxYear = 2100;
 
     const minRange = range[0];
     const maxRange = range[1];
@@ -581,7 +600,7 @@ export function toFixedIfNeeded(number, decimalPlaces){
 }*/
 
 export function toFixedIfNeeded(number, decimalPlaces) {
-    if (!isNumber(number)) {
+    if (!isNumber(number) || (!decimalPlaces && decimalPlaces !== 0)) {
         return number; // Return original value if not a valid number
     }
 
@@ -1046,6 +1065,28 @@ export function roundToEven(number) {
     return rounded;
 }
 
+export function targetSize(dv){
+    const target = dv.getTarget();
+    if(!target) return;
+
+    const computedStyle = window.getComputedStyle(target);
+
+    const paddingTop = parseFloat(computedStyle.paddingTop);
+    const paddingBottom = parseFloat(computedStyle.paddingBottom);
+    const paddingLeft = parseFloat(computedStyle.paddingLeft);
+    const paddingRight = parseFloat(computedStyle.paddingRight);
+
+    const boundingRect = target.getBoundingClientRect();
+
+    const contentWidth = boundingRect.width - paddingLeft - paddingRight;
+    const contentHeight = boundingRect.height - paddingTop - paddingBottom;
+
+    return {
+        width: contentWidth,
+        height: contentHeight,
+    };
+}
+
 export function projChartPosition(dv) {
 
     const layout = dv.getLayout();
@@ -1102,8 +1143,8 @@ export function projChartPosition(dv) {
     if(!layoutWidth || !layoutHeight){
 
         if(maintainAspectRatio){
-            layoutWidth = targetSize.width || 800;
-            layoutHeight = targetSize.height || 400;
+            layoutWidth = targetSize.width;
+            layoutHeight = targetSize.height;
         }else {
             layoutWidth = targetSize.width;
             layoutHeight = (layoutWidth/2);
@@ -1132,8 +1173,8 @@ export function projChartPosition(dv) {
 
 
     // Set initial width and height with default fallbacks
-    const width = roundToEven(layoutWidth) || 800;
-    const height = roundToEven(layoutHeight) || 400;
+    const width = roundToEven(layoutWidth) || (maintainAspectRatio? 1: 800);
+    const height = roundToEven(layoutHeight) || (maintainAspectRatio? 1: 400);
 
     const x = layoutX, y = layoutY;
 

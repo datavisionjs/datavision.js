@@ -54,14 +54,14 @@ export function setGraphPosition(dv){
 
     //y1
     const y1 = valueObject.y1;
-    const y1MaxWidth = y1.maxWidth;
+    const y1MaxWidth = y1.display !== false? y1.maxWidth: 0;
     const y1Title = layout.yAxis? layout.yAxis.title: null;
     let yAxisLeft = getAxisWidth(y1Title, y1MaxWidth, yLabelMaxWidth);
     
 
     //y2
     const y2 = valueObject.y2;
-    const y2MaxWidth = y2.maxWidth;
+    const y2MaxWidth = y2.display !== false? y2.maxWidth: 0;
     const y2Title = layout.y2Axis? layout.y2Axis.title: null;
     let yAxisRight = getAxisWidth((y2Title && (y2MaxWidth>0)), y2MaxWidth, yLabelMaxWidth);
 
@@ -86,7 +86,7 @@ export function setGraphPosition(dv){
     const tempGraphWidth = (canvasWidth-(yAxisLeft+yAxisRight));
 
     const x1 = labelObject.x1;
-    const x1MaxWidth = x1.maxWidth;
+    const x1MaxWidth = x1.display !== false? x1.maxWidth: 0;
     const labelStep = (tempGraphWidth/x1.values.length);
 
     //give space to the right of the x axis using x1MaxWidth
@@ -257,24 +257,33 @@ function setAxisProperties(dv, isZeroBased, axisObject, type){
         let maxWidth = axisMaxWidth;
 
         if(isAllNumbers){
+            /*
             const decimalPlaces = tickFormat? tickFormat.decimalPlaces: null;
             const prefix = tickFormat? tickFormat.prefix || "": "";
-            const suffix = tickFormat? tickFormat.suffix || "": "";
+            const suffix = tickFormat? tickFormat.suffix || "": "";*/
 
             if( !isNaN(tickRangeStart) && !isNaN(tickRangeEnd) ){
-                const startWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeStart, decimalPlaces) + suffix).width;
-                const endWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeEnd, decimalPlaces) + suffix).width;
+                //const startWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeStart, decimalPlaces) + suffix).width;
+                //const endWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(tickRangeEnd, decimalPlaces) + suffix).width;
+
+                const startWidth = ctx.measureText(Global.numberFormat(tickRangeStart, tickFormat)).width;
+                const endWidth = ctx.measureText(Global.numberFormat(tickRangeEnd, tickFormat)).width;
 
                 maxWidth = Math.max(startWidth, endWidth);
             }
         }
 
         if(tickFormat){
+            const isYearSeries = Calc.isYearSeries(tick.range);
             if(!tickFormat.separateNumbers){
-                tickFormat.separateNumbers = !Calc.isYearSeries(tick.range);
+                tickFormat.separateNumbers = !isYearSeries;
+            }
+            if(tickFormat.abbreviate) {
+                tickFormat.abbreviate = !isYearSeries;
             }
         }
 
+        axis.display = targetAxis.display !== false;
         axis.values = values;
         axis.title = title;
         axis.maxWidth = maxWidth;
@@ -536,11 +545,13 @@ export async function setUpChart(dv){
                     const yValue = yData[j];
                     
                     //set maxTextlength
-                    const labelToMeasure = xDataIsAllNumber? xPrefix + Calc.toFixedIfNeeded(xValue, xDecimalPlaces) + xSuffix: xValue + "";
+                    //const labelToMeasure = xDataIsAllNumber? xPrefix + Calc.toFixedIfNeeded(xValue, xDecimalPlaces) + xSuffix: xValue + "";
+                    const labelToMeasure = (xDataIsAllNumber? Global.numberFormat(xValue, xAxisTickFormat): xValue) || "";
                     let labelWidth = (xValue+"").length > (lastMaxLabel+"").length? ctx.measureText(labelToMeasure).width: null;
             
                     //If there's a value between 0 and -10 set the value to -10 and for measurement.
-                    const valueToMeasure = yDataIsAllNumber? yPrefix + Calc.toFixedIfNeeded((yValue < 0 && yValue > 10? -10: yValue), yDecimalPlaces) + ySuffix: yValue+"";
+                    //const valueToMeasure = yDataIsAllNumber? yPrefix + Calc.toFixedIfNeeded((yValue < 0 && yValue > 10? -10: yValue), yDecimalPlaces) + ySuffix: yValue+"";
+                    const valueToMeasure = (yDataIsAllNumber? Global.numberFormat((yValue < 0 && yValue > 10? -10: yValue), yAxisTickFormat): yValue) || "";
                     let valueWidth = valueToMeasure.length > (lastMaxValue+"").length? ctx.measureText(valueToMeasure).width: 0;
                     
                     //loop to assign direction and mode to axisData if a bar dataset includes it.
@@ -579,6 +590,7 @@ export async function setUpChart(dv){
                         const prefix = isHorizontal? xPrefix: yPrefix;
                         const suffix = isHorizontal? xSuffix: ySuffix;
                         const decimalPlaces = isHorizontal? xDecimalPlaces: yDecimalPlaces;
+                        const tickFormat = isHorizontal? xAxisTickFormat: yAxisTickFormat;
             
                         //set axisData xDataIsAllNumber to newXDataIsAllNumber
                         axisData.xDataIsAllNumber = newXDataIsAllNumber;
@@ -659,7 +671,8 @@ export async function setUpChart(dv){
                                     if(bucket.length > 0){
                                         let newValue = await Calc.computeOperation(bucket, operation, newYDataIsAllNumber);
             
-                                        const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
+                                        //const newValueWidth = ctx.measureText(prefix + Calc.toFixedIfNeeded(newValue, decimalPlaces) + suffix).width;
+                                        const newValueWidth = ctx.measureText(Global.numberFormat(newValue, tickFormat)).width;
             
                                         barData.dataPoints.set(key, newValue);
                                         //sort 
@@ -862,7 +875,8 @@ export async function setUpChart(dv){
                                         }
                                     }
 
-                                    valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
+                                    //valueWidth = ctx.measureText(yPrefix + Calc.toFixedIfNeeded(newValue, yDecimalPlaces) + ySuffix).width;
+                                    valueWidth = ctx.measureText(Global.numberFormat(newValue, yAxisTickFormat)).width;
             
                                     dataPoints.set(key, newValue);
 
@@ -1253,8 +1267,12 @@ export async function setUpChart(dv){
                 const maxWidths = [];
                 const cumulativeWidths = [];
 
+                const columnRanges = [];
+
                 const isSummaryColumns = [];
                 let hasSummaryColumn = false;
+
+                const isNumericColumns = [];
 
                 const columnsTotal = [];
                 const rowsTotal = new Map();
@@ -1265,6 +1283,8 @@ export async function setUpChart(dv){
 
                 const dataOperation = dataset.data? dataset.data.operation: false;
 
+                const format = dataset.data? dataset.data.format: {};
+
                 let rowsValueSum = 0;
                 let columnCount = data.length > headerValues.length? data.length: headerValues.length;
                 let rowCount = 0;
@@ -1274,8 +1294,6 @@ export async function setUpChart(dv){
 
                 if(dataOperation){
                     let includesNone = false;
-
-                    const isNumericColumns = [];
 
                     const catColumns = [];
                     let maxCatColumnIndex = -1; // Initialize with an invalid index
@@ -1409,19 +1427,29 @@ export async function setUpChart(dv){
                                 const isOperation = operation && operation !== "none";
 
                                 const columnValues = [];
-                                let maxWidth = maxWidths[index] || 0;
 
                                 for(const [key, bucket] of columnMap){
 
                                     const newValue = isOperation? await Calc.computeOperation(bucket, operation, columnIsNumeric): bucket[0] || "";
 
-                                    const valueWidth = (ctx.measureText(newValue).width + twiceFontSize);
+
+                                    let maxWidth = maxWidths[index] || 0;
+                                    const columnFormat = Array.isArray(format)? format[index]: format;
+                                    const valueWidth = (ctx.measureText((columnIsNumeric && Global.numberFormat(newValue, columnFormat)) || newValue).width + twiceFontSize);
                                     maxWidths[index] = Math.max(maxWidth, valueWidth);
 
                                     columnValues.push(newValue);
 
                                     if(columnIsNumeric){
+
                                         if(Calc.isNumber(newValue)){
+                                            //set range
+                                            const range = columnRanges[index] || [newValue, newValue];
+                                            range[0] = Math.min(range[0], newValue);
+                                            range[1] = Math.max(range[1], newValue);
+                                            columnRanges[index] = range;
+
+                                            //set total
                                             const rowTotal = rowsTotal.get(key) || 0;
                                             rowsTotal.set(key, (rowTotal+newValue));
                                         }
@@ -1461,11 +1489,20 @@ export async function setUpChart(dv){
                                 
                                 const newValue = await Calc.computeOperation(column, operation, columnIsNumeric);
 
-                                const valueWidth = (ctx.measureText(newValue).width + twiceFontSize);
+                                const columnFormat = Array.isArray(format)? format[index]: format;
+
+                                const valueWidth = (ctx.measureText((columnIsNumeric && Global.numberFormat(newValue, columnFormat)) || newValue).width + twiceFontSize);
                                 maxWidths[index] = Math.max(maxWidth, valueWidth);
 
                                 if(columnIsNumeric){
                                     if(Calc.isNumber(newValue)){
+                                        //set range
+                                        const range = columnRanges[index] || [newValue, newValue];
+                                        range[0] = Math.min(range[0], newValue);
+                                        range[1] = Math.max(range[1], newValue);
+                                        columnRanges[index] = range;
+
+                                        //set total
                                         const rowTotal = rowsTotal.get("0") || 0;
                                         rowsTotal.set("0", (rowTotal+newValue));
                                     }
@@ -1478,105 +1515,6 @@ export async function setUpChart(dv){
                             }
                         }
                     }
-
-
-                    /*
-                    for(let index = 0; index < columnCount; index++){
-                        const columnIsNumeric = isNumericColumns[index];
-
-                        //process header values 
-                        const headerValue = headerValues[index];
-                        if(headerValue){
-                            newTableHeaders.push(headerValue);
-        
-                            const valueWidth = ctx.measureText(headerValue).width;
-                            maxValueWidth = Math.max(maxValueWidth, valueWidth);
-                        }
-
-                        //process column data
-                        const column = data[index];
-                        const columnMap = new Map();
-
-                        const operation = Array.isArray(dataOperation)? dataOperation[index]: dataOperation;
-                        const isOperation = operation && operation !== "none";
-
-                        if(column){
-                            //let columnTotal = 0;
-
-                            if(includesNone && operationStatus !== "all"){
-                               
-                                for(let i = 0; i < column.length; i++){
-                                    //const row = ((hasNoOperations? allRows[i]: categoricalRows[i]) || "column").slice();
-                                    let row = hasNoOperations ? allRows[i] : categoricalRows[i];
-
-                                    row = Array.isArray(row) ? row.slice() : ["column"];
-                                    
-                                    //const rowString = (!operationStatus? row: row.splice(maxCatColumnIndex, 1)).toString();
-                                    let rowString;
-                                    if (Array.isArray(row)) {
-                                        const safeCatColumnIndex = Math.max(maxCatColumnIndex, 1); // Ensure the index is valid
-                                        rowString = (!operationStatus ? row : row.slice(0, safeCatColumnIndex).concat(row.slice(safeCatColumnIndex + 1))).toString();
-                                    } else {
-                                        rowString = row.toString();
-                                    }
-                                    
-                                    const value = column[i];
-
-                                    if(columnMap.has(rowString)){
-                                        columnMap.get(rowString).push(value);
-                                    }else {
-                                        columnMap.set(rowString, [value]);
-                                    }
-                                }
-
-                                const columnValues = [];
-
-                                for(const [key, bucket] of columnMap){
-
-                                    const newValue = isOperation? Calc.computeOperation(bucket, operation, columnIsNumeric): bucket[0] || "";
-
-                                    const valueWidth = ctx.measureText(newValue).width;
-                                    maxValueWidth = Math.max(maxValueWidth, valueWidth);
-
-                                    columnValues.push(newValue);
-
-                                    if(columnIsNumeric){
-                                        if(Calc.isNumber(newValue)){
-                                            const rowTotal = rowsTotal.get(key) || 0;
-                                            rowsTotal.set(key, (rowTotal+newValue));
-                                        }
-                                    }
-                                }
-
-                                if(rowCount < columnValues.length){
-                                    rowCount = columnValues.length;
-                                }
-
-                                newTableData.push(columnValues);
-
-                            }else {
-
-                                const newValue = Calc.computeOperation(column, operation, columnIsNumeric);
-
-                                const valueWidth = ctx.measureText(newValue).width;
-                                maxValueWidth = Math.max(maxValueWidth, valueWidth);
-
-                                if(columnIsNumeric){
-                                    if(Calc.isNumber(newValue)){
-                                        const rowTotal = rowsTotal.get("0") || 0;
-                                        rowsTotal.set("0", (rowTotal+newValue));
-                                    }
-                                }
-
-                                newTableData.push([newValue]);
-
-                            }
-
-                            columnsTotal.push(Calc.computeOperation(column, operation, columnIsNumeric));
-                        }
-                    }
-
-                    */
 
                 }else {
 
@@ -1623,38 +1561,6 @@ export async function setUpChart(dv){
                         }
                     }
 
-                    /*
-                    for(let index = 0; index < columnCount; index++){
-                         //process header values 
-                         const maxWidth = maxWidths[index] || 0;
-
-                        const headerValue = headerValues[index];
-                        if(headerValue){
-                            newTableHeaders.push(headerValue);
-                
-                            const valueWidth = ctx.measureText(headerValue).width;
-                            maxWidths[index] = Math.max(maxWidth, valueWidth);
-                        }
-
-                        //process column data
-                        const column = data[index];
-                        if(column){
-                            const newColumn = [];
-                            const len = column.length;
-
-                            len > rowCount? rowCount = len: null;
-                            for(let i = 0; i < len; i++){
-                                const value = column[i];
-                                newColumn.push(value);
-
-                                const valueWidth = ctx.measureText(value).width;
-                                maxValueWidth = Math.max(maxValueWidth, valueWidth);
-                            }
-
-                            newTableData.push(newColumn);
-                        }
-                    }*/
-
                 }
 
                 const newColumnCount = Math.max(newTableData.length, newTableHeaders.length);
@@ -1688,6 +1594,8 @@ export async function setUpChart(dv){
                     ...datasetData,
                     values: sortedTableData, 
                     isSummaryColumns,
+                    isNumericColumns,
+                    columnRanges,
                     font: {
                         ...datasetFont,
                         color: newDataColor,

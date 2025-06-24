@@ -140,10 +140,11 @@ function drawYAxis(dv, ctx, position, isPercent){
     const axisValues = axisData.yData;
 
     for(let key in axisValues){
-        const maxLabelWidth = position.maxLabelWidth[key];
-
         const axis = axisValues[key];
+        if(!axis.display) continue;
+
         const values = axis.values;
+        const maxLabelWidth = position.maxLabelWidth[key];
 
         if(axis.isAllNumbers){
             const tickData = axis.tickData;
@@ -315,10 +316,11 @@ function drawXAxis(dv, ctx, position, isPercent){
     const labels = axisData.xData;
     
     for(let key in labels){
-        const maxLabelWidth = position.maxLabelWidth[key];
-
         const axis = labels[key];
+        if(!axis.display) continue;
+
         const values = axis.values;
+        const maxLabelWidth = position.maxLabelWidth[key];
 
         if(axis.isAllNumbers){
             const tickData = axis.tickData;

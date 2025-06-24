@@ -63,6 +63,8 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
     }
 
     //set tooltip
+    const datasetName = dataset.name || "";
+
     const customData = dataset.custom;
     const customDataPoints = dataset.customDataPoints;
     const customDataValues = customDataPoints.get(label) || [];
@@ -81,7 +83,7 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
             },
             text: [
                 {name: "", value: label},
-                {name: "", value: value + " (" + percent + "%)"},
+                {name: datasetName, value: value, percent: percent},
                 ...customDataValues.map((value, index) => {
                     return {name: customData[index].name || "", value: value};
                 })

@@ -1,3 +1,5 @@
+
+import { cloneDeep } from 'lodash';
 import * as dataVis from './data-visualization/index.js'
 
 //import helpers
@@ -43,6 +45,9 @@ class DataVision {
         this.canvas = document.createElement("canvas");
         this.tempCanvas = document.createElement("canvas");
         this.canvasCopy = document.createElement("canvas");
+
+        //set target id
+        this.targetId = targetId;
 
         // State
         this.canvasSize = { width: 1, height: 1 };
@@ -116,7 +121,7 @@ class DataVision {
     }
 
     getLayout() {
-        return this.layout;
+        return this.layout || {};
     }
 
     // Design methods
@@ -125,12 +130,12 @@ class DataVision {
     }
 
     getDesign() {
-        return this.design;
+        return this.design || {};
     }
 
     // Title methods
     getTitleContainer() {
-        return this.titleContainer;
+        return this.titleContainer || {};
     }
 
     // Canvas methods
@@ -145,7 +150,7 @@ class DataVision {
     }
 
     getCanvasContainer() {
-        return this.canvasContainer;
+        return this.canvasContainer || {};
     }
 
     getCanvas() {
@@ -283,24 +288,16 @@ class DataVision {
         return this.target;
     }
 
+    getTargetId() {
+        return this.targetId || ""; 
+    }
+
+    setTargetSize() {
+        this.targetSize = Calc.targetSize(this);
+    }
+
     getTargetSize() {
-        const target = this.getTarget();
-        const computedStyle = window.getComputedStyle(target);
-    
-        const paddingTop = parseFloat(computedStyle.paddingTop);
-        const paddingBottom = parseFloat(computedStyle.paddingBottom);
-        const paddingLeft = parseFloat(computedStyle.paddingLeft);
-        const paddingRight = parseFloat(computedStyle.paddingRight);
-    
-        const boundingRect = target.getBoundingClientRect();
-    
-        const contentWidth = boundingRect.width - paddingLeft - paddingRight;
-        const contentHeight = boundingRect.height - paddingTop - paddingBottom;
-    
-        return {
-            width: contentWidth,
-            height: contentHeight,
-        };
+        return this.targetSize || {};
     }
 
     updateTargetCanvas() {
@@ -323,11 +320,18 @@ class DataVision {
         const mainContainer = this.getMainContainer();
 
         mainContainer.setAttribute("style", `position: relative; width: ${width}px; height: ${height}px`);
-        
-        if(!mainContainer.parentElement || mainContainer.parentElement !== target) {
-            target?.appendChild(mainContainer);
+
+        if (target) {
+            // Clear all existing children from target
+            while (target.firstChild) {
+                target.removeChild(target.firstChild);
+            }
+
+            // Append mainContainer after clearing
+            target.appendChild(mainContainer);
         }
     }
+
 
     debounce(func, wait) {
         let timeout;
@@ -338,6 +342,15 @@ class DataVision {
     }
 
     update() {
+
+        // If target element is missing or no longer in DOM, do not proceed
+        if (!this.target || !document.body.contains(this.target)) {
+            console.warn("Target element is not present in the DOM. Chart update aborted.");
+            return;
+        }
+
+        //sets the size of the target
+        this.setTargetSize();
         
         //clear tooltipData 
         this.clearToolTipData();
@@ -371,6 +384,52 @@ class DataVision {
         this.addMainContainer();
     }
 
+    observeTarget() {
+        if (!this.target || this._mutationObserver) return;
+
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(this.target)) {
+                console.info("Target element removed from DOM, destroying chart instance.");
+                console.log("target Was Removed: ");
+                this.destroy(); // Call destroy after disconnecting
+            }
+        });
+
+        const parent = this.target.parentElement || document.body;
+        observer.observe(parent, {
+            childList: true,
+            subtree: true
+        });
+
+        this._mutationObserver = observer;
+    }
+
+    observeTargetSize() {
+        if (!this.target || this._resizeObserver) return;
+
+        const resizeObserver = new ResizeObserver(
+            this.debounce(entries => {
+                const currentTarget = document.getElementById(this.targetId);
+                if (currentTarget && currentTarget === this.target) {
+
+                    const targetSize = this.getTargetSize() || {};
+                    const currentSize = Calc.targetSize(this) || {};
+
+                    const isSameSize = targetSize.width === currentSize.width && targetSize.height === currentSize.height;
+
+                    if(isSameSize) return;
+                    this.update();
+                }else {
+                    this.destroy();
+                }
+            }, 100)
+        );
+
+        resizeObserver.observe(this.target);
+        this._resizeObserver = resizeObserver;
+    }
+
+
     async plot (data, layout) {
 
         if (!data || !layout) {
@@ -378,8 +437,8 @@ class DataVision {
         }
 
         // Deep copy to prevent modifying original data
-        data = JSON.parse(JSON.stringify(data)); // Simple deep copy; consider lodash for complex cases
-        layout = JSON.parse(JSON.stringify(layout));
+        data = cloneDeep(data); // Simple deep copy; consider lodash for complex cases
+        layout = cloneDeep(layout);
 
         // Clear tooltip data
         this.clearToolTipData();
@@ -396,41 +455,25 @@ class DataVision {
         }
 
         this.update();
+        this.observeTarget();
 
         const isResponsive = layout?.responsive !== undefined ? layout.responsive : true;
 
         if(isResponsive){
-            // Remove existing event listeners
-            if (this.resizeHandler) {
-                window.removeEventListener('chartResize', this.resizeHandler);
-            }
-            if (this.windowResizeHandler) {
-                window.removeEventListener('resize', this.windowResizeHandler);
-            }
-
-            // Debounce the update method
-            this.resizeHandler = this.debounce(() => {
-                this.update();
-            }, 100);
-            window.addEventListener('chartResize', this.resizeHandler, { passive: true });
-
-            // Listen for window resize and dispatch custom event
-            this.windowResizeHandler = this.debounce(() => {
-                window.dispatchEvent(new Event('chartResize'));
-            }, 100);
-            window.addEventListener('resize', this.windowResizeHandler, { passive: true });
+            this.observeTargetSize();
         }
     }
 
     destroy() {
-        if (this.resizeHandler) {
-            window.removeEventListener('chartResize', this.resizeHandler);
-            this.resizeHandler = null;
+        if (this._mutationObserver) {
+            this._mutationObserver.disconnect();
+            this._mutationObserver = null;
         }
 
-        if (this.windowResizeHandler) {
-            window.removeEventListener('resize', this.windowResizeHandler);
-            this.windowResizeHandler = null;
+        if(this._resizeObserver) {
+            this._resizeObserver.unobserve(this.target);
+            this._resizeObserver.disconnect();
+            this._resizeObserver = null;
         }
 
         // Remove any canvas or custom elements added
@@ -440,10 +483,18 @@ class DataVision {
             }
         }
 
-        // Optionally clear internal references
-        this.layout = null;
-        this.data = null;
+        // Reset all properties
+        this.targetId = null;
+        this.target = null;
         this.canvas = null;
+        this.tempCanvas = null;
+        this.canvasCopy = null;
+        this.canvasContainer = null;
+        this.rawData = [];     
+        this.data = [];
+        this.isSetUpChart = false;
+        this.layout = {};
+        this.design = {};
     }
 }
 
