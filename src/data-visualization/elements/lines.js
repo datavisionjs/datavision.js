@@ -21,60 +21,6 @@ const DrawLines = (dv, ctx, dataset, type, color, size, position, positionIsOut)
     //draw lines and arc within graph bounds
     if(position){
 
-        /*
-        if(position.x > (graphX+graphWidth)){
-            const newX = (graphX+graphWidth);
-            position.y = Calc.linearInterpolationX(
-                newX, 
-                lastPosition.x,
-                lastPosition.y,
-                position.x,
-                position.y
-            );
-            position.x = newX;
-
-        }else if(position.x < (graphX)){
-            if(boundPosition.next && boundPosition.prev){
-                const newX = (graphX-(fontSize/2));
-                position.y = Calc.linearInterpolationX(
-                    newX, 
-                    boundPosition.next.x,
-                    boundPosition.next.y,
-                    boundPosition.prev.x,
-                    boundPosition.prev.y
-                );
-                position.x = newX;
-            }
-        }
-
-        if(position.y > (graphY+graphHeight)){
-            const newY = (graphY+graphHeight);
-            position.x = Calc.linearInterpolationY(
-                newY,
-                boundPosition.next.x,
-                boundPosition.next.y,
-                position.x,
-                position.y
-            );
-            position.y = newY;
-
-        }else if(position.y < (graphY)){
-            
-                const newY = (graphY);
-
-                position.x = Calc.linearInterpolationY(
-                    newY, 
-                    position.x,
-                    position.y,
-                    lastPosition.x,
-                    lastPosition.y
-                );
-
-                position.y = newY;
-            
-        }*/
-
-
         if(type === "start"){
             ctx.beginPath();
 

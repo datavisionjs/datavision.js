@@ -89,15 +89,6 @@ const ShowToolTip = (dv, ctx, pos, data) => {
         tooltipDataset.value = second.value;
         tooltipDataset.percent = second.percent;
 
-        //set x and y
-        /*
-        tooltipDataset.label = first.value;
-        tooltipDataset.value = second.value;
-        if(first.hasOwnProperty("isLabel") && !first.isLabel){
-            tooltipDataset.label = first.value;
-            tooltipDataset.value = second.value;
-        }*/
-
         //add in the custom data 
         const custom = dataText.slice(2, dataText.length);
         custom.length && (tooltipDataset.custom = custom);
@@ -108,11 +99,11 @@ const ShowToolTip = (dv, ctx, pos, data) => {
             const container = document.createElement("div");
             const text = document.createElement("span");
 
-            const name = Global.numberFormat(textObj.name, data.tickFormat);
-            const value = Global.numberFormat(textObj.value, data.tickFormat);
-            const percent = Global.numberFormat(textObj.percent, data.tickFormat);
+            const name = Global.numberFormat(textObj.name, data.format);
+            const value = Global.numberFormat(textObj.value, data.format);
+            const percent = Global.numberFormat(textObj.percent, data.format);
             
-            text.textContent = name + ": " + value + (textObj.percent? " ("+percent+"%)": ""); // Create text content
+            text.textContent = (name && name + ": ") + value + (textObj.percent? " ("+percent+"%)": ""); // Create text content
 
             // Add to container
             container.appendChild(text);

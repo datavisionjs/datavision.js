@@ -3,6 +3,7 @@ import * as Global from '../helpers/global.js';
 import AxisChart from './axis-chart.js';
 import PieChart from './pie-chart.js';
 import TableChart from './table-chart.js';
+import KPIChart from './kpi-chart.js';
 
 
 const Chart = (dv) => {
@@ -39,6 +40,8 @@ const Chart = (dv) => {
             }else if(type === "table") {
 
                 TableChart(dv, dataset);
+            }else if(type === "kpi") {
+                KPIChart(dv, dataset);
             }
         }
 

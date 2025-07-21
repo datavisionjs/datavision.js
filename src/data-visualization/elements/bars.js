@@ -238,7 +238,7 @@ export const Stack = (
                         return {name: data.name || "", value: value};
                     })
                 ],
-                tickFormat
+                format: tickFormat,
             }
         );
     }else {

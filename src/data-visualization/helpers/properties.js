@@ -2,6 +2,7 @@ import * as Calc from './math.js';
 import * as Global from './global.js';
 
 import customColors from '../helpers/colors.js';
+import { has } from 'lodash';
 
 export function setGraphPosition(dv){
     const chartArea = Calc.projChartPosition(dv);
@@ -373,6 +374,7 @@ export async function setUpChart(dv){
 
     const pieData = [];
     const tableData = [];
+    const kpiData = [];
 
     //sort objects
     const layoutSort = layout.sort || {};
@@ -415,6 +417,8 @@ export async function setUpChart(dv){
 
     let hasPieData = false;
     let hasTableData = false;
+    let hasKpiData = false;
+
     let axisDirection = null;
 
     //get range from data 
@@ -467,7 +471,7 @@ export async function setUpChart(dv){
                 });
             }
 
-            if(axisChartTypes.includes(chartType) && !(hasPieData || hasTableData)){
+            if(axisChartTypes.includes(chartType) && !(hasPieData || hasTableData || hasKpiData)){
 
                 const yAxis = dataValueAxis === "y2"? axisYData.y2: axisYData.y1;
                 const xAxis = axisXData[dataLabelAxis];
@@ -1087,7 +1091,7 @@ export async function setUpChart(dv){
                     }
                 }
             
-            }else if(chartType === "pie" && !(hasAxisData || hasTableData)){
+            }else if(chartType === "pie" && !(hasAxisData || hasTableData || hasKpiData)){
 
                 const labels = dataset.labels ? dataset.labels.slice() : [];
                 const values = dataset.values ? dataset.values.slice() : [];
@@ -1108,7 +1112,7 @@ export async function setUpChart(dv){
 
                 const operation = dataset.operation;
                 const design = dataset.design || {};
-                const colors = Array.isArray(design.colors)? design.colors: null;
+                const colors = design.colors || [];
             
                 const valueBuckets = new Map();
                 const colorBuckets = new Map();
@@ -1239,12 +1243,11 @@ export async function setUpChart(dv){
 
                 newDataset.labels = pieLabels;
                 newDataset.values = pieValues;
+                newDataset.labelIsAllNumbers = labelIsAllNumbers;
+                newDataset.valueIsAllNumbers = valueIsAllNumbers;
                 newDataset.type = "pie";
 
                 newDataset.customDataPoints = customDataBuckets;
-
-                newDataset.labelLayout = {tickFormat: getAxisFromLayout(layout, dataLabelAxis), isAllNumbers: labelIsAllNumbers};
-                newDataset.valueLayout = {tickFormat: getAxisFromLayout(layout, dataValueAxis), isAllNumbers: valueIsAllNumbers};
 
                 //sorting
                 Calc.pieCustomSort(dv, newDataset, dataToSort);
@@ -1257,7 +1260,7 @@ export async function setUpChart(dv){
                 legendData.maxWidth = Math.max(legendData.maxWidth, pieMaxLabelWidth);
 
                 hasPieData = true;
-            }else if(chartType === "table" && !(hasAxisData || hasPieData)){
+            }else if(chartType === "table" && !(hasAxisData || hasPieData || hasKpiData)){
 
                 //table dataset
                 const newTableDataset = {...dataset};
@@ -1653,11 +1656,141 @@ export async function setUpChart(dv){
                 tableData.push(newTableDataset);
 
                 hasTableData = true;
-            }
+            }else if(chartType === "kpi" && !(hasAxisData || hasPieData || hasTableData)){
+                const valueObj = dataset?.value || {};
+                const targetObj = dataset?.target || {};
+                const trendObj = dataset?.trend || {};
 
-            //remove duplicates from dataset 
-            //dataset.values = [...new Set(dataset.values)];
-            //dataset.labels = [...new Set(dataset.labels)];
+                let values = valueObj?.data?.slice() || [];
+                let labels = trendObj?.data?.slice() || [];
+                let targets = [];
+
+                let targetDatasets = targetObj?.datasets || [];
+
+                const trendMap = new Map();
+
+                if(labels.length){
+                    const sortedLabels = Calc.customSort(labels, "asc");
+                    const recentLabel = sortedLabels[sortedLabels.length - 1];
+
+                    const newValues = [];
+                    const newTargets = [];
+
+                    for(let i = 0; i < labels.length; i++){
+                        const label = labels[i];
+                        const value = values[i];
+
+                        //set trend map
+                        if(trendMap.has(label)){
+                            const existingValue = trendMap.get(label);
+                            existingValue.push(value);
+                            trendMap.set(label, existingValue);
+                        }else {
+                            trendMap.set(label, [value]);
+                        }
+
+                        if(label === recentLabel){
+                           newValues.push(value);
+                           
+                            for(let j = 0; j < targetDatasets.length; j++){
+                                const targetDataset = targetDatasets[j] || {};
+                                const targetData = targetDataset?.data || [];
+                                const targetValue = targetData[i];
+
+                                newTargets[j] = newTargets[j] || {...targetDataset, data: []};
+                                newTargets[j].data = newTargets[j].data || [];
+
+                                newTargets[j].data.push(targetValue);
+                            }
+                        }
+                    }
+
+                    values = newValues;
+                    targets = newTargets;
+                    labels = Array.from(new Set(sortedLabels));
+
+                }else {
+                    targets = [...targetDatasets];
+                }
+
+                const newDataset = {
+                    ...dataset,
+                    valueDataset: {
+                        ...valueObj
+                    },
+                    targetDataset: {
+                        ...targetObj
+                    },
+                    trendDataset: {
+                        ...trendObj
+                    },
+                }
+
+                let newValue = null;
+
+                //set value
+                if(values.length){
+                    const value = await Calc.computeOperation(values, valueObj?.operation, true);
+                    newValue = value;
+
+                    //compute trend map
+                    if(trendMap.size){
+                        let valueRange = [];
+
+                        for(const [label, valueArray] of trendMap.entries()){
+                            const trendValue = await Calc.computeOperation(valueArray, valueObj?.operation, true);
+                            
+                            valueRange[0] = Math.min(valueRange[0] || trendValue, trendValue);
+                            valueRange[1] = Math.max(valueRange[1] || trendValue, trendValue);
+                            
+                            trendMap.set(label, trendValue);
+                        }
+
+                        //set value range
+                        newDataset.valueDataset.range = valueRange;
+
+                        //set trend map and labels
+                        newDataset.trendDataset.map = trendMap;
+                        newDataset.trendDataset.labels = labels;
+                    }
+                }
+
+                //set targets
+                if(targets.length){
+                    const newTargets = [];
+                    const targetRange = [];
+
+                    for(let i = 0; i < targets.length; i++){
+                        const target = targets[i] || {};
+                        if(target){
+                            const targetValue = await Calc.computeOperation(target?.data, target?.operation, true);
+                            
+                            targetRange[0] = Math.min(targetRange[0] || targetValue, targetValue);
+                            targetRange[1] = Math.max(targetRange[1] || targetValue, targetValue);
+
+                            newTargets.push(targetValue);
+                        }else {
+                            newTargets.push(null);
+                        }
+                    }
+
+                    if(newTargets.length === 1){
+                        const target = newTargets[0];
+                        if (newValue !== null && target !== null && target !== 0) {
+                            newDataset.targetDataset.progress = ((newValue - target) / target) * 100;
+                        }
+                    }
+
+                    newDataset.targetDataset.targets = newTargets;
+                    newDataset.targetDataset.range = targetRange;
+                }
+                
+                newDataset.valueDataset.value = newValue;
+
+                kpiData.push(newDataset);
+
+                hasKpiData = true;
+            }
             
         }
 
@@ -1696,7 +1829,7 @@ export async function setUpChart(dv){
     //set pie Properties 
     setPieProperties(pieData);
 
-    const newData = [axisData, ...pieData, ...tableData];
+    const newData = [axisData, ...pieData, ...tableData, ...kpiData];
 
     //set axis chart properties
     const isHrBarChart = hasBarDataset && (axisDirection === "hr");
@@ -1747,6 +1880,8 @@ export async function setUpChart(dv){
     layout.hasAxisData = hasAxisData;
     layout.hasPieData = hasPieData;
     layout.hasTableData = hasTableData;
+    layout.hasKpiData = hasKpiData;
+
 
     //set data to dv
     dv.setData(newData);

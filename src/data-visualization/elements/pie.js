@@ -1,13 +1,18 @@
+import * as Global from '../helpers/global.js';
 import * as Calc from '../helpers/math.js'
 
 
-const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, pieColor, font, tickFormat) => {
+const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, pieColor, font) => {
     
     const layout = dv.getLayout();
     
-
+    const format = {
+        decimalPlaces: 2,
+        separateNumbers: true,
+        ...dataset?.textFormat || [],
+    };
+    
     const graphPosition = layout.graphPosition;
-    const graphX = graphPosition.x, graphY = graphPosition.y;
     const graphWidth = graphPosition.width, graphHeight = graphPosition.height;
 
     const radius = Calc.getArcRadius((graphWidth*0.9), (graphHeight*0.9));
@@ -51,7 +56,7 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
     // Measure the percentage text width
     ctx.font = `${font.weight} ${font.style} ${font.size}px ${font.family}`;
 
-    const percentText = `${percent}%`;
+    const percentText = `${Global.numberFormat(percent, format)}%`;
     const textWidth = ctx.measureText(percentText).width;
 
     if(textWidth <= arcLength){
@@ -88,7 +93,7 @@ const DrawPieSlice = (dv, ctx, dataset, startDegrees, endDegrees, holeRadius, la
                     return {name: customData[index].name || "", value: value};
                 })
             ],
-            tickFormat
+            format,
         }
     );
 }

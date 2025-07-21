@@ -8,6 +8,7 @@ import DrawPoints from "./points";
 import DrawPieSlice from './pie.js';
 import DrawCell from './cell.js';
 import fillArea from './area.js';
+import DrawKPI from './kpi.js';
 
 const DrawElements = (dv, dataset) => {
 
@@ -434,7 +435,7 @@ const DrawElements = (dv, dataset) => {
                                     hover: {
                                         color: color
                                     },
-                                    tickFormat,
+                                    format: tickFormat,
                                 });
                             }
                             //!positionIsOut? dv.setToolTipData({type: type, radius: size, midPoint: position, label: label, value: value, labelName: labelTitle, valueName: datasetName, size: type === "bubble"? size: null, sizeName: text, color: color, tickFormat: tickFormat}): null;
@@ -479,9 +480,6 @@ const DrawElements = (dv, dataset) => {
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 
     }else if(type === "pie"){
-
-        const tickFormat = {label: dataset.labelLayout.tickFormat, value: dataset.valueLayout.tickFormat};
-
         const radius = (Math.min(graphWidth, graphHeight)/2);
 
         const pieData = dataset.data;
@@ -512,7 +510,7 @@ const DrawElements = (dv, dataset) => {
 
                 const percent = Calc.toFixedIfNeeded(valDecimal*100);
 
-                DrawPieSlice(dv, tempCtx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, color, font, tickFormat);
+                DrawPieSlice(dv, tempCtx, dataset, startDegrees, endDegrees, holeRadius, label, value, percent, color, font);
 
                 startDegrees = endDegrees;
             }
@@ -890,7 +888,15 @@ const DrawElements = (dv, dataset) => {
 
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
     
+    }else if(type === "kpi"){
+        const valueDataset = dataset.valueDataset || {};
+        const targetDataset = dataset.targetDataset || {};
+        const trendDataset = dataset.trendDataset || {};
+
+        DrawKPI(tempCtx, valueDataset, targetDataset, trendDataset);
+
+        ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
     }
 }
 
-export default DrawElements
+export default DrawElements;

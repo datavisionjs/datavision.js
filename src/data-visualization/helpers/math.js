@@ -331,8 +331,8 @@ export function commaSeparateNumber(number, separateNumbers) {
     return parts.join(".");
 }
 
-export function abbreviateNumber(number){
-    if (!isNumber(number) || (number < 1000)) {
+export function abbreviateNumber(number, decimalPlaces = 2){
+    if (!isNumber(number) || Math.abs(number) < 1000) {
         return number;
     }
 
@@ -344,7 +344,7 @@ export function abbreviateNumber(number){
     }
 
     const scaled = number / Math.pow(1000, tier);
-    const formatted = scaled.toFixed(scaled % 1 === 0 ? 0 : 1); // Format to one decimal place if needed
+    const formatted = scaled.toFixed(scaled % decimalPlaces === 0 ? 0 : decimalPlaces); // Format to one decimal place if needed
 
     return `${formatted}${suffixes[tier]}`;
 }

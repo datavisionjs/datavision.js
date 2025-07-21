@@ -127,7 +127,7 @@ export function numberFormat(number, format){
     const abbreviate= format.abbreviate || false;
     
     if(abbreviate){
-        return prefix + Calc.abbreviateNumber(Calc.toFixedIfNeeded(number, decimalPlaces));
+        return prefix + Calc.abbreviateNumber(Calc.toFixedIfNeeded(number, decimalPlaces), decimalPlaces);
     }else {
         return prefix + Calc.commaSeparateNumber(Calc.toFixedIfNeeded(number, decimalPlaces), separateNumbers) + suffix;
     }

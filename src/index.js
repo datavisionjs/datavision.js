@@ -16,13 +16,17 @@ import DrawLegend from './data-visualization/plot-area/legend.js';
 import { addBars } from './data-visualization/plot-area/scrollbar.js';
 
 class DataVision {
+    static #instances = new Map();
+
     constructor(targetId) {
         if (!targetId || typeof targetId !== 'string') {
             throw new Error("A valid target ID is required to initialize DataVision.");
         }
 
-        // Ensure the chart is destroyed before plotting new data
-        this.destroy();
+        if (DataVision.#instances.has(targetId)) {
+            DataVision.#instances.get(targetId).destroy();
+            DataVision.#instances.delete(targetId);
+        }
 
         // Styles and data
         this.rawData = [];
@@ -58,6 +62,9 @@ class DataVision {
 
         // Initialize
         this.clearTarget();
+
+        // Store the new instance in the map
+        DataVision.#instances.set(targetId, this);
     }
 
     createCanvas(canvas, width, height) {
@@ -218,11 +225,11 @@ class DataVision {
                 if (toolTipCard) toolTipCard.style.display = "none";
             }, "");
 
-            Global.on(document, "click", () => {
+            /*Global.on(document, "click", () => {
                 if (!(navigator.maxTouchPoints > 0)) {
                     this.updateTargetCanvas();
                 }
-            }, "");
+            }, "");*/
 
             canvasContainer.appendChild(canvas);
             mainContainer.appendChild(canvasContainer);
@@ -301,9 +308,11 @@ class DataVision {
     }
 
     updateTargetCanvas() {
+        const ctx = this.getCtx();
+        if(!ctx) return;
+
         const canvasCopy = this.getCanvasCopy();
         const { width, height } = this.getCanvasSize();
-        const ctx = this.getCtx();
 
         this.clearCanvas();
         ctx.drawImage(canvasCopy, 0, 0, width, height);
@@ -390,7 +399,6 @@ class DataVision {
         const observer = new MutationObserver(() => {
             if (!document.body.contains(this.target)) {
                 console.info("Target element removed from DOM, destroying chart instance.");
-                console.log("target Was Removed: ");
                 this.destroy(); // Call destroy after disconnecting
             }
         });
@@ -405,24 +413,25 @@ class DataVision {
     }
 
     observeTargetSize() {
-        if (!this.target || this._resizeObserver) return;
+        if (!this.target || this._resizeObserver) {
+            return;
+        }
 
         const resizeObserver = new ResizeObserver(
             this.debounce(entries => {
-                const currentTarget = document.getElementById(this.targetId);
-                if (currentTarget && currentTarget === this.target) {
+                if (document.body.contains(this.target)) {
 
                     const targetSize = this.getTargetSize() || {};
                     const currentSize = Calc.targetSize(this) || {};
 
-                    const isSameSize = targetSize.width === currentSize.width && targetSize.height === currentSize.height;
+                    const isSameSize = targetSize.width === currentSize.width && targetSize.height === currentSize.height; 
 
                     if(isSameSize) return;
                     this.update();
                 }else {
                     this.destroy();
                 }
-            }, 100)
+            }, 10)
         );
 
         resizeObserver.observe(this.target);
