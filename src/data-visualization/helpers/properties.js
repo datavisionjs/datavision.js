@@ -91,11 +91,11 @@ export function setGraphPosition(dv){
     const labelStep = (tempGraphWidth/x1.values.length);
 
     //give space to the right of the x axis using x1MaxWidth
-    xAxisRight = x1.isAllNumbers? x1MaxWidth: 0;
+    xAxisRight = x1.isNumeric? x1MaxWidth: 0;
 
     const x1Title = layout.xAxis? layout.xAxis.title: null;
     let xAxisBottom = getAxisWidth(x1Title, (x1MaxWidth? fontSize: 0), xLabelMaxWidth);
-    if(!x1.isAllNumbers && ((labelStep/fontSize) < 4)){
+    if(!x1.isNumeric && ((labelStep/fontSize) < 4)){
         xAxisBottom = getAxisWidth(x1Title, x1MaxWidth, xLabelMaxWidth);
     }
 
@@ -192,10 +192,12 @@ function getTickData(range, isPercent){
 function fillData(filledData, toFillData, axisValues){
 
     if(axisValues.length > 0){
-        for(let i = 0; i < axisValues.length; i++){
+        /*for(let i = 0; i < axisValues.length; i++){
             const value = axisValues[i];
             toFillData.push(value);
-        }
+        }*/
+
+        toFillData = axisValues.slice();
     }else {
         toFillData = Array.from({ length: filledData.length }, (_, index) => index);
     }
@@ -222,7 +224,7 @@ function setAxisProperties(dv, isZeroBased, axisObject, type){
         const values = Array.from(axis.values);
         const axisMaxWidth = axis.maxWidth;
 
-        const isAllNumbers = Calc.isAllNumbers(values);
+        const isAllNumbers = axis.isNumeric || false;
 
         const design = dv.getDesign();
         let font = design.xAxis.font;
@@ -290,7 +292,7 @@ function setAxisProperties(dv, isZeroBased, axisObject, type){
         axis.maxWidth = maxWidth;
         axis.range = tick.range;
         axis.tickData = tick;
-        axis.isAllNumbers = isAllNumbers;
+        axis.isNumeric = isAllNumbers;
         axis.tickFormat = {...tickFormat};
     }
 };
@@ -402,7 +404,7 @@ export async function setUpChart(dv){
             this.range = null;
             this.maxWidth = 0;
             this.tickData = null;
-            this.isAllNumbers = false;
+            this.isNumeric = false;
         }
     };
 
@@ -421,6 +423,7 @@ export async function setUpChart(dv){
 
     let axisDirection = null;
 
+    console.log("setup started: ");
     //get range from data 
     if(data){
     
@@ -456,18 +459,18 @@ export async function setUpChart(dv){
             const sizeObj = design.size || {};
             const sizeData = sizeObj.data || [];
 
-            const customData = dataset.custom && Array.isArray(dataset.custom)? [...(dataset.custom || [])]: [];
+            const customData = dataset.custom && Array.isArray(dataset.custom)? (dataset.custom || []).slice(): [];
 
             const isBubble = chartType === "scatter" && sizeData.length;
 
             if(isBubble){
-                sizeObj.isAllNumber = Calc.isAllNumbers(sizeData);
+                sizeObj.isNumeric = Calc.isNumericArray(sizeData);
             }
 
             //custom data is all numbers 
             if(customData.length){
                 customData.map((innerObj) => {
-                    innerObj? innerObj.isAllNumber = Calc.isAllNumbers(innerObj.data): null;
+                    innerObj? innerObj.isNumeric = Calc.isNumericArray(innerObj.data): null;
                 });
             }
 
@@ -497,11 +500,13 @@ export async function setUpChart(dv){
                     yAxis: dataValueAxis
                 };
                 
-                const xDataStats = await Calc.getArrayStats(xData);
-                const yDataStats = await Calc.getArrayStats(yData);
+                //const xDataStats = await Calc.getArrayStats(xData);
+                //const yDataStats = await Calc.getArrayStats(yData);
 
-                const xDataIsAllNumber = xDataStats.isNumbers;
-                let yDataIsAllNumber = yDataStats.isNumbers;
+                const {arr1: xDataStats, arr2: yDataStats} = await Calc.getTwoArrayStats(xData, yData);
+
+                const xDataIsAllNumber = xDataStats.isNumeric;
+                let yDataIsAllNumber = yDataStats.isNumeric;
             
                 //get and set tick format
                 const layoutXAxis = getAxisFromLayout(layout, dataLabelAxis);
@@ -542,6 +547,8 @@ export async function setUpChart(dv){
 
                     yDataIsAllNumber = true; //histogram's y axis is numeric
                 }
+
+                console.log("datasetIN: dset ", xData, yData);
             
                 for(let j = 0; j < loopEnd; j++){
                     
@@ -748,7 +755,7 @@ export async function setUpChart(dv){
 
                                             if(bucket.length > 0){
                                                 const customObj = customData[index] || {};
-                                                const isAllNumber = customObj.isAllNumber;
+                                                const isAllNumber = customObj.isNumeric;
                                                 let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
                                                 
                                                 //sort
@@ -812,7 +819,7 @@ export async function setUpChart(dv){
                             for(const [key, bucket] of barData.dataPoints.entries()){
             
                                 if(bucket.length > 0){
-                                    let newValue = await Calc.computeOperation(bucket, "count", xDataStats.isNumbers);
+                                    let newValue = await Calc.computeOperation(bucket, "count", xDataStats.isNumeric);
                                     barData.dataPoints.set(key, newValue);
 
                                     yAxis.values.add(newValue);
@@ -953,7 +960,7 @@ export async function setUpChart(dv){
 
                                 if(isBubble){
                                     const sizeBucket = axisSizeBuckets.get(key);
-                                    const newValue = await Calc.computeOperation(sizeBucket, sizeObj.operation, sizeObj.isAllNumber);
+                                    const newValue = await Calc.computeOperation(sizeBucket, sizeObj.operation, sizeObj.isNumeric);
                                     
                                     if(newValue){
                                         const minSize = sizeRange.min || newValue;
@@ -976,7 +983,7 @@ export async function setUpChart(dv){
                                         if(bucket.length > 0){
 
                                             const customObj = customData[index] || {};
-                                            const isAllNumber = customObj.isAllNumber;
+                                            const isAllNumber = customObj.isNumeric;
                                             let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
 
                                             //sort
@@ -1023,8 +1030,8 @@ export async function setUpChart(dv){
                 yAxis.maxWidth = maxValueWidth > yAxis.maxWidth? maxValueWidth: yAxis.maxWidth;
             
                 //set axis is numbers 
-                yAxis.isAllNumbers = yDataIsAllNumber;
-                xAxis.isAllNumbers = xDataIsAllNumber;
+                yAxis.isNumeric = yDataIsAllNumber;
+                xAxis.isNumeric = xDataIsAllNumber;
             
                 hasAxisData = true;
             
@@ -1075,7 +1082,7 @@ export async function setUpChart(dv){
             
                 if(xAxis){
                     //remove all duplicates
-                    if(!xAxis.isAllNumbers){
+                    if(!xAxis.isNumeric){
                         const xAxisSize = xAxis.values.size;
 
                         //set axis count
@@ -1084,7 +1091,7 @@ export async function setUpChart(dv){
                 }
             
                 if(yAxis){
-                    if(!yAxis.isAllNumbers){
+                    if(!yAxis.isNumeric){
                         const yAxisSize = yAxis.values.size;
                         //set axis count
                         yAxisSize > (scrollData.valuesCount|| 0)? scrollData.valuesCount = yAxisSize: null;
@@ -1107,8 +1114,8 @@ export async function setUpChart(dv){
                 prevDataset.labels = labels;
                 prevDataset.values = values;
 
-                const labelIsAllNumbers = Calc.isAllNumbers(labels);
-                const valueIsAllNumbers = Calc.isAllNumbers(values);
+                const labelIsAllNumbers = Calc.isNumericArray(labels);
+                const valueIsAllNumbers = Calc.isNumericArray(values);
 
                 const operation = dataset.operation;
                 const design = dataset.design || {};
@@ -1213,7 +1220,7 @@ export async function setUpChart(dv){
                                 const bucket = customBuckets[index];
                                 if (bucket.length > 0) {
                                     const customObj = customData[index];
-                                    const isAllNumber = customObj.isAllNumber;
+                                    const isAllNumber = customObj.isNumeric;
                                     let newValue = await Calc.computeOperation(bucket, customObj.operation, isAllNumber);
                                     
                                     // Set sort values for custom data
@@ -1309,7 +1316,7 @@ export async function setUpChart(dv){
                        //process column data
                        const column = data[index];
                         if(column){
-                            const columnIsAllNumbers = Calc.isAllNumbers(column);
+                            const columnIsAllNumbers = Calc.isNumericArray(column);
                             isSummaryColumns.push(columnIsAllNumbers);
                             !hasSummaryColumn? hasSummaryColumn = columnIsAllNumbers: null;
 

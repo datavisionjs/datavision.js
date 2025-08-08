@@ -409,36 +409,45 @@ export function isNumber(value) {
     return typeof value === "number" && !isNaN(value);
 }
 
+function classifyIsNumeric(numericPercentage) {
+    return numericPercentage > 0.8;
+}
 
-//Function that returns true if an array contains all numbers.
-export function isAllNumbers(arr) {
+export function isNumericArray(arr) {
     if(!arr){
         return null;
     }
-    //return arr.every(element => typeof element === 'number');
+
+    //const arrLength = arr.length;
+
+    const cleanArray = [];
     let numberCount = 0;
-    let stringCount = 0;
 
     for(let i = 0; i < arr.length; i++){
         const value = arr[i];
-        const type = typeof value;
 
-        if(type === "string"){
-            stringCount++;
-        }else if(isNumber(value)) {
-            numberCount++;
+        if(value !== null && value !== undefined && value !== "") {
+            cleanArray.push(value);
+            if(isNumber(value)) numberCount++;
         }
     }
 
-    return numberCount > (stringCount/2);
+    //const uniqueValues = new Set(cleanArray);
+    //const cardinalityRatio = uniqueValues.size / arrLength;
+
+    const numericPercentage = numberCount / cleanArray.length;
+
+    return classifyIsNumeric(numericPercentage);
 }
 
 
 export async function getArrayStats(arr) {
     return new Promise((resolve) => {
-        if (!Array.isArray(arr) || arr.length === 0) {
+        const arrLength = arr.length;
+
+        if (!Array.isArray(arr) || arrLength === 0) {
             resolve({
-                isNumbers: false,
+                isNumeric: false,
                 count: 0,
                 min: null,
                 max: null,
@@ -459,23 +468,26 @@ export async function getArrayStats(arr) {
         let numericValues = [];
         const distinctSet = new Set();
 
+        const cleanValues = [];
         let numberCount = 0;
-        let stringCount = 0;
 
         //for (let i = 0; i < arr.length; i++) {
         for(const [i, value] of arr.entries()){
             //const value = arr[i];
 
-            if (isNumber(value)) {
-                sum += value;
-                sumSq += value * value;
-                if (value < min) min = value;
-                if (value > max) max = value;
-                numericValues.push(value);
-                distinctSet.add(value);
-                numberCount++;
-            }else if(typeof value === "string") {
-                stringCount++;
+            if(value !== null && value !== undefined && value !== "") {
+                cleanValues.push(value);
+
+                // Check if the value is a number
+                if (isNumber(value)) {
+                    sum += value;
+                    sumSq += value * value;
+                    if (value < min) min = value;
+                    if (value > max) max = value;
+                    numericValues.push(value);
+                    distinctSet.add(value);
+                    numberCount++;
+                }
             }
         }
 
@@ -483,7 +495,7 @@ export async function getArrayStats(arr) {
 
         if (count === 0) {
             resolve({
-                isNumbers: false,
+                isNumeric: false,
                 count: 0,
                 min: null,
                 max: null,
@@ -509,10 +521,15 @@ export async function getArrayStats(arr) {
                 ? (numericValues[count / 2 - 1] + numericValues[count / 2]) / 2
                 : numericValues[Math.floor(count / 2)];
 
-        const isNumbers = numberCount > (stringCount / 2);
+
+        //const uniqueValues = new Set(cleanValues);
+        //const cardinalityRatio = uniqueValues.size / arrLength;
+        const numericPercentage = numberCount / cleanValues.length;
+
+        const isNumeric = classifyIsNumeric(numericPercentage);
 
         resolve({
-            isNumbers,
+            isNumeric,
             count,
             min,
             max,
@@ -522,6 +539,165 @@ export async function getArrayStats(arr) {
             std_dev: standardDeviation,
             median,
             distinct_count: distinctSet.size
+        });
+    });
+}
+
+export async function getTwoArrayStats(arr1, arr2) {
+    return new Promise((resolve) => {
+        // Validate inputs
+        if (!Array.isArray(arr1) || !Array.isArray(arr2) || arr1.length === 0 || arr2.length === 0 || arr1.length !== arr2.length) {
+            resolve({
+                arr1: {
+                    isNumeric: false,
+                    count: 0,
+                    min: null,
+                    max: null,
+                    sum: null,
+                    avg: null,
+                    variance: null,
+                    std_dev: null,
+                    median: null,
+                    distinct_count: 0
+                },
+                arr2: {
+                    isNumeric: false,
+                    count: 0,
+                    min: null,
+                    max: null,
+                    sum: null,
+                    avg: null,
+                    variance: null,
+                    std_dev: null,
+                    median: null,
+                    distinct_count: 0
+                }
+            });
+            return;
+        }
+
+        let min1 = Infinity, min2 = Infinity;
+        let max1 = -Infinity, max2 = -Infinity;
+        let sum1 = 0, sum2 = 0;
+        let sumSq1 = 0, sumSq2 = 0;
+        let numericValues1 = [], numericValues2 = [];
+        const distinctSet1 = new Set(), distinctSet2 = new Set();
+        let cleanValues1 = [], cleanValues2 = [];
+        let numberCount1 = 0, numberCount2 = 0;
+
+        // Single loop to process both arrays
+        for (let i = 0; i < arr1.length; i++) {
+            const value1 = arr1[i];
+            const value2 = arr2[i];
+
+            // Process arr1
+            if (value1 !== null && value1 !== undefined && value1 !== "") {
+                cleanValues1.push(value1);
+                if (isNumber(value1)) {
+                    sum1 += value1;
+                    sumSq1 += value1 * value1;
+                    if (value1 < min1) min1 = value1;
+                    if (value1 > max1) max1 = value1;
+                    numericValues1.push(value1);
+                    distinctSet1.add(value1);
+                    numberCount1++;
+                }
+            }
+
+            // Process arr2
+            if (value2 !== null && value2 !== undefined && value2 !== "") {
+                cleanValues2.push(value2);
+                if (isNumber(value2)) {
+                    sum2 += value2;
+                    sumSq2 += value2 * value2;
+                    if (value2 < min2) min2 = value2;
+                    if (value2 > max2) max2 = value2;
+                    numericValues2.push(value2);
+                    distinctSet2.add(value2);
+                    numberCount2++;
+                }
+            }
+        }
+
+        // Process stats for arr1
+        const count1 = numericValues1.length;
+        let stats1 = {
+            isNumeric: false,
+            count: 0,
+            min: null,
+            max: null,
+            sum: null,
+            avg: null,
+            variance: null,
+            std_dev: null,
+            median: null,
+            distinct_count: 0
+        };
+
+        if (count1 > 0) {
+            numericValues1 = customSort(numericValues1, "asc");
+            const average1 = sum1 / count1;
+            const variance1 = (sumSq1 / count1) - (average1 * average1);
+            const standardDeviation1 = Math.sqrt(variance1);
+            const median1 = count1 % 2 === 0
+                ? (numericValues1[count1 / 2 - 1] + numericValues1[count1 / 2]) / 2
+                : numericValues1[Math.floor(count1 / 2)];
+            const numericPercentage1 = numberCount1 / cleanValues1.length;
+            stats1 = {
+                isNumeric: classifyIsNumeric(numericPercentage1),
+                count: count1,
+                min: min1,
+                max: max1,
+                sum: sum1,
+                avg: average1,
+                variance: variance1,
+                std_dev: standardDeviation1,
+                median: median1,
+                distinct_count: distinctSet1.size
+            };
+        }
+
+        // Process stats for arr2
+        const count2 = numericValues2.length;
+        let stats2 = {
+            isNumeric: false,
+            count: 0,
+            min: null,
+            max: null,
+            sum: null,
+            avg: null,
+            variance: null,
+            std_dev: null,
+            median: null,
+            distinct_count: 0
+        };
+
+        if (count2 > 0) {
+            numericValues2 = customSort(numericValues2, "asc");
+            const average2 = sum2 / count2;
+            const variance2 = (sumSq2 / count2) - (average2 * average2);
+            const standardDeviation2 = Math.sqrt(variance2);
+            const median2 = count2 % 2 === 0
+                ? (numericValues2[count2 / 2 - 1] + numericValues2[count2 / 2]) / 2
+                : numericValues2[Math.floor(count2 / 2)];
+            const numericPercentage2 = numberCount2 / cleanValues2.length;
+            stats2 = {
+                isNumeric: classifyIsNumeric(numericPercentage2),
+                count: count2,
+                min: min2,
+                max: max2,
+                sum: sum2,
+                avg: average2,
+                variance: variance2,
+                std_dev: standardDeviation2,
+                median: median2,
+                distinct_count: distinctSet2.size
+            };
+        }
+
+        resolve({
+            arr1: stats1,
+            arr2: stats2
         });
     });
 }
@@ -701,7 +877,7 @@ export function tickStep(intervalSize, isReverse){
 
 //get the minimun and max from a data of all numbers and return as range
 export function rangeFromData(dataArray, preferredRange = [null, null], altValue) {
-    if (!dataArray.length || !isAllNumbers(dataArray)) {
+    if (!dataArray.length || !isNumericArray(dataArray)) {
         return [null, null]; // Return early if array is empty or invalid
     }
 
@@ -937,10 +1113,10 @@ export function getAxisLabelPosition(dv, label, axisName){
     const axis = axisData.xData[axisName];
 
     if(axis){
-        const labelIsAllNumbers = axis.isAllNumbers;
+        const labelIsNumeric = axis.isNumeric;
         const axisLabels = axis.values;
 
-        if(!labelIsAllNumbers){
+        if(!labelIsNumeric){
 
             let step = (graphWidth/axisLabels.length);
             step < fontSize? step = fontSize: null;
@@ -978,10 +1154,10 @@ export function getAxisValuePosition(dv, value, axisName){
     const axis = axisData.yData[axisName];
 
     if(axis){
-        const valueIsAllNumbers = axis.isAllNumbers;
+        const valueIsNumeric = axis.isNumeric;
         const axisValues = axis.values;
 
-        if(!valueIsAllNumbers){
+        if(!valueIsNumeric){
 
             let step = (graphHeight/axisValues.length);
             step < fontSize? step = fontSize: null;

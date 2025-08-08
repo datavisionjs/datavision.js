@@ -1,11 +1,11 @@
 import * as Global from '../helpers/global.js';
 
-const DrawKPI = (ctx, valueDataset, targetDataset, trendDataset) => {
+const DrawKPI = (ctx, valueDataset, targetDataset, trendDataset, width, height) => {
     if (!ctx || !valueDataset) {
         return;
     }
 
-    const { width, height } = ctx.canvas;
+    //const { width, height } = ctx.canvas;
     const halfWidth = width * 0.5;
 
     const value =  Global.numberFormat(valueDataset?.value || "", {abbreviate: true});
@@ -105,6 +105,8 @@ const DrawKPI = (ctx, valueDataset, targetDataset, trendDataset) => {
     if(textY < valueSize){
         textY = valueSize; //fit on canvas
     }
+
+    console.log("TX: ", textX, width, textY, height);
 
     //displaying value
     ctx.beginPath();

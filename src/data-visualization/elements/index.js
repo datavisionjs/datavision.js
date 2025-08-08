@@ -60,7 +60,7 @@ const DrawElements = (dv, dataset) => {
         const leftIndexEnd = Math.ceil((leftIndex + 2) + (graphWidth/fontSize));
         const topIndexDiff = Math.abs(topIndexEnd-topIndex), leftIndexDiff = Math.abs(leftIndexEnd-leftIndex);
 
-        const isLoopLeftAxis = (scrollData.isScrollX || !axisData.xData["x1"].isAllNumbers) && ((leftIndexDiff > topIndexDiff) || axisData.yData["y1"].isAllNumbers);
+        const isLoopLeftAxis = (scrollData.isScrollX || !axisData.xData["x1"].isNumeric) && ((leftIndexDiff > topIndexDiff) || axisData.yData["y1"].isNumeric);
 
         const scrollIndex = isLoopLeftAxis? leftIndex: topIndex;
         const scrollIndexEnd = isLoopLeftAxis? leftIndexEnd: topIndexEnd;
@@ -101,7 +101,7 @@ const DrawElements = (dv, dataset) => {
 
                 const baseAxis = isHorizontal? yAxis: xAxis;
 
-                const xAxisIsAllNumbers = xAxis.isAllNumbers, yAxisIsAllNumbers = yAxis.isAllNumbers;
+                const xAxisIsAllNumbers = xAxis.isNumeric, yAxisIsAllNumbers = yAxis.isNumeric;
 
                 const xAxisIsLabel = (!xAxisIsAllNumbers || yAxisIsAllNumbers);
 
@@ -115,7 +115,7 @@ const DrawElements = (dv, dataset) => {
                 let barSize = isStacked? step: (step/(maxBarPerLabel));
 
                 //set the bar size given how far apart each bar is from each other (eliminating overlapping bars)
-                if(baseAxis.isAllNumbers){
+                if(baseAxis.isNumeric){
                     const range = baseAxis.range;
                     const rangeStart = range[0], rangeEnd = range[1];
 
@@ -146,8 +146,8 @@ const DrawElements = (dv, dataset) => {
 
                 //const keys = Array.from(barObject.keys());
 
-                //const loopEnd = baseAxis.isAllNumbers?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
-                const loopEnd = baseAxis.isAllNumbers? barObject.size: (scrollIndexEnd <  barObject.size)? scrollIndexEnd:  barObject.size;
+                //const loopEnd = baseAxis.isNumeric?  barObject.size: scrollIndexEnd <  barObject.size? scrollIndexEnd:  barObject.size;
+                const loopEnd = baseAxis.isNumeric? barObject.size: (scrollIndexEnd <  barObject.size)? scrollIndexEnd:  barObject.size;
 
                 for(let index = scrollIndex; index < loopEnd; index++){
 
@@ -214,8 +214,8 @@ const DrawElements = (dv, dataset) => {
 
                 const defaultSize = 3;
     
-                const xAxisIsAllNumbers = xAxis.isAllNumbers;
-                const yAxisIsAllNumbers = yAxis.isAllNumbers;
+                const xAxisIsAllNumbers = xAxis.isNumeric;
+                const yAxisIsAllNumbers = yAxis.isNumeric;
 
                 const xAxisIsLabel = (!xAxisIsAllNumbers || yAxisIsAllNumbers);
     
@@ -893,7 +893,9 @@ const DrawElements = (dv, dataset) => {
         const targetDataset = dataset.targetDataset || {};
         const trendDataset = dataset.trendDataset || {};
 
-        DrawKPI(tempCtx, valueDataset, targetDataset, trendDataset);
+        DrawKPI(tempCtx, valueDataset, targetDataset, trendDataset, canvasWidth, canvasHeight);
+
+        //console.log(ctx.canvas.width, canvasWidth, ctx.canvas.height, canvasHeight);
 
         ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
     }

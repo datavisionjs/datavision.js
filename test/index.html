@@ -3562,14 +3562,14 @@
             binCount: 30,
         };
 
-        const mX = ["Action", "Adventure", "Puzzle", "Racing"];
+        const mX = ["Action", "Action", "Puzzle", "Racing", "Money"];
 
         const trace2 = {
             x: mX,
             y: [5000291.4567, 11500207.3290, 7170613.8089, 31720647.2456],
             name: 'JP_Sales',
             //mode: "stack",
-            type: 'bar'
+            type: 'scatter'
         };
 
         const trace3 = { 
@@ -3661,12 +3661,12 @@
         }
 
         const data = [
-            //trace2,
+            trace2,
             //trace1,
             //trace2,
             //trace3,
             //table,
-            kpi,
+            //kpi,
             //pie,
             //tranceExp,
             //traceImp,
@@ -3806,7 +3806,8 @@
                 "color": "white"
             },
             "sort": {
-                "order": "asc"
+                "order": "desc",
+                "target": "y"
             },
             "backgroundColor": "white",
             "tooltip": {},

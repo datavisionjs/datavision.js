@@ -89,7 +89,7 @@ export const setContentSize = function (dv){
         const axis = axisValues[key];
         const values = axis.values;
 
-        if(!axis.isAllNumbers){
+        if(!axis.isNumeric){
             let step = (graphWidth/values.length);
             step < fontSize? step = fontSize: null;
 
@@ -107,7 +107,7 @@ export const setContentSize = function (dv){
         const axis = axisLabels[key];
         const values = axis.values;
 
-        if(!axis.isAllNumbers){ 
+        if(!axis.isNumeric){ 
 
             scrollData.contentWidth = ((fontSize*values.length)+graphX);
 

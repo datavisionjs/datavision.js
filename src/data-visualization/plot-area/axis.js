@@ -146,7 +146,7 @@ function drawYAxis(dv, ctx, position, isPercent){
         const values = axis.values;
         const maxLabelWidth = position.maxLabelWidth[key];
 
-        if(axis.isAllNumbers){
+        if(axis.isNumeric){
             const tickData = axis.tickData;
 
             //const maxDist = 7;
@@ -322,7 +322,7 @@ function drawXAxis(dv, ctx, position, isPercent){
         const values = axis.values;
         const maxLabelWidth = position.maxLabelWidth[key];
 
-        if(axis.isAllNumbers){
+        if(axis.isNumeric){
             const tickData = axis.tickData;
 
             values.sort((a, b) => a - b);
